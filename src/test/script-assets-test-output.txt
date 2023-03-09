@@ -1,0 +1,991 @@
+Running 1 test case...
+---
+tx index: 6 comment: sighash/keypath_unk_hashtype_cc
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 1
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 7 comment: sighash/keypath_unk_hashtype_90
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 1
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 15 comment: sighash/scriptpath_hashtype_81
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 0
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 29 comment: sig/flip_p
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 1
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 36 comment: sighash/keypath_unk_hashtype_b7
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 1
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 38 comment: sighash/keypath_unk_hashtype_36
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 1
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 39 comment: sighash/scriptpath_hashtype_mis_83
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 0
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 43 comment: sighash/branched_codesep/right
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 0
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 0
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 53 comment: siglen/empty_keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 1
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+---
+tx index: 61 comment: spendpath/trunc1shortcontrol
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+final: 1
+flags: 133121
+flags & test_flags: 133121
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133125
+flags & test_flags: 133125
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133137
+flags & test_flags: 133137
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133141
+flags & test_flags: 133141
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133633
+flags & test_flags: 133633
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133637
+flags & test_flags: 133637
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133649
+flags & test_flags: 133649
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 133653
+flags & test_flags: 133653
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134145
+flags & test_flags: 134145
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134149
+flags & test_flags: 134149
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134161
+flags & test_flags: 134161
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134165
+flags & test_flags: 134165
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134657
+flags & test_flags: 134657
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134661
+flags & test_flags: 134661
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134673
+flags & test_flags: 134673
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+final: 1
+flags: 134677
+flags & test_flags: 134677
+flags & test_flags == flags: 1
+ret: 0
+test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m

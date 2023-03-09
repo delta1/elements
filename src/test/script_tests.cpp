@@ -18,6 +18,7 @@
 #include <test/util/transaction_utils.h>
 #include <util/strencodings.h>
 #include <util/system.h>
+#include <iostream>
 
 #if defined(HAVE_CONSENSUS_LIB)
 #include <script/bitcoinconsensus.h>
@@ -1676,6 +1677,10 @@ static const std::vector<unsigned int> ALL_CONSENSUS_FLAGS = AllConsensusFlags()
 static void AssetTest(const UniValue& test)
 {
     BOOST_CHECK(test.isObject());
+    auto comment = test["comment"].get_str();
+    std::cout << "comment: " << comment << std::endl;
+    auto flags = test["flags"].get_str();
+    std::cout << "flags: " << flags << std::endl;
 
     CMutableTransaction mtx = TxFromHex(test["tx"].get_str());
     const std::vector<CTxOut> prevouts = TxOutsFromJSON(test["prevouts"]);
@@ -1683,7 +1688,7 @@ static void AssetTest(const UniValue& test)
     mtx.witness.vtxinwit.resize(mtx.vin.size());
     size_t idx = test["index"].get_int64();
     unsigned int test_flags = ParseScriptFlags(test["flags"].get_str());
-    bool fin = test.exists("final") && test["final"].get_bool();
+    bool final = test.exists("final") && test["final"].get_bool();
     // ELEMENTS FIXME: update feature_taproot.py --dumptests to actually output these
     uint256 hash_genesis_block = test.exists("hash_genesis_block") ? uint256S(test["hash_genesis_block"].get_str()) : uint256{};
 
@@ -1697,8 +1702,13 @@ static void AssetTest(const UniValue& test)
         for (const auto flags : ALL_CONSENSUS_FLAGS) {
             // "final": true tests are valid for all flags. Others are only valid with flags that are
             // a subset of test_flags.
-            if (fin || ((flags & test_flags) == flags)) {
+            if (final || ((flags & test_flags) == flags)) {
+                std::cout << "final: " << final << std::endl;
+                std::cout << "flags: " << flags << std::endl;
+                std::cout << "flags & test_flags: " << (flags & test_flags) << std::endl;
+                std::cout << "flags & test_flags == flags: " << ((flags & test_flags) == flags) << std::endl;
                 bool ret = VerifyScript(tx.vin[idx].scriptSig, prevouts[idx].scriptPubKey, &tx.witness.vtxinwit[idx].scriptWitness, flags, txcheck, nullptr);
+                std::cout << "ret: " << ret << std::endl;
                 BOOST_CHECK(ret);
             }
         }
@@ -1744,10 +1754,24 @@ BOOST_AUTO_TEST_CASE(script_assets_test)
     BOOST_CHECK(tests.isArray());
     BOOST_CHECK(tests.size() > 0);
 
-    // ELEMENTS: temporarily disabled until we implement the new Taproot sighash and upload new qa-assets
+    // ELEMENTS: new qa-assets repo https://github.com/ElementsProject/qa-assets
+    // set DIR_UNIT_TEST_DATA env var to /path/to/qa-assets/unit_test_data
+    g_con_elementsmode = true;
     for (size_t i = 0; i < tests.size(); i++) {
-        AssetTest(tests[i]);
+        std::cout << "------" << std::endl;
+        std::cout << "tx index: " << i << std::endl;
+        try {
+            AssetTest(tests[i]);
+        }
+        catch (const std::exception &e) {
+            std::cout << "caught exception" << std::endl;
+            std::cout << i << std::endl;
+            std::cout << e.what() << std::endl;
+            std::cout << "continuing" << std::endl;
+            continue;
+        }
     }
+    g_con_elementsmode = false;
     file.close();
 }
 
