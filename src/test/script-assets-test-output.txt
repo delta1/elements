@@ -1,991 +1,1513 @@
 Running 1 test case...
----
-tx index: 6 comment: sighash/keypath_unk_hashtype_cc
+------
+tx index: 0
+comment: inactive/scriptpath_invalidsig
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 1
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 2
+comment: legacy/pk-wrongkey
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 3
+comment: legacy/pk-wrongkey
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 4
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 5
+comment: alwaysvalid/notsuccessx
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 6
+comment: sighash/keypath_unk_hashtype_cc
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 1
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 7 comment: sighash/keypath_unk_hashtype_90
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 7
+comment: sighash/keypath_unk_hashtype_90
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 1
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 15 comment: sighash/scriptpath_hashtype_81
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 8
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 9
+comment: applic/scriptpath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 10
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 11
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 12
+comment: unkver/1001inputs
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 13
+comment: alwaysvalid/notsuccessx
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 14
+comment: applic/scriptpath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 15
+comment: sighash/scriptpath_hashtype_81
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 0
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 29 comment: sig/flip_p
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 16
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 17
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 18
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 19
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 20
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 21
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 22
+comment: unkver/1001inputs
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 23
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 24
+comment: inactive/scriptpath_valid
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 25
+comment: applic/scriptpath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 26
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 27
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 28
+comment: legacy/pkh-sighashflip
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 29
+comment: sig/flip_p
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 1
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 36 comment: sighash/keypath_unk_hashtype_b7
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 30
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 31
+comment: compat/nocsa
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 32
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 33
+comment: siglen/popbyte_cs_neg
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 34
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 35
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 36
+comment: sighash/keypath_unk_hashtype_b7
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 1
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 38 comment: sighash/keypath_unk_hashtype_36
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 37
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 38
+comment: sighash/keypath_unk_hashtype_36
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 1
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 39 comment: sighash/scriptpath_hashtype_mis_83
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 39
+comment: sighash/scriptpath_hashtype_mis_83
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 0
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 43 comment: sighash/branched_codesep/right
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 40
+comment: opsuccess/undecodable_bypass
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 41
+comment: legacy/pkh-sighashflip
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 42
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 43
+comment: sighash/branched_codesep/right
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 0
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 0
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 53 comment: siglen/empty_keypath
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 44
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 45
+comment: unkver/1001inputs
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 46
+comment: alwaysvalid/notsuccessx
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 47
+comment: inactive/keypath_valid
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 48
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 49
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 50
+comment: opsuccess/bare
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 51
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 52
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 53
+comment: siglen/empty_keypath
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 1
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
----
-tx index: 61 comment: spendpath/trunc1shortcontrol
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 54
+comment: legacy/pkh-sighashflip
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 55
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 56
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 57
+comment: unkver/return
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 58
+comment: unkver/bigpush
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 59
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 60
+comment: legacy/pk-wrongkey
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 61
+comment: spendpath/trunc1shortcontrol
 flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
 final: 1
 flags: 133121
 flags & test_flags: 133121
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133125
 flags & test_flags: 133125
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133137
 flags & test_flags: 133137
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133141
 flags & test_flags: 133141
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133633
 flags & test_flags: 133633
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133637
 flags & test_flags: 133637
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133649
 flags & test_flags: 133649
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 133653
 flags & test_flags: 133653
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134145
 flags & test_flags: 134145
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134149
 flags & test_flags: 134149
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134161
 flags & test_flags: 134161
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134165
 flags & test_flags: 134165
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134657
 flags & test_flags: 134657
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134661
 flags & test_flags: 134661
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134673
 flags & test_flags: 134673
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
 final: 1
 flags: 134677
 flags & test_flags: 134677
 flags & test_flags == flags: 1
-ret: 0
-test/script_tests.cpp(1712): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+flags: CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,DERSIG,NULLDUMMY,P2SH,TAPROOT,WITNESS
+err: 46: Invalid Schnorr signature
+test/script_tests.cpp(1717): [1;31;49merror: in "script_tests/script_assets_test": check ret has failed[0;39;49m
+------
+tx index: 62
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 63
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 64
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 65
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 66
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 67
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 68
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 69
+comment: alwaysvalid/notsuccessx
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 70
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 71
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 72
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 73
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 74
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 75
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 76
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 77
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 78
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 79
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 80
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 81
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 82
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 83
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 84
+comment: inactive/keypath_valid
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 85
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 86
+comment: applic/scriptpath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 87
+comment: inactive/keypath_valid
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 88
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 89
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 90
+comment: unkver/return
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 91
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 92
+comment: inactive/keypath_invalidsig
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY
+------
+tx index: 93
+comment: applic/scriptpath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 94
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 95
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 96
+comment: applic/keypath
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY,TAPROOT
+------
+tx index: 97
+comment: inactive/keypath_empty
+flags: P2SH,DERSIG,CHECKLOCKTIMEVERIFY,CHECKSEQUENCEVERIFY,WITNESS,NULLDUMMY

@@ -1703,12 +1703,17 @@ static void AssetTest(const UniValue& test)
             // "final": true tests are valid for all flags. Others are only valid with flags that are
             // a subset of test_flags.
             if (final || ((flags & test_flags) == flags)) {
-                std::cout << "final: " << final << std::endl;
-                std::cout << "flags: " << flags << std::endl;
-                std::cout << "flags & test_flags: " << (flags & test_flags) << std::endl;
-                std::cout << "flags & test_flags == flags: " << ((flags & test_flags) == flags) << std::endl;
-                bool ret = VerifyScript(tx.vin[idx].scriptSig, prevouts[idx].scriptPubKey, &tx.witness.vtxinwit[idx].scriptWitness, flags, txcheck, nullptr);
-                std::cout << "ret: " << ret << std::endl;
+                ScriptError err;
+                bool ret = VerifyScript(tx.vin[idx].scriptSig, prevouts[idx].scriptPubKey, &tx.witness.vtxinwit[idx].scriptWitness, flags, txcheck, &err);
+                // std::cout << "ret: " << ret << std::endl;
+                if (!ret) {
+                    std::cout << "final: " << final << std::endl;
+                    std::cout << "flags: " << flags << std::endl;
+                    std::cout << "flags & test_flags: " << (flags & test_flags) << std::endl;
+                    std::cout << "flags & test_flags == flags: " << ((flags & test_flags) == flags) << std::endl;
+                    std::cout << "flags: " << FormatScriptFlags(flags) << std::endl;
+                    std::cout << "err: " << err << ": " << ScriptErrorString(err) << std::endl;
+                }
                 BOOST_CHECK(ret);
             }
         }
