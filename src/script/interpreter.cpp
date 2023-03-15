@@ -12,6 +12,7 @@
 #include <pubkey.h>
 #include <script/script.h>
 #include <uint256.h>
+#include <iostream>
 
 typedef std::vector<unsigned char> valtype;
 
@@ -2895,10 +2896,13 @@ bool GenericTransactionSignatureChecker<T>::CheckSchnorrSignature(Span<const uns
     if (sig.size() != 64 && sig.size() != 65) return set_error(serror, SCRIPT_ERR_SCHNORR_SIG_SIZE);
 
     XOnlyPubKey pubkey{pubkey_in};
+    CPubKey cpubkey(pubkey_in.begin(), pubkey_in.end());
+    // std::cout << "cpubkey: " << cpubkey. << std::endl;
 
     uint8_t hashtype = SIGHASH_DEFAULT;
     if (sig.size() == 65) {
         hashtype = SpanPopBack(sig);
+        std::cout << "hashtype: " << hashtype << std::endl;
         if (hashtype == SIGHASH_DEFAULT) return set_error(serror, SCRIPT_ERR_SCHNORR_SIG_HASHTYPE);
     }
     uint256 sighash;

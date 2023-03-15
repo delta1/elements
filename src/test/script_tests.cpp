@@ -1705,7 +1705,7 @@ static void AssetTest(const UniValue& test)
             if (final || ((flags & test_flags) == flags)) {
                 ScriptError err;
                 bool ret = VerifyScript(tx.vin[idx].scriptSig, prevouts[idx].scriptPubKey, &tx.witness.vtxinwit[idx].scriptWitness, flags, txcheck, &err);
-                std::cout << "flags: " << FormatScriptFlags(flags) << std::endl;
+                // std::cout << "flags: " << FormatScriptFlags(flags) << std::endl;
                 if (!ret) {
                     std::cout << "final: " << final << std::endl;
                     std::cout << "flags: " << flags << std::endl;
