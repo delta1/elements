@@ -495,8 +495,13 @@ static bool EvalTapScriptCheckSigFromStack(const valtype& sig, const valtype& vc
             if (sig.size() != 64)
                 return set_error(serror, SCRIPT_ERR_SCHNORR_SIG_SIZE);
             const XOnlyPubKey pubkey{vchPubKey};
-            if (!pubkey.VerifySchnorr(msg, sig))
+            if (!pubkey.VerifySchnorr(msg, sig)) {
+                std::cout << "sig: " << HexStr(sig) << std::endl;
+                std::cout << "pubkey: " << HexStr(pubkey) << std::endl;
+                std::cout << "msg: " << HexStr(msg) << std::endl;
+                std::cout << "sigversion: " << static_cast<char>(sigversion) << std::endl;
                 return set_error(serror, SCRIPT_ERR_SCHNORR_SIG);
+            }
         }
     } else {
         /*
@@ -2897,7 +2902,6 @@ bool GenericTransactionSignatureChecker<T>::CheckSchnorrSignature(Span<const uns
 
     XOnlyPubKey pubkey{pubkey_in};
     CPubKey cpubkey(pubkey_in.begin(), pubkey_in.end());
-    // std::cout << "cpubkey: " << cpubkey. << std::endl;
 
     uint8_t hashtype = SIGHASH_DEFAULT;
     if (sig.size() == 65) {
@@ -2910,7 +2914,12 @@ bool GenericTransactionSignatureChecker<T>::CheckSchnorrSignature(Span<const uns
     if (!SignatureHashSchnorr(sighash, execdata, *txTo, nIn, hashtype, sigversion, *this->txdata, m_mdb)) {
         return set_error(serror, SCRIPT_ERR_SCHNORR_SIG_HASHTYPE);
     }
-    if (!VerifySchnorrSignature(sig, pubkey, sighash)) return set_error(serror, SCRIPT_ERR_SCHNORR_SIG);
+    if (!VerifySchnorrSignature(sig, pubkey, sighash)) {
+        std::cout << "sig: " << HexStr(sig) << std::endl;
+        std::cout << "pubkey: " << HexStr(pubkey_in) << std::endl;
+        std::cout << "sighash: " << sighash.GetHex() << std::endl;
+        return set_error(serror, SCRIPT_ERR_SCHNORR_SIG);
+    }
     return true;
 }
 
@@ -3120,6 +3129,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
     Span<const valtype> stack{witness.stack};
     ScriptExecutionData execdata;
 
+    std::cout << "VerifyWitnessProgram" << std::endl;
     if (witversion == 0) {
         if (program.size() == WITNESS_V0_SCRIPTHASH_SIZE) {
             // BIP141 P2WSH: 32-byte witness v0 program (which encodes SHA256(script))
@@ -3199,6 +3209,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
 
 bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror)
 {
+    std::cout << "VerifyScript" << std::endl;
     static const CScriptWitness emptyWitness;
     if (witness == nullptr) {
         witness = &emptyWitness;
