@@ -2906,7 +2906,8 @@ bool GenericTransactionSignatureChecker<T>::CheckSchnorrSignature(Span<const uns
     uint8_t hashtype = SIGHASH_DEFAULT;
     if (sig.size() == 65) {
         hashtype = SpanPopBack(sig);
-        std::cout << "hashtype: " << hashtype << std::endl;
+        auto temp = (int) hashtype;
+        std::cout << "hashtype: " << temp << std::endl;
         if (hashtype == SIGHASH_DEFAULT) return set_error(serror, SCRIPT_ERR_SCHNORR_SIG_HASHTYPE);
     }
     uint256 sighash;
@@ -3129,7 +3130,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
     Span<const valtype> stack{witness.stack};
     ScriptExecutionData execdata;
 
-    std::cout << "VerifyWitnessProgram" << std::endl;
+    // std::cout << "VerifyWitnessProgram" << std::endl;
     if (witversion == 0) {
         if (program.size() == WITNESS_V0_SCRIPTHASH_SIZE) {
             // BIP141 P2WSH: 32-byte witness v0 program (which encodes SHA256(script))
@@ -3209,7 +3210,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
 
 bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const CScriptWitness* witness, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror)
 {
-    std::cout << "VerifyScript" << std::endl;
+    // std::cout << "VerifyScript" << std::endl;
     static const CScriptWitness emptyWitness;
     if (witness == nullptr) {
         witness = &emptyWitness;
@@ -3248,6 +3249,7 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
                 // The scriptSig must be _exactly_ CScript(), otherwise we reintroduce malleability.
                 return set_error(serror, SCRIPT_ERR_WITNESS_MALLEATED);
             }
+            std::cout << "witnessversion: " << witnessversion << std::endl;
             if (!VerifyWitnessProgram(*witness, witnessversion, witnessprogram, flags, checker, serror, /* is_p2sh */ false)) {
                 return false;
             }
