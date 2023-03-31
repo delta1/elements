@@ -2919,6 +2919,7 @@ bool GenericTransactionSignatureChecker<T>::CheckSchnorrSignature(Span<const uns
         std::cout << "sig: " << HexStr(sig) << std::endl;
         std::cout << "pubkey: " << HexStr(pubkey_in) << std::endl;
         std::cout << "sighash: " << sighash.GetHex() << std::endl;
+        std::cout << "sigversion: " << static_cast<int>(sigversion) << std::endl;
         return set_error(serror, SCRIPT_ERR_SCHNORR_SIG);
     }
     return true;
@@ -3171,6 +3172,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
         if (stack.size() == 1) {
             // Key path spending (stack size is 1 after removing optional annex)
             if (!checker.CheckSchnorrSignature(stack.front(), program, SigVersion::TAPROOT, execdata, serror)) {
+                std::cout << "exit1" << std::endl;
                 return false; // serror is set
             }
             return set_success(serror);
