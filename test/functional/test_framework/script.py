@@ -898,15 +898,15 @@ class TestFrameworkScript(unittest.TestCase):
         for value in values:
             self.assertEqual(CScriptNum.decode(CScriptNum.encode(CScriptNum(value))), value)
 
-def TaprootSignatureHash(txTo, spent_utxos, hash_type, genesis_hash, input_index = 0, scriptpath = False, script = CScript(), codeseparator_pos = -1, annex = None, leaf_ver = LEAF_VERSION_TAPSCRIPT):
+def TaprootSignatureHash(txTo, spent_utxos, hash_type, genesis_uint256, input_index = 0, scriptpath = False, script = CScript(), codeseparator_pos = -1, annex = None, leaf_ver = LEAF_VERSION_TAPSCRIPT):
     assert (len(txTo.vin) == len(spent_utxos))
     assert (input_index < len(txTo.vin))
     out_type = SIGHASH_ALL if hash_type == 0 else hash_type & 3
     in_type = hash_type & SIGHASH_ANYONECANPAY
     spk = spent_utxos[input_index].scriptPubKey
     ss = b""
-    ss += ser_uint256(genesis_hash)
-    ss += ser_uint256(genesis_hash)
+    ss += ser_uint256(genesis_uint256)
+    ss += ser_uint256(genesis_uint256)
     ss += bytes([hash_type]) # hash_type
     ss += struct.pack("<i", txTo.nVersion)
     ss += struct.pack("<I", txTo.nLockTime)
