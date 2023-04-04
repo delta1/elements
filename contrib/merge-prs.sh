@@ -7,7 +7,7 @@ BASE="${BASE_ORIG}"
 BITCOIN_UPSTREAM_REMOTE=bitcoin
 BITCOIN_UPSTREAM="${BITCOIN_UPSTREAM_REMOTE}/master"
 ELEMENTS_UPSTREAM_REMOTE=upstream
-ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
+# ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Replace this with the location where we should put the fuzz test corpus
 BITCOIN_QA_ASSETS="${HOME}/code/bitcoin/qa-assets"
@@ -139,6 +139,12 @@ quietly () {
     fi
 }
 
+notify () {
+    local MESSAGE="$1"
+    local JSON="{\"content\": \"$MESSAGE\"}"
+    curl -d "$JSON" -H "Content-Type: application/json" "$WEBHOOK"
+}
+
 ## Sort by unix timestamp and iterate over them
 #echo "$ELT_COMMITS" "$BTC_COMMITS" | sort -n -k1 | while read line
 echo "$BTC_COMMITS" | tac | while read -r line
@@ -183,7 +189,7 @@ do
         echo -e "Continuing build of \e[37m$PR_ID\e[0m at $(date)"
     else
         echo -e "Start merge/build of \e[37m$PR_ID\e[0m at $(date)"
-        git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH into merged_master ($CHAIN PR $PR_ID)"
+        git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH into merged_master ($CHAIN PR $PR_ID)" || notify "fail merge"
     fi
 
     if [[ "$DO_CHERRY" == "1" ]]; then
@@ -208,10 +214,10 @@ do
         # The following is an expansion of `make check` that skips the libsecp
         # tests and also the benchmarks (though it does build them!)
         echo "Building"
-        quietly make -j"$PARALLEL_BUILD" -k
+        quietly make -j"$PARALLEL_BUILD" -k || notify "fail build"
 	# quietly make -j1 check
         echo "Linting"
-        quietly ./ci/lint/06_script.sh
+        quietly ./ci/lint/06_script.sh || notify "fail lint"
     fi
 
     if [[ "$DO_TEST" == "1" ]]; then
@@ -223,7 +229,7 @@ do
         quietly ./test/util/rpcauth-test.py
         quietly make -C src/univalue/ check
         echo "Functional testing"
-        quietly ./test/functional/test_runner.py --jobs="$PARALLEL_TEST"
+        quietly ./test/functional/test_runner.py --jobs="$PARALLEL_TEST" || notify "fail test"
     fi
 
     if [[ "$DO_FUZZ" == "1" ]]; then
@@ -236,7 +242,7 @@ do
         quietly ./configure --with-incompatible-bdb --enable-fuzz --with-sanitizers=address,fuzzer,undefined CC="ccache clang" CXX="ccache clang++"
         quietly make -j"$PARALLEL_BUILD" -k
         echo "Fuzzing"
-        quietly ./test/fuzz/test_runner.py -j"$PARALLEL_FUZZ" "${FUZZ_CORPUS}"
+        quietly ./test/fuzz/test_runner.py -j"$PARALLEL_FUZZ" "${FUZZ_CORPUS}" || notify "fail fuzz"
 
     fi
 
@@ -246,10 +252,12 @@ do
     fi
 
     if [[ "$KEEP_GOING" == "0" ]]; then
+        notify "done, exiting"
         exit 1
+    else
+        notify "done, continuing"
     fi
 
-#    bummer1.sh
     SKIP_MERGE=0
     echo "end" >> merge.log
 done
