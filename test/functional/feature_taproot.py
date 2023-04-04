@@ -22,6 +22,7 @@ from test_framework.messages import (
     CTxOutValue,
     CTxOutWitness,
     uint256_from_str,
+    ser_uint256,
 )
 from test_framework.script import (
     ANNEX_TAG,
@@ -131,9 +132,10 @@ import random
 # while ctx2 only uses the modified hashtype inside the sighash calculation.
 #
 # ELEMENTS:
-# Elements taphash calculation also depends on genesis_block_hash which is stored as
-# `genesis_hash` in the test config
-g_genesis_hash = None
+# Elements taphash calculation also depends on the uint256 value of the genesis block hash
+# which is stored as genesis_uint256 in the test config
+g_genesis_uint256 = None
+g_genesis_block_hash = None
 
 def deep_eval(ctx, expr):
     """Recursively replace any callables c in expr (including inside lists) with c(ctx)."""
@@ -208,7 +210,7 @@ def default_sighash(ctx):
     tx = get(ctx, "tx")
     idx = get(ctx, "idx")
     hashtype = get(ctx, "hashtype_actual")
-    genesis_hash = get(ctx, "genesis_hash")
+    genesis_uint256 = get(ctx, "genesis_uint256")
     mode = get(ctx, "mode")
     if mode == "taproot":
         # BIP341 signature hash
@@ -218,9 +220,9 @@ def default_sighash(ctx):
             codeseppos = get(ctx, "codeseppos")
             leaf_ver = get(ctx, "leafversion")
             script = get(ctx, "script_taproot")
-            return TaprootSignatureHash(tx, utxos, hashtype, genesis_hash, idx, scriptpath=True, script=script, leaf_ver=leaf_ver, codeseparator_pos=codeseppos, annex=annex)
+            return TaprootSignatureHash(tx, utxos, hashtype, genesis_uint256, idx, scriptpath=True, script=script, leaf_ver=leaf_ver, codeseparator_pos=codeseppos, annex=annex)
         else:
-            return TaprootSignatureHash(tx, utxos, hashtype, genesis_hash, idx, scriptpath=False, annex=annex)
+            return TaprootSignatureHash(tx, utxos, hashtype, genesis_uint256, idx, scriptpath=False, annex=annex)
     elif mode == "witv0":
         # BIP143 signature hash
         scriptcode = get(ctx, "scriptcode")
@@ -387,7 +389,7 @@ DEFAULT_CONTEXT = {
     # The input arguments to provide to the executed script
     "inputs": [],
     # Genesis hash(required for taproot outputs)
-    "genesis_hash": None,
+    "genesis_uint256": None,
 
     # == Parameters to be set before evaluation: ==
     # - mode: what spending style to use ("taproot", "witv0", or "legacy").
@@ -449,7 +451,7 @@ def spend(tx, idx, utxos, **kwargs):
 
 Spender = namedtuple("Spender", "script,comment,is_standard,sat_function,err_msg,sigops_weight,no_fail,need_vin_vout_mismatch")
 
-def make_spender(comment, *, tap=None, witv0=False, script=None, pkh=None, p2sh=False, genesis_hash=None, spk_mutate_pre_p2sh=None, failure=None, standard=True, err_msg=None, sigops_weight=0, need_vin_vout_mismatch=False, **kwargs):
+def make_spender(comment, *, tap=None, witv0=False, script=None, pkh=None, p2sh=False, genesis_uint256=None, spk_mutate_pre_p2sh=None, failure=None, standard=True, err_msg=None, sigops_weight=0, need_vin_vout_mismatch=False, **kwargs):
     """Helper for constructing Spender objects using the context signing framework.
 
     * tap: a TaprootInfo object (see taproot_construct), for Taproot spends (cannot be combined with pkh, witv0, or script)
@@ -467,10 +469,10 @@ def make_spender(comment, *, tap=None, witv0=False, script=None, pkh=None, p2sh=
     """
 
     conf = dict()
-    global g_genesis_hash
-    if genesis_hash is None:
-        genesis_hash = g_genesis_hash
-    conf["genesis_hash"] = genesis_hash
+    global g_genesis_uint256
+    if genesis_uint256 is None:
+        genesis_uint256 = g_genesis_uint256
+    conf["genesis_uint256"] = genesis_uint256
 
     # Compute scriptPubKey and set useful defaults based on the inputs.
     if witv0:
@@ -1184,7 +1186,8 @@ def dump_json_test(tx, input_utxos, idx, success, failure):
         ("prevouts", [x.output.serialize().hex() for x in input_utxos]),
         ("index", idx),
         ("flags", flags),
-        ("comment", spender.comment)
+        ("comment", spender.comment),
+        ("hash_genesis_block", g_genesis_block_hash)
     ]
 
     # The "final" field indicates that a spend should be always valid, even with more validation flags enabled
@@ -1495,8 +1498,12 @@ class TaprootTest(BitcoinTestFramework):
         # Post-taproot activation tests go first (pre-taproot tests' blocks are invalid post-taproot).
         self.log.info("Post-activation tests...")
         self.nodes[1].generate(COINBASE_MATURITY + 1)
-        global g_genesis_hash
-        g_genesis_hash = uint256_from_str(bytes.fromhex(self.nodes[1].getblockhash(0))[::-1])
+        global g_genesis_block_hash
+        g_genesis_block_hash = self.nodes[1].getblockhash(0)
+        print(g_genesis_block_hash)
+        global g_genesis_uint256
+        g_genesis_uint256 = uint256_from_str(bytes.fromhex(g_genesis_block_hash)[::-1])
+        print(g_genesis_uint256)
         self.test_spenders(self.nodes[1], spenders_taproot_active(), input_counts=[1, 2, 2, 2, 2, 3])
 
         # Re-connect nodes in case they have been disconnected

@@ -1691,6 +1691,7 @@ static void AssetTest(const UniValue& test)
     bool final = test.exists("final") && test["final"].get_bool();
     // ELEMENTS FIXME: update feature_taproot.py --dumptests to actually output these
     uint256 hash_genesis_block = test.exists("hash_genesis_block") ? uint256S(test["hash_genesis_block"].get_str()) : uint256{};
+    std::cout << "hash_genesis_block: " << hash_genesis_block << std::endl;
 
     if (test.exists("success")) {
         mtx.vin[idx].scriptSig = ScriptFromHex(test["success"]["scriptSig"].get_str());
