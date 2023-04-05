@@ -40,7 +40,7 @@ DO_CHERRY=1
 if [[ "$1" == "setup" ]]; then
     echo "Setting up..."
     echo
-    git config remote.upstream.url >/dev/null || remote add upstream "https://github.com/ElementsProject/elements.git"
+    git config remote.upstream.url >/dev/null || git remote add upstream "https://github.com/ElementsProject/elements.git"
     git config remote.bitcoin.url >/dev/null || git remote add bitcoin "https://github.com/bitcoin/bitcoin.git"
     if git worktree list --porcelain | grep --silent prunable; then
         echo "You have stale git worktrees, please either fix them or run 'git worktree prune'."
