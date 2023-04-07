@@ -17,18 +17,18 @@ FUZZ_CORPUS="${BITCOIN_QA_ASSETS}/fuzz_seed_corpus/"
 # BEWARE: On some systems /tmp/ gets periodically cleaned, which may cause
 #   random files from this directory to disappear based on timestamp, and
 #   make git very confused
-WORKTREE="${HOME}/code/elements-merge-worktree"
+WORKTREE="/tmp/merge-worktree"
 #mkdir -p "${HOME}/.tmp"
 
 # These should be tuned to your machine; below values are for an 8-core
 #   16-thread macbook pro
-PARALLEL_BUILD=6  # passed to make -j
-PARALLEL_TEST=4  # passed to test_runner.py --jobs
-PARALLEL_FUZZ=4  # passed to test_runner.py -j when fuzzing
+PARALLEL_BUILD=14  # passed to make -j
+PARALLEL_TEST=12  # passed to test_runner.py --jobs
+PARALLEL_FUZZ=12  # passed to test_runner.py -j when fuzzing
 
 # ccache opts
-export CCACHE_DIR="/home/byron/code/ccache"
-export CCACHE_MAXSIZE="50G"
+export CCACHE_DIR="/tmp/ccache"
+export CCACHE_MAXSIZE="10G"
 
 SKIP_MERGE=0
 DO_BUILD=1
@@ -68,6 +68,18 @@ elif [[ "$1" == "list-only" ]]; then
     DO_BUILD=0
 elif [[ "$1" == "step" ]]; then
     KEEP_GOING=0
+elif [[ "$1" == "merge-only" ]]; then
+    SKIP_MERGE=0
+    KEEP_GOING=0
+    DO_BUILD=0
+    DO_TEST=0
+    DO_CHERRY=0
+elif [[ "$1" == "cherry-only" ]]; then
+    SKIP_MERGE=1
+    KEEP_GOING=0
+    DO_BUILD=0
+    DO_TEST=0
+    DO_CHERRY=1
 elif [[ "$1" == "step-continue" ]]; then
     SKIP_MERGE=1
     KEEP_GOING=0
@@ -174,7 +186,7 @@ do
     fi
 
     # check for our cherry-pick PRs and halt if found
-    STOPPERS=("22713" "23716" "24104")
+    STOPPERS=("22713" "23716" "24104", "26005")
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
@@ -196,10 +208,10 @@ do
 	HED=$(git rev-parse HEAD)
 	echo "HEAD is at $HED"
 	# cherry-pick build fixes
-	git -C "$WORKTREE" cherry-pick c08430ab7c89b441cb7fd72da239be7dacb2b1ad
-        git -C "$WORKTREE" cherry-pick e295862057f40288ae322bc34726c6caa290659c
-        git -C "$WORKTREE" cherry-pick ad3e9e1
-        git -C "$WORKTREE" cherry-pick 069bec1
+	git -C "$WORKTREE" cherry-pick fb63ca0e8ce87f13c54a08a7eb0e82716c9daa03
+	git -C "$WORKTREE" cherry-pick 3f6b84f6f34a3a8a3b2a0d24c24e49243670453e
+	git -C "$WORKTREE" cherry-pick d0a5e7952ac59ba815f84cadbefa77981e551eda
+	git -C "$WORKTREE" cherry-pick b988511c5225ddfec2fa9d7b82c35239781cd2ff
     fi
 
     if [[ "$DO_BUILD" == "1" ]]; then
@@ -210,7 +222,7 @@ do
         quietly git -C "$WORKTREE" clean -xf
         echo "autogen & configure"
         quietly ./autogen.sh
-        quietly ./configure --with-incompatible-bdb
+        quietly ./configure 
         # The following is an expansion of `make check` that skips the libsecp
         # tests and also the benchmarks (though it does build them!)
         echo "Building"
