@@ -28,7 +28,7 @@ PARALLEL_FUZZ=12  # passed to test_runner.py -j when fuzzing
 
 # ccache opts
 export CCACHE_DIR="/tmp/ccache"
-export CCACHE_MAXSIZE="10G"
+export CCACHE_MAXSIZE="20G"
 
 SKIP_MERGE=0
 DO_BUILD=1
@@ -155,6 +155,9 @@ notify () {
     local MESSAGE="$1"
     local JSON="{\"content\": \"$MESSAGE\"}"
     curl -d "$JSON" -H "Content-Type: application/json" "$WEBHOOK"
+    if [[ "$2" == "1" ]]; then
+	    exit 1
+    fi
 }
 
 ## Sort by unix timestamp and iterate over them
@@ -185,12 +188,13 @@ do
         continue
     fi
 
-    # check for our cherry-pick PRs and halt if found
-    STOPPERS=("22713" "23716" "24104", "26005")
+    # check for our cherry-pick stoppers and halt if found
+    STOPPERS=("23716" "24104", "26005")
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
 		echo "Found $STOPPER in $PR_ID! Exiting."
+		notify "hit stopper, exiting"
 		exit 1
 	else
 		echo "Didn't find $STOPPER in $PR_ID. Continuing."
@@ -201,16 +205,16 @@ do
         echo -e "Continuing build of \e[37m$PR_ID\e[0m at $(date)"
     else
         echo -e "Start merge/build of \e[37m$PR_ID\e[0m at $(date)"
-        git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH into merged_master ($CHAIN PR $PR_ID)" || notify "fail merge"
+        git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH into merged_master ($CHAIN PR $PR_ID)" || notify "fail merge" 1
     fi
 
     if [[ "$DO_CHERRY" == "1" ]]; then
 	HED=$(git rev-parse HEAD)
 	echo "HEAD is at $HED"
 	# cherry-pick build fixes
-	git -C "$WORKTREE" cherry-pick fb63ca0e8ce87f13c54a08a7eb0e82716c9daa03
+	git -C "$WORKTREE" cherry-pick fb63ca0e8ce87f13c54a08a7eb0e82716c9daa03 #23716
 	git -C "$WORKTREE" cherry-pick 3f6b84f6f34a3a8a3b2a0d24c24e49243670453e
-	git -C "$WORKTREE" cherry-pick d0a5e7952ac59ba815f84cadbefa77981e551eda
+	#git -C "$WORKTREE" cherry-pick d0a5e7952ac59ba815f84cadbefa77981e551eda #22713
 	git -C "$WORKTREE" cherry-pick b988511c5225ddfec2fa9d7b82c35239781cd2ff
     fi
 
@@ -226,7 +230,7 @@ do
         # The following is an expansion of `make check` that skips the libsecp
         # tests and also the benchmarks (though it does build them!)
         echo "Building"
-        quietly make -j"$PARALLEL_BUILD" -k || notify "fail build"
+        quietly make -j"$PARALLEL_BUILD" -k || notify "fail build" 1
 	# quietly make -j1 check
         echo "Linting"
         quietly ./ci/lint/06_script.sh || notify "fail lint"
@@ -241,7 +245,7 @@ do
         quietly ./test/util/rpcauth-test.py
         quietly make -C src/univalue/ check
         echo "Functional testing"
-        quietly ./test/functional/test_runner.py --jobs="$PARALLEL_TEST" || notify "fail test"
+        quietly ./test/functional/test_runner.py --jobs="$PARALLEL_TEST" || notify "fail test" 1
     fi
 
     if [[ "$DO_FUZZ" == "1" ]]; then
@@ -254,7 +258,7 @@ do
         quietly ./configure --with-incompatible-bdb --enable-fuzz --with-sanitizers=address,fuzzer,undefined CC="ccache clang" CXX="ccache clang++"
         quietly make -j"$PARALLEL_BUILD" -k
         echo "Fuzzing"
-        quietly ./test/fuzz/test_runner.py -j"$PARALLEL_FUZZ" "${FUZZ_CORPUS}" || notify "fail fuzz"
+        quietly ./test/fuzz/test_runner.py -j"$PARALLEL_FUZZ" "${FUZZ_CORPUS}" || notify "fail fuzz" 1
 
     fi
 
@@ -264,10 +268,10 @@ do
     fi
 
     if [[ "$KEEP_GOING" == "0" ]]; then
-        notify "done, exiting"
+        notify "$PR_ID done, exiting"
         exit 1
     else
-        notify "done, continuing"
+        notify "$PR_ID done, continuing"
     fi
 
     SKIP_MERGE=0
