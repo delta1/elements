@@ -241,7 +241,7 @@ do
         quietly ./src/qt/test/test_elements-qt
         quietly ./src/test/test_bitcoin
         quietly ./src/bench/bench_bitcoin
-        quietly ./test/util/bitcoin-util-test.py
+        quietly ./test/util/test_runner.py
         quietly ./test/util/rpcauth-test.py
         quietly make -C src/univalue/ check
         echo "Functional testing"
