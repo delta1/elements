@@ -55,21 +55,76 @@ class CTTest(BitcoinTestFramework):
 
         feerate = 1.0
 
-        balance = self.nodes[0].getbalance()
+        node0 = self.nodes[0]
+        node1 = self.nodes[1]
+        node2 = self.nodes[2]
+
+        # coinbase_addr = self.nodes[0].getnewaddress()
+        # node0.generatetoaddress(201, coinbase_addr)
+        node0.generate(101)
+        self.sync_all()
+        balance = node0.getbalance()
         print(balance)
         assert_equal(balance['bitcoin'], 21000000)
+        address = node0.getnewaddress()
+        info = node0.getaddressinfo(address)
+        txid = node0.sendtoaddress(info['unconfidential'], 20999999, "", "", False, None, None, None, None, None, None, feerate)
+        tx = node0.gettransaction(txid, True, True)
+        # print(tx)
+        print(f"fee: {tx['fee']}")
+        decoded = tx['decoded']
+        vin = decoded['vin']
+        vout = decoded['vout']
+        print(f"vin : {len(vin)}")
+        print(f"vout: {len(vout)}")
+        node0.generate(1)
 
-        self.nodes[0].generate(101)
-        self.sync_all()
-
-        print("send explicit 1")
-        for i in range(5):
-            address = self.nodes[1].getnewaddress()
-            info = self.nodes[1].getaddressinfo(address)
-            txid = self.nodes[0].sendtoaddress(info['unconfidential'], 1000, "", "", False, None, None, None, None, None, None, feerate)
-            tx = self.nodes[0].gettransaction(txid)
+        for i in range(10):
+            address = node1.getnewaddress()
+            info = node1.getaddressinfo(address)
+            txid = node0.sendtoaddress(info['unconfidential'], 1, "", "", False, None, None, None, None, None, None, feerate)
+            tx = node0.gettransaction(txid, True, True)
+            # print(tx)
             print(f"fee: {tx['fee']}")
+            decoded = tx['decoded']
+            vin = decoded['vin']
+            vout = decoded['vout']
+            print(f"vin : {len(vin)}")
+            print(f"vout: {len(vout)}")
+            node0.generate(1)
+
+        unspent = node1.listunspent()
+        # print(unspent)
+        # assert_equal(len(unspent), 5)
+
+        print("---")
+        print("issue asset")
+        issued = self.nodes[0].issueasset(5000, 1, False)
+        # print(issued)
+        asset = issued['asset']
+        print(f"asset: {asset}")
+        self.nodes[0].generate(1)
+        txid = issued['txid']
+        tx = self.nodes[0].gettransaction(txid)
+        print(f"fee: {tx['fee']}")
+        print("---")
+
+        for i in range(5):
+            address = self.nodes[2].getnewaddress()
+            info = self.nodes[2].getaddressinfo(address)
+            txid = self.nodes[0].sendtoaddress(info['address'], 1000, "", "", False, None, None, None, None, asset, None, feerate)
+            tx = self.nodes[0].gettransaction(txid, True, True)
+            print(f"fee: {tx['fee']}")
+            decoded = tx['decoded']
+            vin = decoded['vin']
+            vout = decoded['vout']
+            print(f"vin : {len(vin)}")
+            print(f"vout: {len(vout)}")
             self.nodes[0].generate(1)
+
+        unspent = self.nodes[2].listunspent()
+        # print(unspent)
+        assert_equal(len(unspent), 5)
 
         # address = self.nodes[1].getnewaddress()
         # info = self.nodes[1].getaddressinfo(address)
