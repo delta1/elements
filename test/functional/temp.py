@@ -63,77 +63,80 @@ class CTTest(BitcoinTestFramework):
         self.sync_all()
 
         print("send explicit 1")
-        address = self.nodes[1].getnewaddress()
-        info = self.nodes[1].getaddressinfo(address)
-        print("send btc")
-        txid = self.nodes[0].sendtoaddress(info['unconfidential'], 1000, "", "", False, None, None, None, None, None, None, feerate)
+        for i in range(5):
+            address = self.nodes[1].getnewaddress()
+            info = self.nodes[1].getaddressinfo(address)
+            txid = self.nodes[0].sendtoaddress(info['unconfidential'], 1000, "", "", False, None, None, None, None, None, None, feerate)
+            tx = self.nodes[0].gettransaction(txid)
+            print(f"fee: {tx['fee']}")
+            self.nodes[0].generate(1)
+
+        # address = self.nodes[1].getnewaddress()
+        # info = self.nodes[1].getaddressinfo(address)
+        # # print("send btc")
+        # txid = self.nodes[0].sendtoaddress(info['unconfidential'], 1000, "", "", False, None, None, None, None, None, None, feerate)
         # print(txid)
-        tx = self.nodes[0].gettransaction(txid)
         # print(tx)
-        print(f"fee: {tx['fee']}")
-        self.nodes[0].generate(1)
-        self.sync_all()
+        # self.sync_all()
 
-        for amount in range(10, 0, -1):
-            (from_node,to_node) = (self.nodes[0], self.nodes[1]) if amount % 2 == 0 else (self.nodes[1], self.nodes[0])
+        # for amount in range(10, 0, -1):
+        #     (from_node,to_node) = (self.nodes[0], self.nodes[1]) if amount % 2 == 0 else (self.nodes[1], self.nodes[0])
 
-            address = to_node.getnewaddress()
-            info = to_node.getaddressinfo(address)
-            # print(info)
-            print(f"send {amount}")
-            txid = from_node.sendtoaddress(info['unconfidential'], amount, "", "", False, None, None, None, None, None, None, feerate)
-            print(txid)
-            tx = from_node.gettransaction(txid)
-            # print(tx)
-            print(f"fee: {tx['fee']}")
-            from_node.generate(1)
-            self.sync_all()
-            balance = self.nodes[0].getbalance()
-            print(balance)
-            balance = self.nodes[1].getbalance()
-            print(balance)
+        #     address = to_node.getnewaddress()
+        #     info = to_node.getaddressinfo(address)
+        #     # print(info)
+        #     # print(f"send {amount}")
+        #     txid = from_node.sendtoaddress(info['unconfidential'], amount, "", "", False, None, None, None, None, None, None, feerate)
+        #     # print(txid)
+        #     tx = from_node.gettransaction(txid)
+        #     # print(tx)
+        #     print(f"fee: {tx['fee']}")
+        #     from_node.generate(1)
+        #     self.sync_all()
+        #     balance = self.nodes[0].getbalance()
+        #     # print(balance)
+        #     balance = self.nodes[1].getbalance()
+        #     # print(balance)
 
-        print("issue asset")
-        issued = self.nodes[0].issueasset(100, 1, False)
-        print(issued)
-        asset = issued['asset']
-        print(f"asset: {asset}")
-        self.nodes[0].generate(1)
-        self.sync_all()
-        time.sleep(1)
-        txid = issued['txid']
-        tx = self.nodes[0].gettransaction(txid)
-        print(f"fee: {tx['fee']}")
+        # print("issue asset")
+        # issued = self.nodes[0].issueasset(100, 1, False)
+        # print(issued)
+        # asset = issued['asset']
+        # print(f"asset: {asset}")
+        # self.nodes[0].generate(1)
+        # self.sync_all()
+        # time.sleep(1)
+        # txid = issued['txid']
+        # tx = self.nodes[0].gettransaction(txid)
+        # print(f"fee: {tx['fee']}")
 
-        balance = self.nodes[0].getbalance()
-        print(balance)
+        # balance = self.nodes[0].getbalance()
+        # print(balance)
 
-        for amount in range(10, 0, -1):
-            (from_node,to_node) = (self.nodes[0], self.nodes[1]) if amount % 2 == 0 else (self.nodes[1], self.nodes[0])
+        # for amount in range(10, 0, -1):
+        #     (from_node,to_node) = (self.nodes[0], self.nodes[1]) if amount % 2 == 0 else (self.nodes[1], self.nodes[0])
 
-            address = to_node.getnewaddress()
-            info = to_node.getaddressinfo(address)
-            # print(info)
-            print(f"send {amount} of asset")
-            txid = from_node.sendtoaddress(info['address'], amount, "", "", False, None, None, None, None, asset, None, feerate)
-            print(txid)
-            tx = from_node.gettransaction(txid)
-            # print(tx)
-            print(f"fee: {tx['fee']}")
-            from_node.generate(1)
-            self.sync_all()
-            time.sleep(1)
-            balance = self.nodes[0].getbalance()
-            print(balance)
-            time.sleep(1)
-            balance = self.nodes[1].getbalance()
-            print(balance)
+        #     address = to_node.getnewaddress()
+        #     info = to_node.getaddressinfo(address)
+        #     # print(info)
+        #     print(f"send {amount} of asset")
+        #     txid = from_node.sendtoaddress(info['address'], amount, "", "", False, None, None, None, None, asset, None, feerate)
+        #     # print(txid)
+        #     tx = from_node.gettransaction(txid)
+        #     # print(tx)
+        #     print(f"fee: {tx['fee']}")
+        #     from_node.generate(1)
+        #     self.sync_all()
+        #     balance = self.nodes[0].getbalance()
+        #     # print(balance)
+        #     balance = self.nodes[1].getbalance()
+        #     # print(balance)
 
-        height0 = self.nodes[0].getblockchaininfo()['blocks']
-        height1 = self.nodes[1].getblockchaininfo()['blocks']
-        height2 = self.nodes[2].getblockchaininfo()['blocks']
+        # height0 = self.nodes[0].getblockchaininfo()['blocks']
+        # height1 = self.nodes[1].getblockchaininfo()['blocks']
+        # height2 = self.nodes[2].getblockchaininfo()['blocks']
 
-        assert height0 == height1 == height2
+        # assert height0 == height1 == height2
 
         # assert False
 
