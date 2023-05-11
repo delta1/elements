@@ -22,8 +22,8 @@ WORKTREE="/tmp/merge-worktree"
 
 # These should be tuned to your machine; below values are for an 8-core
 #   16-thread macbook pro
-PARALLEL_BUILD=14  # passed to make -j
-PARALLEL_TEST=12  # passed to test_runner.py --jobs
+PARALLEL_BUILD=15  # passed to make -j
+PARALLEL_TEST=15  # passed to test_runner.py --jobs
 PARALLEL_FUZZ=12  # passed to test_runner.py -j when fuzzing
 
 # ccache opts
@@ -36,6 +36,7 @@ KEEP_GOING=1
 DO_TEST=1
 DO_FUZZ=0
 DO_CHERRY=1
+UNDO_CHERRY=1
 
 if [[ "$1" == "setup" ]]; then
     echo "Setting up..."
@@ -80,6 +81,7 @@ elif [[ "$1" == "cherry-only" ]]; then
     DO_BUILD=0
     DO_TEST=0
     DO_CHERRY=1
+    UNDO_CHERRY=0
 elif [[ "$1" == "step-continue" ]]; then
     SKIP_MERGE=1
     KEEP_GOING=0
@@ -183,6 +185,8 @@ do
     fi
     echo -e "$CHAIN PR \e[37m$PR_ID \e[33m$HASH\e[0m on \e[32m$DATE\e[0m "
 
+    notify "starting merge of $PR_ID"
+
     ## Do it
     if [[ "$1" == "list-only" ]]; then
         continue
@@ -214,8 +218,8 @@ do
 	# cherry-pick build fixes
 	git -C "$WORKTREE" cherry-pick fb63ca0e8ce87f13c54a08a7eb0e82716c9daa03 #23716
 	git -C "$WORKTREE" cherry-pick 3f6b84f6f34a3a8a3b2a0d24c24e49243670453e
+	git -C "$WORKTREE" cherry-pick dc5d6b0d4793ca978f71f69ef7d6b818794676c2 #24104
 	#git -C "$WORKTREE" cherry-pick d0a5e7952ac59ba815f84cadbefa77981e551eda #22713
-	git -C "$WORKTREE" cherry-pick b988511c5225ddfec2fa9d7b82c35239781cd2ff
     fi
 
     if [[ "$DO_BUILD" == "1" ]]; then
@@ -226,7 +230,7 @@ do
         quietly git -C "$WORKTREE" clean -xf
         echo "autogen & configure"
         quietly ./autogen.sh
-        quietly ./configure 
+        quietly ./configure --with-seccomp=no
         # The following is an expansion of `make check` that skips the libsecp
         # tests and also the benchmarks (though it does build them!)
         echo "Building"
@@ -262,7 +266,7 @@ do
 
     fi
 
-    if [[ "$DO_CHERRY" == "1" ]]; then
+    if [[ "$DO_CHERRY" == "1" && "$UNDO_CHERRY" == "1" ]]; then
 	# undo cherry-picks
 	git reset --hard "$HED"
     fi
@@ -271,7 +275,7 @@ do
         notify "$PR_ID done, exiting"
         exit 1
     else
-        notify "$PR_ID done, continuing"
+        echo "$PR_ID done, continuing"
     fi
 
     SKIP_MERGE=0
