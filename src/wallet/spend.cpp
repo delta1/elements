@@ -80,6 +80,13 @@ int CalculateMaximumSignedInputSize(const CTxOut& txout, const CWallet* wallet, 
     return CalculateMaximumSignedInputSize(txout, provider.get(), use_max_sig);
 }
 
+// ELEMENTS
+TxSize CalculateMaximumSignedTxSize(const CTransaction &tx, const CWallet *wallet, unsigned int discountFactor, const CCoinControl* coin_control = nullptr) {
+    auto txsize = CalculateMaximumSignedTxSize(tx, wallet, coin_control);
+    int64_t vsize = GetVirtualTransactionSize(txsize.weight, 0, 0, discountFactor);
+    return TxSize{vsize, txsize.weight};
+}
+
 // Returns pair of vsize and weight
 TxSize CalculateMaximumSignedTxSize(const CTransaction &tx, const CWallet *wallet, const CCoinControl* coin_control)
 {
@@ -819,6 +826,27 @@ static bool fillBlindDetails(BlindDetails* det, CWallet* wallet, CMutableTransac
     return true;
 }
 
+// check if all coins and outputs are blinded, except fee outputs
+bool allBlinded(const std::vector<CInputCoin>& coins, const std::vector<CTxOut>& vout)
+{
+    for (auto& coin: coins) {
+        if (coin.txout.nValue.IsExplicit() || coin.txout.nAsset.IsExplicit()) {
+            return false;
+        }
+    }
+
+    for (auto& out: vout) {
+        if (out.IsFee()) {
+            continue;
+        }
+        if (out.nAsset.IsExplicit() || out.nValue.IsExplicit()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool CWallet::CreateTransactionInternal(
         const std::vector<CRecipient>& vecSend,
         CTransactionRef& tx,
@@ -1365,7 +1393,12 @@ bool CWallet::CreateTransactionInternal(
             return false;
         }
 
-        tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
+        // if the transaction is confidential apply the fee discount factor
+        if (allBlinded(selected_coins, tx_blinded.vout)) {
+            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
+        } else {
+            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
+        }
     } else {
         tx_sizes = CalculateMaximumSignedTxSize(CTransaction(txNew), this, &coin_control);
     }
@@ -1397,7 +1430,7 @@ bool CWallet::CreateTransactionInternal(
         // without causing the transaction to fail to balance. So keep it, and merely
         // zero it out.
         if (was_blinded && blind_details->num_to_blind == 1) {
-            assert (may_need_blinded_dummy);
+            assert(may_need_blinded_dummy);
             change_position->scriptPubKey = CScript() << OP_RETURN;
             change_position->nValue = 0;
         } else {
@@ -1409,7 +1442,6 @@ bool CWallet::CreateTransactionInternal(
                 tx_blinded.witness.vtxoutwit.erase(tx_blinded.witness.vtxoutwit.begin() + nChangePosInOut);
             }
             if (blind_details) {
-
                 blind_details->o_amounts.erase(blind_details->o_amounts.begin() + nChangePosInOut);
                 blind_details->o_assets.erase(blind_details->o_assets.begin() + nChangePosInOut);
                 blind_details->o_pubkeys.erase(blind_details->o_pubkeys.begin() + nChangePosInOut);
@@ -1439,7 +1471,11 @@ bool CWallet::CreateTransactionInternal(
         nChangePosInOut = -1;
 
         // Because we have dropped this change, the tx size and required fee will be different, so let's recalculate those
-        tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
+        if (allBlinded(selected_coins, tx_blinded.vout)) {
+            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
+        } else {
+            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
+        }
         nBytes = tx_sizes.vsize;
         fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes);
     }

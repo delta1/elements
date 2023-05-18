@@ -782,21 +782,37 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     // Keep track of transactions that spend a coinbase, which we re-scan
     // during reorgs to ensure COINBASE_MATURITY is still met.
     bool fSpendsCoinbase = false;
+    bool fConfidential = true; // ELEMENTS: keep track if all inputs/outputs (except fees) are blinded
     for (const CTxIn &txin : tx.vin) {
         // ELEMENTS:
         if (txin.m_is_pegin) {
+            fConfidential = false;
             continue;
         }
         const Coin &coin = m_view.AccessCoin(txin.prevout);
         if (coin.IsCoinBase()) {
             fSpendsCoinbase = true;
+            fConfidential = false;
             break;
+        }
+        if (coin.out.nAsset.IsExplicit() || coin.out.nValue.IsExplicit()) {
+            fConfidential = false;
+        }
+    }
+
+    for (auto &out : tx.vout) {
+        if (out.IsFee()) continue;
+        if (out.nAsset.IsExplicit() || out.nValue.IsExplicit()) {
+            fConfidential = false;
         }
     }
 
     entry.reset(new CTxMemPoolEntry(ptx, ws.m_base_fees, nAcceptTime, m_active_chainstate.m_chain.Height(),
             fSpendsCoinbase, nSigOpsCost, lp, setPeginsSpent));
     unsigned int nSize = entry->GetTxSize();
+    if (fConfidential) {
+        nSize = entry->GetTxSizeWithDiscount(nCtFeeDiscountFactor);
+    }
 
     if (nSigOpsCost > MAX_STANDARD_TX_SIGOPS_COST)
         return state.Invalid(TxValidationResult::TX_NOT_STANDARD, "bad-txns-too-many-sigops",

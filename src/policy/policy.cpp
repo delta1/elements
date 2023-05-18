@@ -16,6 +16,7 @@
 
 // ELEMENTS:
 CAsset policyAsset;
+unsigned int nCtFeeDiscountFactor;
 
 CAmount GetDustThreshold(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 {
@@ -319,4 +320,10 @@ int64_t GetVirtualTransactionSize(const CTransaction& tx, int64_t nSigOpCost, un
 int64_t GetVirtualTransactionInputSize(const CTransaction& tx, const size_t nIn, int64_t nSigOpCost, unsigned int bytes_per_sigop)
 {
     return GetVirtualTransactionSize(GetTransactionInputWeight(tx, nIn), nSigOpCost, bytes_per_sigop);
+}
+
+// ELEMENTS
+int64_t GetVirtualTransactionSize(int64_t nWeight, int64_t nSigOpCost, unsigned int bytes_per_sigop, unsigned int discountFactor)
+{
+    return GetVirtualTransactionSize(nWeight, nSigOpCost, bytes_per_sigop) / discountFactor;
 }

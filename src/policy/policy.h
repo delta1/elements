@@ -18,6 +18,9 @@ class CTxOut;
 
 // ELEMENTS:
 extern CAsset policyAsset;
+extern unsigned int nCtFeeDiscountFactor;
+/** Default for -nctfeediscountfactor, which is the dividing factor for vsize of Confidential Transactions **/
+static const unsigned int DEFAULT_CT_FEE_DISCOUNT_FACTOR = 10;
 
 /** Default for -blockmaxweight, which controls the range of block weights the mining code will create **/
 static const unsigned int DEFAULT_BLOCK_MAX_WEIGHT = MAX_BLOCK_WEIGHT - 4000;
@@ -135,5 +138,8 @@ static inline int64_t GetVirtualTransactionInputSize(const CTransaction& tx)
 {
     return GetVirtualTransactionInputSize(tx, 0, 0, 0);
 }
+
+// ELEMENTS
+int64_t GetVirtualTransactionSize(int64_t nWeight, int64_t nSigOpCost, unsigned int bytes_per_sigop, unsigned int discountFactor);
 
 #endif // BITCOIN_POLICY_POLICY_H
