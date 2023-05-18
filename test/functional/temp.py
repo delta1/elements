@@ -37,7 +37,7 @@ class CTTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 3
         self.setup_clean_chain = True
-        args = ["-blindedaddresses=1", "-initialfreecoins=2100000000000000", "-con_blocksubsidy=0", "-con_connect_genesis_outputs=1"]
+        args = ["-blindedaddresses=1", "-initialfreecoins=2100000000000000", "-con_blocksubsidy=0", "-con_connect_genesis_outputs=1", "-nctfeediscountfactor=14"]
         self.extra_args = [args] * self.num_nodes
         self.extra_args[0].append("-anyonecanspendaremine=1") # first node gets the coins
 
@@ -71,27 +71,23 @@ class CTTest(BitcoinTestFramework):
         txid = node0.sendtoaddress(info['unconfidential'], 20999999, "", "", False, None, None, None, None, None, None, feerate)
         tx = node0.gettransaction(txid, True, True)
         # print(tx)
-        print(f"fee: {tx['fee']}")
         decoded = tx['decoded']
         vin = decoded['vin']
         vout = decoded['vout']
-        print(f"vin : {len(vin)}")
-        print(f"vout: {len(vout)}")
         node0.generate(1)
+        print(f"vin: {len(vin)} vout: {len(vout)} fee: {tx['fee']}")
 
-        for i in range(10):
+        for i in range(20):
             address = node1.getnewaddress()
             info = node1.getaddressinfo(address)
-            txid = node0.sendtoaddress(info['unconfidential'], 1, "", "", False, None, None, None, None, None, None, feerate)
+            txid = node0.sendtoaddress(info['unconfidential'], 0.00000500, "", "", False, None, None, None, None, None, None, feerate)
             tx = node0.gettransaction(txid, True, True)
             # print(tx)
-            print(f"fee: {tx['fee']}")
             decoded = tx['decoded']
             vin = decoded['vin']
             vout = decoded['vout']
-            print(f"vin : {len(vin)}")
-            print(f"vout: {len(vout)}")
             node0.generate(1)
+            print(f"vin: {len(vin)} vout: {len(vout)} fee: {tx['fee']}")
 
         unspent = node1.listunspent()
         # print(unspent)
@@ -118,9 +114,8 @@ class CTTest(BitcoinTestFramework):
             decoded = tx['decoded']
             vin = decoded['vin']
             vout = decoded['vout']
-            print(f"vin : {len(vin)}")
-            print(f"vout: {len(vout)}")
             self.nodes[0].generate(1)
+            print(f"vin: {len(vin)} vout: {len(vout)} fee: {tx['fee']}")
 
         unspent = self.nodes[2].listunspent()
         # print(unspent)
