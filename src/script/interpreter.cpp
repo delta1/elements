@@ -3106,8 +3106,11 @@ static bool VerifyTaprootCommitment(const std::vector<unsigned char>& control, c
     const XOnlyPubKey q{program};
     // Compute the Merkle root from the leaf and the provided path.
     const uint256 merkle_root = ComputeTaprootMerkleRoot(control, tapleaf_hash);
+    std::cout << "merkle_root: " << merkle_root.GetHex() << std::endl;
     // Verify that the output pubkey matches the tweaked internal pubkey, after correcting for parity.
-    return q.CheckTapTweak(p, merkle_root, control[0] & 1);
+    auto ret = q.CheckTapTweak(p, merkle_root, control[0] & 1);
+    std::cout << "ret: " << ret << std::endl;
+    return ret;
 }
 
 static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, const std::vector<unsigned char>& program, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror, bool is_p2sh)
@@ -3169,6 +3172,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
             }
             execdata.m_tapleaf_hash = ComputeTapleafHash(control[0] & TAPROOT_LEAF_MASK, exec_script);
             if (!VerifyTaprootCommitment(control, program, execdata.m_tapleaf_hash)) {
+                std::cout << "verify taproot commitment failed" << std::endl;
                 return set_error(serror, SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH);
             }
             execdata.m_tapleaf_hash_init = true;

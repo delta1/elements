@@ -179,14 +179,18 @@ class MiniWallet:
             vsize = Decimal(185)  # anyone-can-spend
         else:
             vsize = Decimal(248)  # P2PK (73 bytes scriptSig + 35 bytes scriptPubKey + 60 bytes other)
+        print(f"vsize: {vsize}")
         send_value = int(COIN * (utxo_to_spend['value'] - fee_rate * (vsize / 1000)))
+        print(f"send_value: {send_value}")
         fee = int(COIN * utxo_to_spend['value'] - send_value)
+        print(f"fee: {fee}")
         assert send_value > 0
 
         tx = CTransaction()
         tx.vin = [CTxIn(COutPoint(int(utxo_to_spend['txid'], 16), utxo_to_spend['vout']), nSequence=sequence)]
         tx.vout = [CTxOut(send_value, self._scriptPubKey), CTxOut(fee)]
         tx.nLockTime = locktime
+        print(f"_address: {self._address}")
         if not self._address:
             # raw script
             if self._priv_key is not None:
@@ -201,6 +205,7 @@ class MiniWallet:
         tx_hex = tx.serialize().hex()
 
         tx_info = from_node.testmempoolaccept([tx_hex])[0]
+        print(tx_info)
         assert_equal(mempool_valid, tx_info['allowed'])
         if mempool_valid:
             assert_equal(tx_info['vsize'], vsize)

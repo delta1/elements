@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 namespace
 {
@@ -235,7 +236,10 @@ uint256 XOnlyPubKey::ComputeTapTweakHash(const uint256* merkle_root) const
 bool XOnlyPubKey::CheckTapTweak(const XOnlyPubKey& internal, const uint256& merkle_root, bool parity) const
 {
     secp256k1_xonly_pubkey internal_key;
-    if (!secp256k1_xonly_pubkey_parse(secp256k1_context_verify, &internal_key, internal.data())) return false;
+    if (!secp256k1_xonly_pubkey_parse(secp256k1_context_verify, &internal_key, internal.data())) {
+        std::cout << "xonly pubkey parse failed" << std::endl;
+        return false;
+    }
     uint256 tweak = internal.ComputeTapTweakHash(&merkle_root);
     return secp256k1_xonly_pubkey_tweak_add_check(secp256k1_context_verify, m_keydata.begin(), parity, &internal_key, tweak.begin());
 }
