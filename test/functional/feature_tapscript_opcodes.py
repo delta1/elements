@@ -68,6 +68,7 @@ class TapHashPeginTest(BitcoinTestFramework):
 
         sec = generate_privkey()
         pub = compute_xonly_pubkey(sec)[0]
+        print(scripts)
         tap = taproot_construct(pub, scripts)
         spk = tap.scriptPubKey
 
@@ -96,7 +97,7 @@ class TapHashPeginTest(BitcoinTestFramework):
         self.nodes[0].sendrawtransaction(signed_raw_tx['hex'])
         tx = tx_from_hex(signed_raw_tx['hex'])
         tx.rehash()
-        self.nodes[0].generate(1)
+        self.generate(self.nodes[0], 1)
         last_blk = self.nodes[0].getblock(self.nodes[0].getbestblockhash())
         assert(tx.hash in last_blk['tx'])
 
@@ -118,7 +119,7 @@ class TapHashPeginTest(BitcoinTestFramework):
             peg_id = self.nodes[0].sendtoaddress(fund_info["mainchain_address"], 1)
             raw_peg_tx = self.nodes[0].gettransaction(peg_id)["hex"]
             peg_txid = self.nodes[0].sendrawtransaction(raw_peg_tx)
-            self.nodes[0].generate(101)
+            self.generate(self.nodes[0], 101)
             peg_prf = self.nodes[0].gettxoutproof([peg_txid])
             claim_script = fund_info["claim_script"]
 
@@ -249,14 +250,14 @@ class TapHashPeginTest(BitcoinTestFramework):
 
 
         self.nodes[0].sendrawtransaction(hexstring = tx.serialize().hex())
-        self.nodes[0].generate(1)
+        self.generate(self.nodes[0], 1)
         last_blk = self.nodes[0].getblock(self.nodes[0].getbestblockhash())
         tx.rehash()
         assert(tx.hash in last_blk['tx'])
 
 
     def run_test(self):
-        self.nodes[0].generate(101)
+        self.generate(self.nodes[0], 101)
         self.wait_until(lambda: self.nodes[0].getblockcount() == 101, timeout=5)
         # Test whether the above test framework is working
         self.log.info("Test simple op_1")

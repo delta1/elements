@@ -80,6 +80,7 @@ class MiniWallet:
             pub_key = self._priv_key.get_pubkey()
             self._scriptPubKey = key_to_p2pk_script(pub_key.get_bytes())
         elif mode == MiniWalletMode.ADDRESS_OP_TRUE:
+            print(f"mini_wallet mode is address_op_true")
             self._address, self._internal_key = create_deterministic_address_bcrt1_p2tr_op_true()
             self._scriptPubKey = bytes.fromhex(self._test_node.validateaddress(self._address)['scriptPubKey'])
 
@@ -175,6 +176,8 @@ class MiniWallet:
         """Create and return a tx with the specified fee_rate. Fee may be exact or at most one satoshi higher than needed."""
         self._utxos = sorted(self._utxos, key=lambda k: (k['value'], -k['height']))
         utxo_to_spend = utxo_to_spend or self._utxos.pop()  # Pick the largest utxo (if none provided) and hope it covers the fee
+        print(f"from_node: {from_node}")
+        print(f"utxo to spend: {utxo_to_spend}")
         if self._priv_key is None:
             vsize = Decimal(185)  # anyone-can-spend
         else:
@@ -188,6 +191,8 @@ class MiniWallet:
 
         tx = CTransaction()
         tx.vin = [CTxIn(COutPoint(int(utxo_to_spend['txid'], 16), utxo_to_spend['vout']), nSequence=sequence)]
+        print(self._scriptPubKey)
+        print(f"self._scriptPubKey: {self._scriptPubKey.hex()}")
         tx.vout = [CTxOut(send_value, self._scriptPubKey), CTxOut(fee)]
         tx.nLockTime = locktime
         print(f"_address: {self._address}")
@@ -198,13 +203,22 @@ class MiniWallet:
                 self.sign_tx(tx)
             else:
                 # anyone-can-spend
-                tx.vin[0].scriptSig = CScript([OP_NOP] * 44)  # pad to identical size
+                tx.vin[0].scriptSig = CScript([OP_NOP] * 43)  # pad to identical size
         else:
-            tx.wit.vtxinwit = [CTxInWitness()]
-            tx.wit.vtxinwit[0].scriptWitness.stack = [CScript([OP_TRUE]), bytes([LEAF_VERSION_TAPSCRIPT]) + self._internal_key]
+            wit = CTxInWitness()
+            print(f"wit: {wit}")
+            tx.wit.vtxinwit = [wit]
+            stack = [CScript([OP_TRUE]), bytes([LEAF_VERSION_TAPSCRIPT]) + self._internal_key]
+            print(f"stack: {stack}")
+            tx.wit.vtxinwit[0].scriptWitness.stack = stack
+            print(f"tx.wit: {tx.wit}")
+
+        print(f"tx: {tx}")
         tx_hex = tx.serialize().hex()
 
-        tx_info = from_node.testmempoolaccept([tx_hex])[0]
+        r = from_node.testmempoolaccept([tx_hex])
+        print(f"r: {r}")
+        tx_info = r[0]
         print(tx_info)
         assert_equal(mempool_valid, tx_info['allowed'])
         if mempool_valid:

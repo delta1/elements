@@ -47,10 +47,14 @@ def create_deterministic_address_bcrt1_p2tr_op_true():
     Returns a tuple with the generated address and the internal key.
     """
     internal_key = (1).to_bytes(32, 'big')
-    print(f"internal_key: {internal_key}")
-    scriptPubKey = taproot_construct(internal_key, [(None, CScript([OP_TRUE]))]).scriptPubKey
-    print(f"scriptPubKey: {scriptPubKey}")
-    address = encode_segwit_address("ert", 1, scriptPubKey[2:])
+    print(f"internal_key:     {internal_key.hex()}")
+    tap_info = taproot_construct(internal_key, [(None, CScript([OP_TRUE]))])
+    print(f"tap_info: {tap_info}")
+    scriptPubKey = tap_info.scriptPubKey
+    print(f"scriptPubKey: {scriptPubKey.hex()}")
+    witprog = scriptPubKey[2:]
+    print(f"witprog: {witprog.hex()}")
+    address = encode_segwit_address("ert", 1, witprog)
     assert_equal(address, 'ert1pdwr8t5pjes3ny9eal6uknlplzatlyqxaapn0tkrcg8rvvmmr7uwsq8d9sa')
     return (address, internal_key)
 

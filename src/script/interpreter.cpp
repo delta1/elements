@@ -3076,7 +3076,9 @@ static bool ExecuteWitnessScript(const Span<const valtype>& stack_span, const CS
 
 uint256 ComputeTapleafHash(uint8_t leaf_version, const CScript& script)
 {
-    return (CHashWriter(HASHER_TAPLEAF_ELEMENTS) << leaf_version << script).GetSHA256();
+    auto hash = (CHashWriter(HASHER_TAPLEAF_ELEMENTS) << leaf_version << script).GetSHA256();
+    std::cout << "tapleafhash: " << hash.GetHex() << std::endl;
+    return hash;
 }
 
 uint256 ComputeTaprootMerkleRoot(Span<const unsigned char> control, const uint256& tapleaf_hash)
@@ -3115,6 +3117,20 @@ static bool VerifyTaprootCommitment(const std::vector<unsigned char>& control, c
 
 static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, const std::vector<unsigned char>& program, unsigned int flags, const BaseSignatureChecker& checker, ScriptError* serror, bool is_p2sh)
 {
+    std::cout << "witness: " << witness.ToString() << std::endl;
+    std::cout << "witversion: " << witversion << std::endl;
+    std::cout << "flags: " << flags << std::endl;
+    std::cout << "is_p2sh: " << is_p2sh << std::endl;
+    std::cout << "program: " << program.size() << std::endl;
+    for (auto& c: program) {
+        std::cout << c;
+    }
+    std::cout << std::endl;
+    for (auto& c: program) {
+        std::cout << int(c) << "/";
+    }
+    std::cout << std::endl;
+
     CScript exec_script; //!< Actually executed script (last stack item in P2WSH; implied P2PKH script in P2WPKH; leaf script in P2TR)
     Span<const valtype> stack{witness.stack};
     ScriptExecutionData execdata;
@@ -3155,6 +3171,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
         } else {
             execdata.m_annex_present = false;
         }
+        std::cout << "annex present: " << execdata.m_annex_present << std::endl;
         execdata.m_annex_init = true;
         if (stack.size() == 1) {
             // Key path spending (stack size is 1 after removing optional annex)
@@ -3163,6 +3180,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
             }
             return set_success(serror);
         } else {
+            std::cout << "stack size: " << stack.size() << std::endl;
             // Script path spending (stack size is >1 after removing optional annex)
             const valtype& control = SpanPopBack(stack);
             const valtype& script_bytes = SpanPopBack(stack);
@@ -3170,6 +3188,8 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
             if (control.size() < TAPROOT_CONTROL_BASE_SIZE || control.size() > TAPROOT_CONTROL_MAX_SIZE || ((control.size() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE) != 0) {
                 return set_error(serror, SCRIPT_ERR_TAPROOT_WRONG_CONTROL_SIZE);
             }
+            std::cout << "control[0]: " << control[0] << std::endl;
+            std::cout << "control[0] & TAPROOT_LEAF_MASK: " << (control[0] & TAPROOT_LEAF_MASK) << std::endl;
             execdata.m_tapleaf_hash = ComputeTapleafHash(control[0] & TAPROOT_LEAF_MASK, exec_script);
             if (!VerifyTaprootCommitment(control, program, execdata.m_tapleaf_hash)) {
                 std::cout << "verify taproot commitment failed" << std::endl;

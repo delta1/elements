@@ -14,3 +14,16 @@ rpc_signrawtransaction.py --legacy-wallet          | ✖ Failed  | 2 s
 rpc_txoutproof.py                                  | ✖ Failed  | 1 s
 wallet_bumpfee.py --descriptors                    | ✖ Failed  | 31 s
 wallet_bumpfee.py --legacy-wallet                  | ✖ Failed  | 31 s
+
+
+CTransaction(nVersion=1
+vin=[
+    CTxIn(prevout=COutPoint(hash=591aa8809210f5147a8746167f7c3ae9e949b94388d2be90d1f5e06f481a0062 n=0) scriptSig= nSequence=0 m_is_pegin=False
+    assetIssuance=CAssetIssuance(assetBlindingNonce=0000000000000000000000000000000000000000000000000000000000000000 assetEntropy=0000000000000000000000000000000000000000000000000000000000000000 nAmount=b'\x00' nInflationKeys=b'\x00'))]
+
+vout=[
+    CTxOut(nAsset=CTxOutAsset(vchCommitment=b'\x01#\x0fO]K|o\xa8E\x80n\xe4\xf6w\x13E\x9e\x1bi\xe8\xe6\x0f\xce\xe2\xe4\x94\x0cz\r]\xe1\xb2') nValue=CTxOutValue(vchCommitment=b'\x01\x00\x00\x00\x01*\x05\x194') nNonce=CTxOutNonce(vchCommitment=b'\x00') scriptPubKey=51206b8675d032cc2332173dfeb969fc3f1757f200dde866f5d87841c6c66f63f71d),
+
+    CTxOut(nAsset=CTxOutAsset(vchCommitment=b'\x01#\x0fO]K|o\xa8E\x80n\xe4\xf6w\x13E\x9e\x1bi\xe8\xe6\x0f\xce\xe2\xe4\x94\x0cz\r]\xe1\xb2') nValue=CTxOutValue(vchCommitment=b'\x01\x00\x00\x00\x00\x00\x00\xd8\xcc') nNonce=CTxOutNonce(vchCommitment=b'\x00') scriptPubKey=)] wit=CTxWitness([CTxInWitness (b'', b'', CScriptWitness(51,c40000000000000000000000000000000000000000000000000000000000000001) CScriptWitness())], []) nLockTime=0)
+
+51 20 6b 86 75 d0 32 cc 23 32 17 3d fe b9 69 fc 3f 17 57 f2 00 dd e8 66 f5 d8 78 41 c6 c6 6f 63 f7 1d
