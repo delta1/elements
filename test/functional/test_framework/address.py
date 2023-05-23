@@ -50,6 +50,12 @@ def create_deterministic_address_bcrt1_p2tr_op_true():
     print(f"internal_key:     {internal_key.hex()}")
     tap_info = taproot_construct(internal_key, [(None, CScript([OP_TRUE]))])
     print(f"tap_info: {tap_info}")
+    print(f"tap_info.tweak: {tap_info.tweak.hex()}")
+    print(len(tap_info.tweak))
+    print("---")
+    for b in tap_info.tweak:
+        print(int(b))
+    print("---")
     scriptPubKey = tap_info.scriptPubKey
     print(f"scriptPubKey: {scriptPubKey.hex()}")
     witprog = scriptPubKey[2:]

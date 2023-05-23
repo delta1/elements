@@ -141,16 +141,35 @@ int secp256k1_xonly_pubkey_tweak_add_check(const secp256k1_context* ctx, const u
     ARG_CHECK(tweaked_pubkey32 != NULL);
     ARG_CHECK(tweak32 != NULL);
 
-    if (!secp256k1_xonly_pubkey_load(ctx, &pk, internal_pubkey)
-        || !secp256k1_ec_pubkey_tweak_add_helper(&pk, tweak32)) {
+    int load_internal = secp256k1_xonly_pubkey_load(ctx, &pk, internal_pubkey);
+    printf("load_internal: %d\n", load_internal);
+    int tweak_add_helper = secp256k1_ec_pubkey_tweak_add_helper(&pk, tweak32);
+    printf("tweak_add_helper: %d\n", tweak_add_helper);
+    if (!load_internal
+        || !tweak_add_helper) {
         return 0;
     }
     secp256k1_fe_normalize_var(&pk.x);
     secp256k1_fe_normalize_var(&pk.y);
     secp256k1_fe_get_b32(pk_expected32, &pk.x);
 
-    return secp256k1_memcmp_var(&pk_expected32, tweaked_pubkey32, 32) == 0
-            && secp256k1_fe_is_odd(&pk.y) == tweaked_pk_parity;
+    int memcmp = secp256k1_memcmp_var(&pk_expected32, tweaked_pubkey32, 32);
+    printf("memcmp: %d\n", memcmp);
+    printf("\ntweaked_pubkey32: %s\n", tweaked_pubkey32);
+    int i = 0;
+    for (i = 0; i < 32; ++i) {
+        printf("%d/", tweaked_pubkey32[i]);
+    }
+    printf("\npk_expected32: %s\n", pk_expected32);
+    int j = 0;
+    for (j = 0; j < 32; ++j) {
+        printf("%d/", pk_expected32[j]);
+    }
+    int is_odd = secp256k1_fe_is_odd(&pk.y);
+    printf("\nis_odd: %d\n", is_odd);
+    printf("\ntweaked_pk_parity: %d\n", tweaked_pk_parity);
+    return memcmp == 0
+            && is_odd == tweaked_pk_parity;
 }
 
 static void secp256k1_keypair_save(secp256k1_keypair *keypair, const secp256k1_scalar *sk, secp256k1_ge *pk) {

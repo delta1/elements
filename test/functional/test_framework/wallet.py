@@ -82,7 +82,9 @@ class MiniWallet:
         elif mode == MiniWalletMode.ADDRESS_OP_TRUE:
             print(f"mini_wallet mode is address_op_true")
             self._address, self._internal_key = create_deterministic_address_bcrt1_p2tr_op_true()
-            self._scriptPubKey = bytes.fromhex(self._test_node.validateaddress(self._address)['scriptPubKey'])
+            v = self._test_node.validateaddress(self._address)
+            print(v)
+            self._scriptPubKey = bytes.fromhex(v['scriptPubKey'])
 
     def rescan_utxos(self):
         """Drop all utxos and rescan the utxo set"""

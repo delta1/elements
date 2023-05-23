@@ -3110,6 +3110,7 @@ static bool VerifyTaprootCommitment(const std::vector<unsigned char>& control, c
     const uint256 merkle_root = ComputeTaprootMerkleRoot(control, tapleaf_hash);
     std::cout << "merkle_root: " << merkle_root.GetHex() << std::endl;
     // Verify that the output pubkey matches the tweaked internal pubkey, after correcting for parity.
+    std::cout << "control[0] & 1: " << int(control[0] & 1) << std::endl;
     auto ret = q.CheckTapTweak(p, merkle_root, control[0] & 1);
     std::cout << "ret: " << ret << std::endl;
     return ret;
@@ -3183,12 +3184,22 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
             std::cout << "stack size: " << stack.size() << std::endl;
             // Script path spending (stack size is >1 after removing optional annex)
             const valtype& control = SpanPopBack(stack);
+            std::cout << "control: " << std::endl;
+            for (auto& c : control) {
+                std::cout << int(c) << "/";
+            }
+            std::cout << std::endl;
             const valtype& script_bytes = SpanPopBack(stack);
+            std::cout << "script_byes: " << std::endl;
+            for (auto& c : script_bytes) {
+                std::cout << int(c) << "/";
+            }
+            std::cout << std::endl;
             exec_script = CScript(script_bytes.begin(), script_bytes.end());
             if (control.size() < TAPROOT_CONTROL_BASE_SIZE || control.size() > TAPROOT_CONTROL_MAX_SIZE || ((control.size() - TAPROOT_CONTROL_BASE_SIZE) % TAPROOT_CONTROL_NODE_SIZE) != 0) {
                 return set_error(serror, SCRIPT_ERR_TAPROOT_WRONG_CONTROL_SIZE);
             }
-            std::cout << "control[0]: " << control[0] << std::endl;
+            std::cout << "control[0]: " << int(control[0]) << std::endl;
             std::cout << "control[0] & TAPROOT_LEAF_MASK: " << (control[0] & TAPROOT_LEAF_MASK) << std::endl;
             execdata.m_tapleaf_hash = ComputeTapleafHash(control[0] & TAPROOT_LEAF_MASK, exec_script);
             if (!VerifyTaprootCommitment(control, program, execdata.m_tapleaf_hash)) {

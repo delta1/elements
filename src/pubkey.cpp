@@ -240,10 +240,16 @@ bool XOnlyPubKey::CheckTapTweak(const XOnlyPubKey& internal, const uint256& merk
         std::cout << "xonly pubkey parse failed" << std::endl;
         return false;
     }
+    std::cout << "internal_key: " << std::endl;
+    for (auto& i : internal_key.data) {
+        std::cout << int(i) << "/";
+    }
+    std::cout << std::endl;
     uint256 tweak = internal.ComputeTapTweakHash(&merkle_root);
     std::cout << "tweak: " << tweak.GetHex() << std::endl;
-    auto temp = secp256k1_xonly_pubkey_tweak_add_check(secp256k1_context_verify, m_keydata.begin(), parity, &internal_key, tweak.begin());
-    return temp;
+    auto tweak_add_check = secp256k1_xonly_pubkey_tweak_add_check(secp256k1_context_verify, m_keydata.begin(), parity, &internal_key, tweak.begin());
+    std::cout << "tweak_add_check: " << tweak_add_check << std::endl;
+    return tweak_add_check;
 }
 
 bool CPubKey::TweakMulVerify(const CPubKey& untweaked, const uint256& tweak) const
