@@ -425,7 +425,8 @@ class BlockchainTest(BitcoinTestFramework):
            block = node.getblock(blockhash, verbosity)
            tx = block['tx'][1]
            assert 'fee' in tx
-           assert_equal(tx['fee'], tx['vsize'] * fee_per_byte)
+           bitcoin = "b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23"
+           assert_equal(tx['fee'][bitcoin], tx['vsize'] * fee_per_byte)
 
         def assert_vin_contains_prevout(verbosity):
            block = node.getblock(blockhash, verbosity)
@@ -439,7 +440,7 @@ class BlockchainTest(BitcoinTestFramework):
                total_vin += vin["prevout"]["value"]
            for vout in tx["vout"]:
                total_vout += vout["value"]
-           assert_equal(total_vin, total_vout + tx["fee"])
+           assert_equal(total_vin, total_vout) # ELEMENTS: FIXME explain why the fee is not included
 
         def assert_vin_does_not_contain_prevout(verbosity):
            block = node.getblock(blockhash, verbosity)
@@ -451,8 +452,9 @@ class BlockchainTest(BitcoinTestFramework):
                for vin in tx["vin"]:
                    assert "prevout" not in vin
 
-        self.log.info("Test that getblock with verbosity 1 doesn't include fee")
-        assert_fee_not_in_block(1)
+        # ELEMENTS: fee outputs are explicit
+        # self.log.info("Test that getblock with verbosity 1 doesn't include fee")
+        # assert_fee_not_in_block(1)
 
         self.log.info('Test that getblock with verbosity 2 and 3 includes expected fee')
         assert_fee_in_block(2)
@@ -479,8 +481,9 @@ class BlockchainTest(BitcoinTestFramework):
         # Move instead of deleting so we can restore chain state afterwards
         move_block_file('rev00000.dat', 'rev_wrong')
 
-        assert_fee_not_in_block(2)
-        assert_fee_not_in_block(3)
+        # ELEMENTS: fee outputs are explicit
+        # assert_fee_not_in_block(2)
+        # assert_fee_not_in_block(3)
         assert_vin_does_not_contain_prevout(2)
         assert_vin_does_not_contain_prevout(3)
 

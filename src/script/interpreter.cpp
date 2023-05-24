@@ -3190,7 +3190,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
             }
             std::cout << std::endl;
             const valtype& script_bytes = SpanPopBack(stack);
-            std::cout << "script_byes: " << std::endl;
+            std::cout << "script_bytes: " << std::endl;
             for (auto& c : script_bytes) {
                 std::cout << int(c) << "/";
             }
