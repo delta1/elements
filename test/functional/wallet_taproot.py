@@ -7,6 +7,7 @@
 import random
 
 from decimal import Decimal
+from test_framework.messages import tx_from_hex
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import assert_equal
 from test_framework.descriptors import descsum_create
@@ -310,6 +311,11 @@ class WalletTaprootTest(BitcoinTestFramework):
             res = self.psbt_offline.walletprocesspsbt(psbt)
             assert(res['complete'])
             rawtx = self.nodes[0].finalizepsbt(res['psbt'])['hex']
+            tx = tx_from_hex(rawtx)
+            print(tx.vout)
+            for o in tx.vout:
+                print(o.is_fee())
+                print(o.nValue.getAmount())
             txid = self.nodes[0].sendrawtransaction(rawtx)
             self.nodes[0].generatetoaddress(1, self.boring.getnewaddress())
             assert(self.psbt_online.gettransaction(txid)['confirmations'] > 0)

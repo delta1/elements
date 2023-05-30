@@ -551,6 +551,7 @@ def gen_return_txouts():
 # transaction to make it large.  See gen_return_txouts() above.
 def create_lots_of_big_transactions(node, txouts, utxos, num, fee):
     addr = node.getnewaddress()
+    print(f"addr: {addr}")
     txids = []
     from .messages import tx_from_hex
     for _ in range(num):
@@ -562,6 +563,9 @@ def create_lots_of_big_transactions(node, txouts, utxos, num, fee):
         tx = tx_from_hex(rawtx)
         for txout in txouts:
             tx.vout.append(txout)
+        for o in tx.vout:
+            print(f"o.is_fee(): {o.is_fee()}")
+            print(f"o.nValue.getAmount(): {o.nValue.getAmount()}")
         newtx = tx.serialize().hex()
         signresult = node.signrawtransactionwithwallet(newtx, None, "NONE")
         txid = node.sendrawtransaction(signresult["hex"], 0)
