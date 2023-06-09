@@ -256,16 +256,14 @@ static void ApproximateBestSubset(const std::vector<OutputGroup>& groups, const 
 // ELEMENTS:
 std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmountMap& mapTargetValue)
 {
+    SelectionResult result{mapTargetValue};
     std::vector<OutputGroup> inner_groups;
-    std::set<CInputCoin> inner_coinsret;
-    std::set<CInputCoin> setCoinsRet;
     CAmount non_policy_effective_value = 0;
     bool subtract_fee_outputs = false;
 
     // Perform the standard Knapsack solver for every non-policy asset individually.
     for (std::map<CAsset, CAmount>::const_iterator it = mapTargetValue.begin(); it != mapTargetValue.end(); ++it) {
         inner_groups.clear();
-        inner_coinsret.clear();
 
         if (it->second == 0) {
             continue;
@@ -280,7 +278,8 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
         for (const OutputGroup& g : groups) {
             bool add = true;
             for (const CInputCoin& c : g.m_outputs) {
-                if (setCoinsRet.find(c) != setCoinsRet.end()) {
+                auto set = result.GetInputSet();
+                if (set.find(c) != set.end()) {
                     add = false;
                     break;
                 }
@@ -306,12 +305,15 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
             return std::nullopt;
         }
 
-        auto result = KnapsackSolver(inner_groups, it->second);
-        mapValueRet[it->first] = result->GetSelectedValue();
-        for (const CInputCoin& ic : inner_coinsret) {
+        auto inner_result = KnapsackSolver(inner_groups, it->second);
+        // mapValueRet[it->first] = inner_result->GetSelectedValue();
+        for (const CInputCoin& ic : inner_result->GetInputSet()) {
             if (!subtract_fee_outputs) {
                 non_policy_effective_value += ic.effective_value;
             }
+        }
+        for (const OutputGroup& g : inner_groups) {
+            result.AddInput(g);
         }
     }
 
@@ -319,7 +321,6 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
     CAmount policy_target = non_policy_effective_value + mapTargetValue.at(::policyAsset);
     if (policy_target > 0) {
         inner_groups.clear();
-        inner_coinsret.clear();
 
         // We filter the groups on two conditions:
         // - only groups that have (exclusively) coins of the asset we're solving for
@@ -327,7 +328,8 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
         for (const OutputGroup& g : groups) {
             bool add = true;
             for (const CInputCoin& c : g.m_outputs) {
-                if (setCoinsRet.find(c) != setCoinsRet.end()) {
+                auto set = result.GetInputSet();
+                if (set.find(c) != set.end()) {
                     add = false;
                     break;
                 }
@@ -345,14 +347,17 @@ std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, 
 
         if (inner_groups.size() == 0) {
             // No output groups for this asset.
-            return false;
+            return std::nullopt;
         }
 
-        auto result = KnapsackSolver(inner_groups, policy_target);
-        mapValueRet[::policyAsset] = result->GetSelectionValue();
+        auto policy_result = KnapsackSolver(inner_groups, policy_target);
+        // mapValueRet[::policyAsset] = policy_result->GetSelectionValue();
+        for (const OutputGroup& g : inner_groups) {
+            result.AddInput(g);
+        }
     }
 
-    return true;
+    return result;
 }
 
 std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmount& nTargetValue)
