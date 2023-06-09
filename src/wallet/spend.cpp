@@ -475,11 +475,10 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
         mapTargetValue_copy[::policyAsset] += coin_selection_params.m_change_fee;
     }
 
-    // FIXME by fixing std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmountMap& mapTargetValue); in coinselection.h/cpp
-    // if (auto knapsack_result{KnapsackSolver(all_groups, mapTargetValue_copy)}) {
-    //     knapsack_result->ComputeAndSetWaste(coin_selection_params.m_cost_of_change);
-    //     results.push_back(*knapsack_result);
-    // }
+    if (auto knapsack_result{KnapsackSolver(all_groups, mapTargetValue_copy)}) {
+        knapsack_result->ComputeAndSetWaste(coin_selection_params.m_cost_of_change);
+        results.push_back(*knapsack_result);
+    }
 
     if (results.size() == 0) {
         // No solution found
