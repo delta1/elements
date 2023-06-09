@@ -71,6 +71,8 @@ uint256 SendCoins(CWallet& wallet, SendCoinsDialog& sendCoinsDialog, const CTxDe
         ->setCheckState(rbf ? Qt::Checked : Qt::Unchecked);
     uint256 txid;
     boost::signals2::scoped_connection c(wallet.NotifyTransactionChanged.connect([&txid](const uint256& hash, ChangeType status) {
+        std::cout << "status: " << status << std::endl;
+        std::cout << "hash: " << hash.GetHex() << std::endl;
         if (status == CT_NEW) txid = hash;
     }));
     ConfirmSend();
@@ -198,7 +200,7 @@ void TestGUI(interfaces::Node& node)
     QCOMPARE(transactionTableModel->rowCount({}), 105);
     uint256 txid1 = SendCoins(*wallet.get(), sendCoinsDialog, PKHash(), 5 * COIN, false /* rbf */);
     uint256 txid2 = SendCoins(*wallet.get(), sendCoinsDialog, PKHash(), 10 * COIN, true /* rbf */);
-    QCOMPARE(transactionTableModel->rowCount({}), 107);
+    QCOMPARE(transactionTableModel->rowCount({}), 107); // ELEMENTS: FIXME this is 106 because txid2 is not valid
     QVERIFY(FindTx(*transactionTableModel, txid1).isValid());
     QVERIFY(FindTx(*transactionTableModel, txid2).isValid());
 

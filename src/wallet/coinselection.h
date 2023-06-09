@@ -247,6 +247,8 @@ public:
     void Clear();
 
     void AddInput(const OutputGroup& group);
+    // ELEMENTS
+    void AddInput(const CInputCoin& coin);
 
     /** Calculates and stores the waste for this selection via GetSelectionWaste */
     void ComputeAndSetWaste(CAmount change_cost);

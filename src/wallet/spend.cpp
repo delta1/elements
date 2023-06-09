@@ -429,6 +429,7 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
 
     // ELEMENTS: BnB only for policy asset?
     if (mapTargetValue.size() == 1) {
+        std::cout << "mapTargetValue.size is 1" << std::endl;
         // Note that unlike KnapsackSolver, we do not include the fee for creating a change output as BnB will not create a change output.
         std::vector<OutputGroup> positive_groups = GroupOutputs(wallet, coins, coin_selection_params, eligibility_filter, true /* positive_only */);
 
@@ -455,6 +456,7 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
         if (auto bnb_result{SelectCoinsBnB(positive_groups, nTargetValue, coin_selection_params.m_cost_of_change)}) {
             bnb_result->ComputeAndSetWaste(CAmount(0));
             results.push_back(*bnb_result);
+            std::cout << "bnb result value: " << bnb_result->GetSelectedValue() << std::endl;
         }
 
         // We include the minimum final change for SRD as we do want to avoid making really small change.
@@ -463,6 +465,7 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
         if (auto srd_result{SelectCoinsSRD(positive_groups, srd_target)}) {
             srd_result->ComputeAndSetWaste(coin_selection_params.m_cost_of_change);
             results.push_back(*srd_result);
+            std::cout << "srd result value: " << srd_result->GetSelectedValue() << std::endl;
         }
     }
 
@@ -478,6 +481,7 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
     if (auto knapsack_result{KnapsackSolver(all_groups, mapTargetValue_copy)}) {
         knapsack_result->ComputeAndSetWaste(coin_selection_params.m_cost_of_change);
         results.push_back(*knapsack_result);
+        std::cout << "knp result value: " << knapsack_result->GetSelectedValue() << std::endl;
     }
 
     if (results.size() == 0) {
@@ -488,6 +492,8 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
     // Choose the result with the least waste
     // If the waste is the same, choose the one which spends more inputs.
     auto& best_result = *std::min_element(results.begin(), results.end());
+    std::cout << "bst result value: " << best_result.GetSelectedValue() << std::endl;
+    assert(best_result.GetSelectedValue() >= mapTargetValue);
     return best_result;
 }
 
@@ -1150,13 +1156,16 @@ static bool CreateTransactionInternal(
     // Get available coins
     std::vector<COutput> vAvailableCoins;
     AvailableCoins(wallet, vAvailableCoins, &coin_control, 1, MAX_MONEY, MAX_MONEY, 0);
+    std::cout << "available coins: " << vAvailableCoins.size() << std::endl;
 
     // Choose coins to use
+    std::cout << "map_selection_target: " << map_selection_target << std::endl;
     std::optional<SelectionResult> result = SelectCoins(wallet, vAvailableCoins, /* nTargetValue */ map_selection_target, coin_control, coin_selection_params);
     if (!result) {
         error = _("Insufficient funds");
         return false;
     }
+    std::cout << "selected coins: " << result.value().GetInputSet().size() << std::endl;
 
     // If all of our inputs are explicit, we don't need a blinded dummy
     if (may_need_blinded_dummy) {
@@ -1173,6 +1182,9 @@ static bool CreateTransactionInternal(
     // We will reduce the fee from this change output later, and remove the output if it is too small.
     // ELEMENTS: wrap this all in a loop, set nChangePosInOut specifically for policy asset
     CAmountMap map_change_and_fee = result->GetSelectedValue() - map_recipients_sum;
+    std::cout << "result selected va: " << result->GetSelectedValue() << std::endl;
+    std::cout << "map_recipients_sum: " << map_recipients_sum << std::endl;
+    std::cout << "map_change_and_fee: " << map_change_and_fee << std::endl;
     // Zero out any non-policy assets which have zero change value
     for (auto it = map_change_and_fee.begin(); it != map_change_and_fee.end(); ) {
         if (it->first != policyAsset && it->second == 0) {
@@ -1181,6 +1193,7 @@ static bool CreateTransactionInternal(
             ++it;
         }
     }
+    std::cout << "map_change_and_fee: " << map_change_and_fee << std::endl;
 
     // Uniformly randomly place change outputs for all assets, except that the policy-asset
     // change may have a fixed position.
@@ -1219,7 +1232,9 @@ static bool CreateTransactionInternal(
         }
 
         const CAsset& asset = *change_pos[i];
+        std::cout << "asset: " << asset.GetHex() << std::endl;
         const CAmount& change_and_fee = map_change_and_fee.at(asset);
+        std::cout << "change_and_fee: " << change_and_fee << std::endl;
 
         assert(change_and_fee >= 0);
 

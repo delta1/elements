@@ -275,6 +275,8 @@ class WalletTaprootTest(BitcoinTestFramework):
             self.generatetoaddress(self.nodes[0], 1, self.boring.getnewaddress(), sync_fun=self.no_op)
             test_balance = int(self.rpc_online.getbalance()['bitcoin'] * 100000000)
             ret_amnt = random.randrange(100000, test_balance)
+            print(f"ret_amnt sats: {ret_amnt}")
+            print(f"ret_amnt btc: {Decimal(ret_amnt) / 100000000}")
             res = self.rpc_online.sendtoaddress(address=self.boring.getnewaddress(), amount=Decimal(ret_amnt) / 100000000, subtractfeefromamount=True)
             self.generatetoaddress(self.nodes[0], 1, self.boring.getnewaddress(), sync_fun=self.no_op)
             assert(self.rpc_online.gettransaction(res)["confirmations"] > 0)
