@@ -35,8 +35,8 @@ DO_BUILD=1
 KEEP_GOING=1
 DO_TEST=1
 DO_FUZZ=0
-DO_CHERRY=1
-UNDO_CHERRY=1
+DO_CHERRY=0
+UNDO_CHERRY=0
 
 if [[ "$1" == "setup" ]]; then
     echo "Setting up..."
@@ -192,8 +192,8 @@ do
         continue
     fi
 
-    # check for our cherry-pick stoppers and halt if found
-    STOPPERS=("23716" "24104", "26005")
+    # check for stoppers and halt if found
+    STOPPERS=("26005")
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
@@ -216,9 +216,9 @@ do
 	HED=$(git rev-parse HEAD)
 	echo "HEAD is at $HED"
 	# cherry-pick build fixes
-	git -C "$WORKTREE" cherry-pick fb63ca0e8ce87f13c54a08a7eb0e82716c9daa03 #23716
-	git -C "$WORKTREE" cherry-pick 3f6b84f6f34a3a8a3b2a0d24c24e49243670453e
-	git -C "$WORKTREE" cherry-pick dc5d6b0d4793ca978f71f69ef7d6b818794676c2 #24104
+	#git -C "$WORKTREE" cherry-pick fb63ca0e8ce87f13c54a08a7eb0e82716c9daa03 #23716
+	#git -C "$WORKTREE" cherry-pick 3f6b84f6f34a3a8a3b2a0d24c24e49243670453e
+	#git -C "$WORKTREE" cherry-pick dc5d6b0d4793ca978f71f69ef7d6b818794676c2 #24104
 	#git -C "$WORKTREE" cherry-pick d0a5e7952ac59ba815f84cadbefa77981e551eda #22713
     fi
 
@@ -242,14 +242,14 @@ do
 
     if [[ "$DO_TEST" == "1" ]]; then
         echo "Testing"
-        quietly ./src/qt/test/test_elements-qt
-        quietly ./src/test/test_bitcoin
-        quietly ./src/bench/bench_bitcoin
-        quietly ./test/util/test_runner.py
-        quietly ./test/util/rpcauth-test.py
-        quietly make -C src/univalue/ check
+        quietly ./src/qt/test/test_elements-qt || notify "fail test qt" 1
+        quietly ./src/test/test_bitcoin || notify "fail test bitcoin" 1
+        quietly ./src/bench/bench_bitcoin || notify "fail test bench" 1
+        quietly ./test/util/test_runner.py || notify "fail test util" 1
+        quietly ./test/util/rpcauth-test.py || notify "fail test rpc" 1
+        #quietly make -C src/univalue/ check
         echo "Functional testing"
-        quietly ./test/functional/test_runner.py --jobs="$PARALLEL_TEST" || notify "fail test" 1
+        quietly ./test/functional/test_runner.py --jobs="$PARALLEL_TEST" || notify "fail test runner" 1
     fi
 
     if [[ "$DO_FUZZ" == "1" ]]; then
