@@ -2747,7 +2747,6 @@ void ForceUntrimHeader(const CBlockIndex *pindex_)
     AssertLockHeld(cs_main);
     CBlockIndex *pindex=const_cast<CBlockIndex*>(pindex_);
     pindex->untrim();
-    setDirtyBlockIndex.insert(pindex);
 }
 
 void CChainState::UpdateTip(const CBlockIndex* pindexNew)

@@ -67,6 +67,7 @@ void CBlockIndex::untrim() {
     proof = pindexfull->proof;
     m_dynafed_params = pindexfull->m_dynafed_params;
     m_signblock_witness = pindexfull->m_signblock_witness;
+    m_pcontext->chainman->m_blockman.m_dirty_blockindex.insert(this);
 }
 
 const CBlockIndex *CBlockIndex::untrim_to(CBlockIndex *pindexNew) const
