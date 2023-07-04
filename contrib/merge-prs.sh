@@ -7,7 +7,7 @@ BASE="${BASE_ORIG}"
 BITCOIN_UPSTREAM_REMOTE=bitcoin
 BITCOIN_UPSTREAM="${BITCOIN_UPSTREAM_REMOTE}/master"
 ELEMENTS_UPSTREAM_REMOTE=upstream
-# ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
+ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Replace this with the location where we should put the fuzz test corpus
 BITCOIN_QA_ASSETS="${HOME}/code/bitcoin/qa-assets"
@@ -130,8 +130,8 @@ if [[ "$SKIP_MERGE" == "1" ]]; then
 fi
 
 ## Get full list of merges
-# ELT_COMMITS=$(git -C "$WORKTREE" log "$ELEMENTS_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Elements %s')
-BTC_COMMITS=$(git -C "$WORKTREE" log "$BITCOIN_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Bitcoin %s')
+ELT_COMMITS=$(git -C "$WORKTREE" log "$ELEMENTS_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Elements %s')
+#BTC_COMMITS=$(git -C "$WORKTREE" log "$BITCOIN_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Bitcoin %s')
 
 #ELT_COMMITS=
 #BTC_COMMITS=$(git -C "$WORKTREE" log v0.21.0 --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Bitcoin %s')
@@ -164,7 +164,7 @@ notify () {
 
 ## Sort by unix timestamp and iterate over them
 #echo "$ELT_COMMITS" "$BTC_COMMITS" | sort -n -k1 | while read line
-echo "$BTC_COMMITS" | tac | while read -r line
+echo "$ELT_COMMITS" | tac | while read -r line
 do
     echo
     echo "=-=-=-=-=-=-=-=-=-=-="
