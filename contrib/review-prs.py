@@ -15,7 +15,7 @@ from typing import List, Dict, Any
 
 BITCOIN_MASTER = "bitcoin/master"
 ELEMENTS_MASTER = "upstream/master"
-MERGED_MASTER = "upstream/merged-master"
+MERGED_MASTER = "origin/merged-master"
 MERGED_MASTER_REVIEWED = "merged-master-reviewed"
 
 # NOTE: We don't use /tmp/ anymore, as on many systems (incl. macOS), random
