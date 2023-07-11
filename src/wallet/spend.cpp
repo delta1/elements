@@ -81,11 +81,11 @@ int CalculateMaximumSignedInputSize(const CTxOut& txout, const CWallet* wallet, 
 }
 
 // ELEMENTS
-TxSize CalculateMaximumSignedTxSize(const CTransaction &tx, const CWallet *wallet, unsigned int discountFactor, const CCoinControl* coin_control = nullptr) {
-    auto txsize = CalculateMaximumSignedTxSize(tx, wallet, coin_control);
-    int64_t vsize = GetVirtualTransactionSize(txsize.weight, 0, 0, discountFactor);
-    return TxSize{vsize, txsize.weight};
-}
+// TxSize CalculateMaximumSignedTxSize(const CTransaction &tx, const CWallet *wallet, unsigned int discountFactor, const CCoinControl* coin_control = nullptr) {
+//     auto txsize = CalculateMaximumSignedTxSize(tx, wallet, coin_control);
+//     int64_t vsize = GetVirtualTransactionSize(txsize.weight, 0, 0, discountFactor);
+//     return TxSize{vsize, txsize.weight};
+// }
 
 // Returns pair of vsize and weight
 TxSize CalculateMaximumSignedTxSize(const CTransaction &tx, const CWallet *wallet, const CCoinControl* coin_control)
@@ -1474,12 +1474,13 @@ bool CWallet::CreateTransactionInternal(
         nChangePosInOut = -1;
 
         // Because we have dropped this change, the tx size and required fee will be different, so let's recalculate those
-        if (allBlinded(selected_coins, tx_blinded.vout)) {
-            // tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
-            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
-        } else {
-            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
-        }
+        tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
+        // if (allBlinded(selected_coins, tx_blinded.vout)) {
+        //     // tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
+        //     tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
+        // } else {
+        //     tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
+        // }
         nBytes = tx_sizes.vsize;
         fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes);
     }

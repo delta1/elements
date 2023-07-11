@@ -33,9 +33,9 @@ static inline int64_t GetVirtualTransactionSize(const CTransaction& tx, int64_t 
 }
 
 // ELEMENTS
-inline int64_t GetVirtualTransactionSize(int64_t weight, int64_t sigop_cost, unsigned int discountFactor)
-{
-    return GetVirtualTransactionSize(weight, sigop_cost, ::nBytesPerSigOp, discountFactor);
-}
+// inline int64_t GetVirtualTransactionSize(int64_t weight, int64_t sigop_cost, unsigned int discountFactor)
+// {
+//     return GetVirtualTransactionSize(weight, sigop_cost, ::nBytesPerSigOp, discountFactor);
+// }
 
 #endif // BITCOIN_POLICY_SETTINGS_H

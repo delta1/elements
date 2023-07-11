@@ -60,10 +60,10 @@ size_t CTxMemPoolEntry::GetTxSize() const
 }
 
 // ELEMENTS
-size_t CTxMemPoolEntry::GetTxSizeWithDiscount(unsigned int discountFactor) const
-{
-    return GetVirtualTransactionSize(nTxWeight, sigOpCost, discountFactor);
-}
+// size_t CTxMemPoolEntry::GetTxSizeWithDiscount(unsigned int discountFactor) const
+// {
+//     return GetVirtualTransactionSize(nTxWeight, sigOpCost, discountFactor);
+// }
 
 // Update the given tx for any in-mempool descendants.
 // Assumes that CTxMemPool::m_children is correct for the given tx and all

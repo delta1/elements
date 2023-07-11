@@ -323,7 +323,7 @@ int64_t GetVirtualTransactionInputSize(const CTransaction& tx, const size_t nIn,
 }
 
 // ELEMENTS
-int64_t GetVirtualTransactionSize(int64_t nWeight, int64_t nSigOpCost, unsigned int bytes_per_sigop, unsigned int discountFactor)
-{
-    return GetVirtualTransactionSize(nWeight, nSigOpCost, bytes_per_sigop) / discountFactor;
-}
+// int64_t GetVirtualTransactionSize(int64_t nWeight, int64_t nSigOpCost, unsigned int bytes_per_sigop, unsigned int discountFactor)
+// {
+//     return GetVirtualTransactionSize(nWeight, nSigOpCost, bytes_per_sigop) / discountFactor;
+// }
