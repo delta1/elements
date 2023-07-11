@@ -1,0 +1,21 @@
+miner_tests
+feature_bip68_sequence.py                          | ✖ Failed  | 12 s
+feature_confidential_transactions.py               | ✖ Failed  | 10 s
+feature_maxuploadtarget.py                         | ✖ Failed  | 2 s
+feature_rbf.py                                     | ✖ Failed  | 6 s
+feature_segwit.py --legacy-wallet                  | ✖ Failed  | 5 s
+feature_tapscript_opcodes.py                       | ✖ Failed  | 4 s
+mempool_package_onemore.py                         | ✖ Failed  | 21 s
+mining_prioritisetransaction.py                    | ✖ Failed  | 5 s
+p2p_feefilter.py                                   | ✖ Failed  | 68 s
+rpc_fundrawtransaction.py --descriptors            | ✖ Failed  | 4 s
+rpc_fundrawtransaction.py --legacy-wallet          | ✖ Failed  | 7 s
+wallet_abandonconflict.py --descriptors            | ✖ Failed  | 7 s
+wallet_abandonconflict.py --legacy-wallet          | ✖ Failed  | 11 s
+wallet_avoidreuse.py --descriptors                 | ✖ Failed  | 12 s
+wallet_avoidreuse.py --legacy-wallet               | ✖ Failed  | 23 s
+wallet_elements_regression_1172.py                 | ✖ Failed  | 5 s
+wallet_groups.py --descriptors                     | ✖ Failed  | 73 s
+wallet_groups.py --legacy-wallet                   | ✖ Failed  | 79 s
+wallet_import_rescan.py --legacy-wallet            | ✖ Failed  | 9 s
+wallet_taproot.py                                  | ✖ Failed  | 7 s

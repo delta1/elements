@@ -146,6 +146,7 @@ class BIP68Test(BitcoinTestFramework):
             outputs = {}
             for i in range(num_outputs):
                 outputs[addresses[i]] = random.randint(1, 20)*0.01
+            print(len(outputs))
             self.nodes[0].sendmany("", outputs)
             self.nodes[0].generate(1)
 

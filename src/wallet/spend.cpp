@@ -1395,7 +1395,8 @@ bool CWallet::CreateTransactionInternal(
 
         // if the transaction is confidential apply the fee discount factor
         if (allBlinded(selected_coins, tx_blinded.vout)) {
-            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
+            // tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
+            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
         } else {
             tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
         }
@@ -1406,11 +1407,13 @@ bool CWallet::CreateTransactionInternal(
 
     // Calculate the transaction fee
     int nBytes = tx_sizes.vsize;
+    LogPrintf("nBytes: %d\n", nBytes);
     if (nBytes < 0) {
         error = _("Signing transaction failed");
         return false;
     }
     nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+    LogPrintf("nFeeRet: %d\n", nFeeRet);
 
     // Subtract fee from the change output if not subtracting it from recipient outputs
     CAmount fee_needed = nFeeRet;
@@ -1472,7 +1475,8 @@ bool CWallet::CreateTransactionInternal(
 
         // Because we have dropped this change, the tx size and required fee will be different, so let's recalculate those
         if (allBlinded(selected_coins, tx_blinded.vout)) {
-            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
+            // tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
+            tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
         } else {
             tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
         }
@@ -1487,6 +1491,7 @@ bool CWallet::CreateTransactionInternal(
     // Update nFeeRet in case fee_needed changed due to dropping the change output
     if (fee_needed <= map_change_and_fee.at(policyAsset) - change_amount) {
         nFeeRet = map_change_and_fee.at(policyAsset) - change_amount;
+        LogPrintf("nFeeRet update: %d\n", nFeeRet);
     }
 
     // Reduce output values for subtractFeeFromAmount
@@ -1532,6 +1537,7 @@ bool CWallet::CreateTransactionInternal(
             ++i;
         }
         nFeeRet = fee_needed;
+        LogPrintf("nFeeRet fee_needed: %d\n", nFeeRet);
     }
 
     // ELEMENTS: Give up if change keypool ran out and change is required
@@ -1639,6 +1645,7 @@ bool CWallet::CreateTransactionInternal(
     }
 
     if (nFeeRet > m_default_max_tx_fee) {
+        LogPrintf("nFeeRet: %d max: %d\n", nFeeRet, m_default_max_tx_fee);
         error = TransactionErrorString(TransactionError::MAX_FEE_EXCEEDED);
         return false;
     }

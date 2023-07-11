@@ -811,7 +811,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
             fSpendsCoinbase, nSigOpsCost, lp, setPeginsSpent));
     unsigned int nSize = entry->GetTxSize();
     if (fConfidential) {
-        nSize = entry->GetTxSizeWithDiscount(nCtFeeDiscountFactor);
+        // nSize = entry->GetTxSizeWithDiscount(nCtFeeDiscountFactor);
     }
 
     if (nSigOpsCost > MAX_STANDARD_TX_SIGOPS_COST)
