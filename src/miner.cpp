@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <logging.h>
 
 void ResetChallenge(CBlockHeader& block, const CBlockIndex& indexLast, const Consensus::Params& params)
 {
@@ -432,6 +433,9 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
             packageSigOpsCost = modit->nSigOpCostWithAncestors;
         }
 
+        LogPrintf("packageSize: %d\n", packageSize);
+        LogPrintf("packageFees: %d\n", packageFees);
+        LogPrintf("getfee: %d\n", blockMinFeeRate.GetFee(packageSize));
         if (packageFees < blockMinFeeRate.GetFee(packageSize)) {
             // Everything else we might consider has a lower fee rate
             return;

@@ -50,6 +50,7 @@ public:
      * Return the fee in satoshis for the given size in bytes.
      */
     CAmount GetFee(uint32_t num_bytes) const;
+    CAmount GetFee(uint32_t num_bytes, unsigned int discount) const; // ELEMENTS
     /**
      * Return the fee in satoshis for a size of 1000 bytes
      */

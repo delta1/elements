@@ -37,7 +37,7 @@ class CTTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 3
         self.setup_clean_chain = True
-        args = ["-blindedaddresses=1", "-initialfreecoins=2100000000000000", "-con_blocksubsidy=0", "-con_connect_genesis_outputs=1", "-nctfeediscountfactor=14"]
+        args = ["-blindedaddresses=1", "-initialfreecoins=2100000000000000", "-con_blocksubsidy=0", "-con_connect_genesis_outputs=1", "-nctfeediscountfactor=10"]
         self.extra_args = [args] * self.num_nodes
         self.extra_args[0].append("-anyonecanspendaremine=1") # first node gets the coins
 
@@ -108,6 +108,7 @@ class CTTest(BitcoinTestFramework):
         for i in range(5):
             address = self.nodes[2].getnewaddress()
             info = self.nodes[2].getaddressinfo(address)
+            print(self.nodes[0].getbalance())
             txid = self.nodes[0].sendtoaddress(info['address'], 1000, "", "", False, None, None, None, None, asset, None, feerate)
             tx = self.nodes[0].gettransaction(txid, True, True)
             print(f"fee: {tx['fee']}")
@@ -115,7 +116,15 @@ class CTTest(BitcoinTestFramework):
             vin = decoded['vin']
             vout = decoded['vout']
             self.nodes[0].generate(1)
-            print(f"vin: {len(vin)} vout: {len(vout)} fee: {tx['fee']}")
+            tx = self.nodes[0].gettransaction(txid, True, True)
+            tx['hex'] = "snip"
+            print(tx)
+            mempool = self.nodes[0].getmempoolinfo()
+            print(f"mempool: {mempool}")
+            raw = self.nodes[0].getrawmempool()
+            print(f"raw: {raw}")
+            assert tx['confirmations'] > 0
+            print(f"vin: {len(vin)} vout: {len(vout)} size: {tx['vsize']} fee: {tx['fee']}")
 
         unspent = self.nodes[2].listunspent()
         # print(unspent)

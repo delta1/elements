@@ -19,3 +19,9 @@ wallet_groups.py --descriptors                     | ✖ Failed  | 73 s
 wallet_groups.py --legacy-wallet                   | ✖ Failed  | 79 s
 wallet_import_rescan.py --legacy-wallet            | ✖ Failed  | 9 s
 wallet_taproot.py                                  | ✖ Failed  | 7 s
+
+
+feature_confidential_transactions.py               | ✖ Failed  | 10 s
+rpc_fundrawtransaction.py --descriptors            | ✖ Failed  | 3 s
+rpc_fundrawtransaction.py --legacy-wallet          | ✖ Failed  | 6 s
+wallet_elements_regression_1172.py                 | ✖ Failed  | 5 s

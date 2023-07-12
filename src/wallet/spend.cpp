@@ -1380,6 +1380,7 @@ bool CWallet::CreateTransactionInternal(
     // Do "initial blinding" for fee estimation purposes
     TxSize tx_sizes;
     CMutableTransaction tx_blinded = txNew;
+    auto allBlind = false;
     if (blind_details) {
         if (!fillBlindDetails(blind_details, this, tx_blinded, selected_coins, error)) {
             return false;
@@ -1397,6 +1398,7 @@ bool CWallet::CreateTransactionInternal(
         if (allBlinded(selected_coins, tx_blinded.vout)) {
             // tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
             tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
+            allBlind = true;
         } else {
             tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
         }
@@ -1412,8 +1414,13 @@ bool CWallet::CreateTransactionInternal(
         error = _("Signing transaction failed");
         return false;
     }
-    nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes);
-    LogPrintf("nFeeRet: %d\n", nFeeRet);
+    if (allBlind) {
+        nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes, ::nCtFeeDiscountFactor);
+        LogPrintf("nFeeRet allBlind: %d\n", nFeeRet);
+    } else {
+        nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+        LogPrintf("nFeeRet: %d\n", nFeeRet);
+    }
 
     // Subtract fee from the change output if not subtracting it from recipient outputs
     CAmount fee_needed = nFeeRet;
