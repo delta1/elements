@@ -1482,14 +1482,11 @@ bool CWallet::CreateTransactionInternal(
 
         // Because we have dropped this change, the tx size and required fee will be different, so let's recalculate those
         tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
-        // if (allBlinded(selected_coins, tx_blinded.vout)) {
-        //     // tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, ::nCtFeeDiscountFactor, &coin_control);
-        //     tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
-        // } else {
-        //     tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), this, &coin_control);
-        // }
         nBytes = tx_sizes.vsize;
         fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+        if (allBlind) {
+            fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes, ::nCtFeeDiscountFactor);
+        }
     }
 
     // The only time that fee_needed should be less than the amount available for fees (in change_and_fee - change_amount) is when

@@ -32,6 +32,7 @@ CAmount CFeeRate::GetFee(uint32_t num_bytes) const
     return nFee;
 }
 
+// ELEMENTS
 CAmount CFeeRate::GetFee(uint32_t num_bytes, unsigned int discount) const
 {
     auto nFee = GetFee(num_bytes) / discount;

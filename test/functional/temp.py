@@ -118,13 +118,13 @@ class CTTest(BitcoinTestFramework):
             self.nodes[0].generate(1)
             tx = self.nodes[0].gettransaction(txid, True, True)
             tx['hex'] = "snip"
-            print(tx)
+            # print(f"tx: {tx}")
             mempool = self.nodes[0].getmempoolinfo()
-            print(f"mempool: {mempool}")
+            # print(f"mempool: {mempool}")
             raw = self.nodes[0].getrawmempool()
-            print(f"raw: {raw}")
+            # print(f"raw: {raw}")
             assert tx['confirmations'] > 0
-            print(f"vin: {len(vin)} vout: {len(vout)} size: {tx['vsize']} fee: {tx['fee']}")
+            print(f"vin: {len(vin)} vout: {len(vout)} size: {tx['decoded']['vsize']} fee: {tx['fee']}")
 
         unspent = self.nodes[2].listunspent()
         # print(unspent)

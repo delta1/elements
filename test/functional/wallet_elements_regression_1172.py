@@ -33,6 +33,7 @@ class WalletCtTest(BitcoinTestFramework):
             "-con_blocksubsidy=0",
             "-con_connect_genesis_outputs=1",
             "-txindex=1",
+            "-printpriority"
         ]] * self.num_nodes
         self.extra_args[0].append("-anyonecanspendaremine=1") # first node gets the coins
 
@@ -123,4 +124,3 @@ class WalletCtTest(BitcoinTestFramework):
 
 if __name__ == '__main__':
     WalletCtTest().main()
-

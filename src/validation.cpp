@@ -536,6 +536,20 @@ private:
         return true;
     }
 
+    // ELEMENTS
+    bool CheckFeeRate(size_t package_size, CAmount package_fee, TxValidationState& state, unsigned int discount) EXCLUSIVE_LOCKS_REQUIRED(cs_main, m_pool.cs)
+    {
+        CAmount mempoolRejectFee = m_pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFee(package_size);
+        if (mempoolRejectFee > 0 && package_fee < mempoolRejectFee) {
+            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "mempool min fee not met", strprintf("%d < %d", package_fee, mempoolRejectFee));
+        }
+
+        if (package_fee < ::minRelayTxFee.GetFee(package_size, discount)) {
+            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "discounted min relay fee not met", strprintf("%d < %d", package_fee, ::minRelayTxFee.GetFee(package_size)));
+        }
+        return true;
+    }
+
 private:
     CTxMemPool& m_pool;
     CCoinsViewCache m_view;
@@ -810,9 +824,6 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     entry.reset(new CTxMemPoolEntry(ptx, ws.m_base_fees, nAcceptTime, m_active_chainstate.m_chain.Height(),
             fSpendsCoinbase, nSigOpsCost, lp, setPeginsSpent));
     unsigned int nSize = entry->GetTxSize();
-    if (fConfidential) {
-        // nSize = entry->GetTxSizeWithDiscount(nCtFeeDiscountFactor);
-    }
 
     if (nSigOpsCost > MAX_STANDARD_TX_SIGOPS_COST)
         return state.Invalid(TxValidationResult::TX_NOT_STANDARD, "bad-txns-too-many-sigops",
@@ -820,7 +831,12 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
 
     // No transactions are allowed below minRelayTxFee except from disconnected
     // blocks
-    if (!bypass_limits && !CheckFeeRate(nSize, nModifiedFees, state)) return false;
+    bool check = CheckFeeRate(nSize, nModifiedFees, state);
+    // ELEMENTS
+    if (fConfidential) {
+        check = CheckFeeRate(nSize, nModifiedFees, state, ::nCtFeeDiscountFactor);
+    }
+    if (!bypass_limits && !check) return false;
 
     const CTxMemPool::setEntries setIterConflicting = m_pool.GetIterSet(setConflicts);
     // Calculate in-mempool ancestors, up to a limit.
