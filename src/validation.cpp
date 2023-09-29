@@ -2571,6 +2571,11 @@ bool CChainState::FlushStateToDisk(
             {
                 LOG_TIME_MILLIS_WITH_CATEGORY("write block index to disk", BCLog::BENCH);
 
+                if (node::fTrimHeaders) {
+                    for (std::set<CBlockIndex*>::iterator it = setTrimmableBlockIndex.begin(); it != setTrimmableBlockIndex.end(); it++) {
+                        (*it)->untrim();
+                    }
+                }
                 if (!m_blockman.WriteBlockIndexDB()) {
                     return AbortNode(state, "Failed to write to block index database");
                 }
@@ -2707,6 +2712,18 @@ static void UpdateTipLog(
         !warning_messages.empty() ? strprintf(" warning='%s'", warning_messages) : "");
 }
 
+void ForceUntrimHeader(const CBlockIndex *pindex_)
+{
+    assert(pindex_);
+    if (!pindex_->trimmed()) {
+        return;
+    }
+    AssertLockHeld(cs_main);
+    CBlockIndex *pindex=const_cast<CBlockIndex*>(pindex_);
+    pindex->untrim();
+    setDirtyBlockIndex.insert(pindex);
+}
+
 void CChainState::UpdateTip(const CBlockIndex* pindexNew)
 {
     AssertLockHeld(::cs_main);
@@ -2752,11 +2769,13 @@ void CChainState::UpdateTip(const CBlockIndex* pindexNew)
     }
     UpdateTipLog(coins_tip, pindexNew, m_params, __func__, "", warning_messages.original);
 
+    ForceUntrimHeader(pindexNew);
     // Do some logging if dynafed parameters changed.
     if (pindexNew->pprev && !pindexNew->dynafed_params().IsNull()) {
         int height = pindexNew->nHeight;
         uint256 hash = pindexNew->GetBlockHash();
         uint256 root = pindexNew->dynafed_params().m_current.CalculateRoot();
+        ForceUntrimHeader(pindexNew->pprev);
         if (pindexNew->pprev->dynafed_params().IsNull()) {
             LogPrintf("Dynafed activated in block %d:%s: %s\n", height, hash.GetHex(), root.GetHex());
         } else if (root != pindexNew->pprev->dynafed_params().m_current.CalculateRoot()) {
