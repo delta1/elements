@@ -8,6 +8,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
     <ItemGroup>
+      <ClCompile Include="..\..\src\primitives\transaction.cpp" />
 @SOURCE_FILES@
     <ClCompile Include="..\..\src\wallet\init.cpp">
       <ObjectFileName>$(IntDir)wallet_init.obj</ObjectFileName>
