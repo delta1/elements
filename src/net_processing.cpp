@@ -3302,12 +3302,15 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
         std::vector<CBlock> vHeaders;
         int nLimit = MAX_HEADERS_RESULTS;
         LogPrint(BCLog::NET, "getheaders %d to %s from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop.IsNull() ? "end" : hashStop.ToString(), pfrom.GetId());
+        int64_t time_untrimming = 0;
         for (; pindex; pindex = m_chainman.ActiveChain().Next(pindex))
         {
             if (pindex->trimmed()) {
                 // Header is trimmed, reload from disk before sending
+                int64_t n_start = GetTimeMicros();
                 CBlockIndex tmpBlockIndexFull;
                 const CBlockIndex* pindexfull = pindex->untrim_to(&tmpBlockIndexFull);
+                time_untrimming += GetTimeMicros() - n_start;
                 vHeaders.push_back(pindexfull->GetBlockHeader());
             } else {
                 vHeaders.push_back(pindex->GetBlockHeader());
@@ -3315,6 +3318,7 @@ void PeerManagerImpl::ProcessMessage(CNode& pfrom, const std::string& msg_type, 
             if (--nLimit <= 0 || pindex->GetBlockHash() == hashStop)
                 break;
         }
+        LogPrintf("Sending headers, spent %ldus untrimming headers\n", time_untrimming);
 
         // pindex can be nullptr either if we sent m_chainman.ActiveChain().Tip() OR
         // if our peer has m_chainman.ActiveChain().Tip() (and thus we are sending an empty

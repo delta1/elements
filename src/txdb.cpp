@@ -333,22 +333,44 @@ bool CBlockTreeDB::WritePAKList(const std::vector<std::vector<unsigned char> >& 
 
 const CBlockIndex *CBlockTreeDB::RegenerateFullIndex(const CBlockIndex *pindexTrimmed, CBlockIndex *pindexNew) const
 {
+    //auto pindexTrimmed = this;
     if(!pindexTrimmed->trimmed()) {
         return pindexTrimmed;
     }
     CBlockHeader tmp;
     bool BlockRead = false;
+    //LogPrintf("%s: 1- Re-reading block %d from disk at pos %s\n", __func__, nHeight, GetBlockPos().ToString());
+    int64_t n_start = GetTimeMicros();
     {
         // At this point we can either be locked or unlocked depending on where we're being called
         // but cs_main is a RecursiveMutex, so it doesn't matter
         LOCK(cs_main);
         // In unpruned nodes, same data could be read from blocks using ReadBlockFromDisk, but that turned out to
         // be about 6x slower than reading from the index
+#if 0
+        std::unique_ptr<CDBIterator> pcursor(this->NewIterator());
+
+        pcursor->Seek(std::make_pair(DB_BLOCK_INDEX, pindexTrimmed->GetBlockHash()));
+
+        // Load m_block_index
+        if (pcursor->Valid()) {
+            std::pair<uint8_t, uint256> key;
+            if (pcursor->GetKey(key) && key.first == DB_BLOCK_INDEX) {
+                CDiskBlockIndex diskindex;
+                if (pcursor->GetValue(diskindex)) {
+                    tmp = diskindex.GetBlockHeader();
+                    BlockRead = true;
+                }
+            }
+        }
+#else
         std::pair<uint8_t, uint256> key(DB_BLOCK_INDEX, pindexTrimmed->GetBlockHash());
         CDiskBlockIndex diskindex;
         BlockRead = this->Read(key, diskindex);
         tmp = diskindex.GetBlockHeader();
+#endif
     }
+    //LogPrintf("%s: 2- Re-reading block %d from disk, %s in %luus\n", __func__, pindexTrimmed->nHeight, (BlockRead)?"Found":"not found", GetTimeMicros() - n_start);
     assert(BlockRead);
     // Clone the needed data from the original trimmed block
     pindexNew->pprev          = pindexTrimmed->pprev;
@@ -370,9 +392,13 @@ const CBlockIndex *CBlockTreeDB::RegenerateFullIndex(const CBlockIndex *pindexTr
     pindexNew->m_dynafed_params    = tmp.m_dynafed_params;
     pindexNew->m_signblock_witness = tmp.m_signblock_witness;
 
+    //LogPrintf("%s: loaded 1 block from disk to replace local trimmed index\n", __func__);
     if (pindexTrimmed->nHeight && pindexTrimmed->nHeight % 1000 == 0) {
+        n_start = GetTimeMicros();
         assert(CheckProof(pindexNew->GetBlockHeader(), Params().GetConsensus()));
+        LogPrintf("%s: Block %d, spent %luus validating\n", __func__, pindexTrimmed->nHeight, GetTimeMicros() - n_start);
     }
+    //LogPrintf("%s: 3- Re-reading block %d from disk at pos %s, %s, proof checked\n", __func__, pindexTrimmed->nHeight, GetBlockPos().ToString(), (BlockRead)?"Found":"not found");
     return pindexNew;
 }
 
@@ -411,6 +437,9 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->m_dynafed_params    = diskindex.m_dynafed_params;
                 pindexNew->m_signblock_witness = diskindex.m_signblock_witness;
 
+                if (g_signed_blocks && diskindex.m_dynafed_params.value().IsNull() && diskindex.proof.value().IsNull()) {
+                    LogPrintf("%s: about to crash\n", __func__);
+                }
                 assert(!(g_signed_blocks && diskindex.m_dynafed_params.value().IsNull() && diskindex.proof.value().IsNull()));
 
                 pindexNew->set_stored();
@@ -429,6 +458,9 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                     pindexNew->trim();
                 }
 
+                if (n_total % 100000 == 0) {
+                    LogPrintf("LoadBlockIndexGuts: loaded %d partial / %d untrimmed (fully in-memory) headers, trim point is %d\n", n_total, n_untrimmed, trimBelowHeight);
+                }
                 pcursor->Next();
             } else {
                 return error("%s: failed to read value", __func__);
@@ -438,7 +470,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
         }
     }
 
-    LogPrintf("LoadBlockIndexGuts: loaded %d total / %d untrimmed (fully in-memory) headers\n", n_total, n_untrimmed);
+    LogPrintf("LoadBlockIndexGuts: loaded %d total / %d untrimmed (fully in-memory) headers, trim point is %d\n", n_total, n_untrimmed, trimBelowHeight);
     return true;
 }
 

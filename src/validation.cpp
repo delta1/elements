@@ -2598,18 +2598,44 @@ bool CChainState::FlushStateToDisk(
                     CBlockIndex* min_index = pindexBestHeader->GetAncestor(trim_height-1);
                     // Handle any remaining untrimmed blocks that were too recent for trimming last time we flushed.
                     if (min_index) {
+                        LogPrintf("Trim start: Trim point is %ld out of %ld headers, checking until header %ld.\n", trim_height, pindexBestHeader->nHeight, nMinTrimHeight);
+                        int64_t n_start = GetTimeMicros();
+                        int n_trimmed = 0;
+                        int n_trimmable = 0;
+                        int n_attempted = 0;
                         int nMaxTrimHeightRound = std::max(nMinTrimHeight, min_index->nHeight + 1);
                         while (min_index && min_index->nHeight >= nMinTrimHeight) {
+                            n_trimmable++;
                             if (!min_index->trimmed()) {
                                 // there may be gaps due to untrimmed blocks, we need to check them all
+                                n_attempted++;
                                 if (!min_index->trim()) {
                                     // Header could not be trimmed, we'll need to try again next round
                                     nMaxTrimHeightRound = min_index->nHeight;
+                                } else {
+                                    n_trimmed++;
                                 }
                             }
                             min_index = min_index->pprev;
                         }
                         nMinTrimHeight = nMaxTrimHeightRound;
+                        LogPrintf("Trim result: %ld headers checked, %ld trimmings attemped, %ld headers trimmed this round in %luus.\n", n_trimmable, n_attempted, n_trimmed, GetTimeMicros() - n_start);
+#if 1
+                        // debug check of the trimming algorithm, search for gaps that should not exist
+                        min_index = pindexBestHeader;
+                        if (min_index) {
+                            int n_trimmed = 0;
+                            int n_trimmable = 0;
+                            while (min_index) {
+                                if (min_index->nHeight < nMinTrimHeight) {
+                                    n_trimmable++;
+                                    n_trimmed += (int)min_index->trimmed();
+                                }
+                                min_index = min_index->pprev;
+                            }
+                            LogPrintf("Trim check: Headers below %ld won't be checked again, %ld headers within trimmable height, %ld actually trimmed, %ld untrimmed.\n", nMinTrimHeight, n_trimmable, n_trimmed, n_trimmable - n_trimmed);
+                        }
+#endif
                     }
                 }
             }
