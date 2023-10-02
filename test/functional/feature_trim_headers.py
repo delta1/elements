@@ -100,10 +100,12 @@ class TrimHeadersTest(BitcoinTestFramework):
         miner_next = self.nodes[mineridx_next]
 
         # If dynafed is enabled, this means signblockscript has been WSH-wrapped
-        blockchain_info = self.nodes[0].getblockchaininfo()
-        dynafed_active = blockchain_info['softforks']['dynafed']['bip9']['status'] == "active"
+        blockchain_info = self.nodes[0].getdeploymentinfo()
+        print(blockchain_info)
+        dynafed_active = blockchain_info['deployments']['dynafed']['bip9']['status'] == "active"
         if dynafed_active:
             wsh_wrap = self.nodes[0].decodescript(self.witnessScript)['segwit']['hex']
+            blockchain_info = self.nodes[0].getblockchaininfo()
             assert_equal(wsh_wrap, blockchain_info['current_signblock_hex'])
 
         # Make a few transactions to make non-empty blocks for compact transmission
@@ -204,14 +206,14 @@ class TrimHeadersTest(BitcoinTestFramework):
         tip = self.nodes[0].getblockhash(self.nodes[0].getblockcount())
         header = self.nodes[0].getblockheader(tip)
         block = self.nodes[0].getblock(tip)
-        info = self.nodes[0].getblockchaininfo()
+        info = self.nodes[0].getdeploymentinfo()
 
         assert 'signblock_witness_asm' in header
         assert 'signblock_witness_hex' in header
         assert 'signblock_witness_asm' in block
         assert 'signblock_witness_hex' in block
 
-        assert_equal(info['softforks']['dynafed']['bip9']['status'], "defined")
+        assert_equal(info['deployments']['dynafed']['bip9']['status'], "defined")
 
         # activate dynafed
         blocks_til_dynafed = 431 - self.nodes[0].getblockcount()
@@ -220,7 +222,7 @@ class TrimHeadersTest(BitcoinTestFramework):
         expected_height += blocks_til_dynafed
         self.check_height(expected_height)
 
-        assert_equal(self.nodes[0].getblockchaininfo()['softforks']['dynafed']['bip9']['status'], "active")
+        assert_equal(self.nodes[0].getdeploymentinfo()['deployments']['dynafed']['bip9']['status'], "locked_in")
 
         num = 3000
         self.log.info(f"Mine {num} dynamic federation blocks without txns")
@@ -239,7 +241,7 @@ class TrimHeadersTest(BitcoinTestFramework):
         expected_height += num
         self.mine_large_blocks(num)
 
-        info = self.nodes[0].getblockchaininfo()
+        info = self.nodes[0].getdeploymentinfo()
 
         self.log.info("Restart the trimmed nodes")
         self.start_node(1, extra_args=self.trim_args)
@@ -253,7 +255,7 @@ class TrimHeadersTest(BitcoinTestFramework):
         self.log.info("Prune the pruned node")
         self.nodes[2].pruneblockchain(4000)
 
-        info = self.nodes[0].getblockchaininfo()
+        info = self.nodes[0].getdeploymentinfo()
         hash = self.nodes[0].getblockhash(expected_height)
         block = self.nodes[0].getblock(hash)
         for i in range(1, self.num_nodes):
