@@ -9,6 +9,7 @@
   </PropertyGroup>
     <ItemGroup>
       <ClCompile Include="..\..\src\primitives\transaction.cpp" />
+      <ClCompile Include="..\..\src\primitives\bitcoin\transaction.cpp" />
 @SOURCE_FILES@
     <ClCompile Include="..\..\src\wallet\init.cpp">
       <ObjectFileName>$(IntDir)wallet_init.obj</ObjectFileName>
