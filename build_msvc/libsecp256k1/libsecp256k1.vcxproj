@@ -9,7 +9,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\secp256k1\src\secp256k1.c" />
-    <ClCompile Include="..\..\src\secp256k1\src\precomputed_ecmult.c" />
   </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
