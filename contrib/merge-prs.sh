@@ -9,6 +9,12 @@ BITCOIN_UPSTREAM="${BITCOIN_UPSTREAM_REMOTE}/master"
 ELEMENTS_UPSTREAM_REMOTE=upstream
 ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
+# Set these to whether you want to merge from Bitcoin or Elements
+TARGET_UPSTREAM=$BITCOIN_UPSTREAM
+TARGET_NAME="Bitcoin"
+#TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
+#TARGET_NAME="Elements"
+
 # Replace this with the location where we should put the fuzz test corpus
 BITCOIN_QA_ASSETS="${HOME}/code/bitcoin/qa-assets"
 FUZZ_CORPUS="${BITCOIN_QA_ASSETS}/fuzz_seed_corpus/"
@@ -130,13 +136,7 @@ if [[ "$SKIP_MERGE" == "1" ]]; then
 fi
 
 ## Get full list of merges
-ELT_COMMITS=$(git -C "$WORKTREE" log "$ELEMENTS_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Elements %s')
-#BTC_COMMITS=$(git -C "$WORKTREE" log "$BITCOIN_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Bitcoin %s')
-
-#ELT_COMMITS=
-#BTC_COMMITS=$(git -C "$WORKTREE" log v0.21.0 --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Bitcoin %s')
-
-#play /home/apoelstra/games/Hover/sounds/mixed/hit_wall.wav 2>/dev/null ## play start sound
+COMMITS=$(git -C "$WORKTREE" log "$TARGET_UPSTREAM" --not $BASE --merges --first-parent --pretty="format:%ct %cI %h $TARGET_NAME %s")
 
 cd "$WORKTREE"
 
@@ -163,37 +163,32 @@ notify () {
 }
 
 ## Sort by unix timestamp and iterate over them
-#echo "$ELT_COMMITS" "$BTC_COMMITS" | sort -n -k1 | while read line
-echo "$ELT_COMMITS" | tac | while read -r line
+echo "$COMMITS" | tac | while read -r line
 do
-    echo
-    echo "=-=-=-=-=-=-=-=-=-=-="
-    echo
-
     echo -e "$line"
     ## Extract data and output what we're doing
     DATE=$(echo "$line" | cut -d ' ' -f 2)
     HASH=$(echo "$line" | cut -d ' ' -f 3)
     CHAIN=$(echo "$line" | cut -d ' ' -f 4)
     PR_ID=$(echo "$line" | cut -d ' ' -f 6 | tr -d :)
-    echo "PR_ID is $PR_ID"
+    #echo "PR_ID is $PR_ID"
     PR_ID_ALT=$(echo "$line" | cut -d ' ' -f 8 | tr -d :)
-    echo "PR_ID_ALT is $PR_ID_ALT"
+    #echo "PR_ID_ALT is $PR_ID_ALT"
 
     if [[ "$PR_ID" == "pull" ]]; then
 	PR_ID="${PR_ID_ALT}"
     fi
-    echo -e "$CHAIN PR \e[37m$PR_ID \e[33m$HASH\e[0m on \e[32m$DATE\e[0m "
+    #echo -e "$CHAIN PR \e[37m$PR_ID \e[33m$HASH\e[0m on \e[32m$DATE\e[0m "
 
-    notify "starting merge of $PR_ID"
 
     ## Do it
     if [[ "$1" == "list-only" ]]; then
         continue
     fi
+    notify "starting merge of $PR_ID"
 
     # check for stoppers and halt if found
-    STOPPERS=("26005")
+    STOPPERS=()
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
