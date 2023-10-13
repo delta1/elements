@@ -2,10 +2,10 @@
 
 set -eo pipefail
 
-BASE_ORIG=elements-23.x
+BASE_ORIG=merged-master
 BASE="${BASE_ORIG}"
 BITCOIN_UPSTREAM_REMOTE=bitcoin
-BITCOIN_UPSTREAM="${BITCOIN_UPSTREAM_REMOTE}/23.x"
+BITCOIN_UPSTREAM="${BITCOIN_UPSTREAM_REMOTE}/master"
 ELEMENTS_UPSTREAM_REMOTE=upstream
 ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
@@ -130,8 +130,8 @@ if [[ "$SKIP_MERGE" == "1" ]]; then
 fi
 
 ## Get full list of merges
-#ELT_COMMITS=$(git -C "$WORKTREE" log "$ELEMENTS_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Elements %s')
-BTC_COMMITS=$(git -C "$WORKTREE" log "$BITCOIN_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Bitcoin %s')
+ELT_COMMITS=$(git -C "$WORKTREE" log "$ELEMENTS_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Elements %s')
+#BTC_COMMITS=$(git -C "$WORKTREE" log "$BITCOIN_UPSTREAM" --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Bitcoin %s')
 
 #ELT_COMMITS=
 #BTC_COMMITS=$(git -C "$WORKTREE" log v0.21.0 --not $BASE --merges --first-parent --pretty='format:%ct %cI %h Bitcoin %s')
@@ -164,7 +164,7 @@ notify () {
 
 ## Sort by unix timestamp and iterate over them
 #echo "$ELT_COMMITS" "$BTC_COMMITS" | sort -n -k1 | while read line
-echo "$BTC_COMMITS" | tac | while read -r line
+echo "$ELT_COMMITS" | tac | while read -r line
 do
     echo
     echo "=-=-=-=-=-=-=-=-=-=-="
@@ -176,23 +176,22 @@ do
     HASH=$(echo "$line" | cut -d ' ' -f 3)
     CHAIN=$(echo "$line" | cut -d ' ' -f 4)
     PR_ID=$(echo "$line" | cut -d ' ' -f 6 | tr -d :)
-    #echo "PR_ID is $PR_ID"
+    echo "PR_ID is $PR_ID"
     PR_ID_ALT=$(echo "$line" | cut -d ' ' -f 8 | tr -d :)
-    #echo "PR_ID_ALT is $PR_ID_ALT"
+    echo "PR_ID_ALT is $PR_ID_ALT"
 
     if [[ "$PR_ID" == "pull" ]]; then
 	PR_ID="${PR_ID_ALT}"
     fi
-    #echo -e "$CHAIN PR \e[37m$PR_ID \e[33m$HASH\e[0m on \e[32m$DATE\e[0m "
+    echo -e "$CHAIN PR \e[37m$PR_ID \e[33m$HASH\e[0m on \e[32m$DATE\e[0m "
 
+    notify "starting merge of $PR_ID"
 
     ## Do it
     if [[ "$1" == "list-only" ]]; then
         continue
     fi
 
-    notify "starting merge of $PR_ID"
-    #
     # check for stoppers and halt if found
     STOPPERS=("26005")
     for STOPPER in "${STOPPERS[@]}"
@@ -210,7 +209,7 @@ do
         echo -e "Continuing build of \e[37m$PR_ID\e[0m at $(date)"
     else
         echo -e "Start merge/build of \e[37m$PR_ID\e[0m at $(date)"
-        git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH ($CHAIN PR $PR_ID)" || notify "fail merge" 1
+        git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH into merged_master ($CHAIN PR $PR_ID)" || notify "fail merge" 1
     fi
 
     if [[ "$DO_CHERRY" == "1" ]]; then
