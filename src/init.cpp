@@ -1327,7 +1327,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 
     // ELEMENTS:
     policyAsset = CAsset(uint256S(gArgs.GetArg("-feeasset", chainparams.GetConsensus().pegged_asset.GetHex())));
-    nCtFeeDiscountFactor = args.GetArg("-nctfeediscountfactor", DEFAULT_CT_FEE_DISCOUNT_FACTOR);
+    nCtFeeDiscountFactor = args.GetIntArg("-nctfeediscountfactor", DEFAULT_CT_FEE_DISCOUNT_FACTOR);
 
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections

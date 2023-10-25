@@ -20,7 +20,6 @@ from test_framework.messages import (
 )
 from test_framework.util import (
     assert_equal,
-    hex_str_to_bytes,
     BITCOIN_ASSET_OUT,
     assert_raises_rpc_error,
 )
@@ -61,7 +60,7 @@ class CTTest(BitcoinTestFramework):
 
         # coinbase_addr = self.nodes[0].getnewaddress()
         # node0.generatetoaddress(201, coinbase_addr)
-        node0.generate(101)
+        self.generate(node0, 101)
         self.sync_all()
         balance = node0.getbalance()
         print(balance)
@@ -74,7 +73,7 @@ class CTTest(BitcoinTestFramework):
         decoded = tx['decoded']
         vin = decoded['vin']
         vout = decoded['vout']
-        node0.generate(1)
+        self.generate(node0, 1)
         print(f"vin: {len(vin)} vout: {len(vout)} fee: {tx['fee']}")
 
         for i in range(20):
@@ -86,7 +85,7 @@ class CTTest(BitcoinTestFramework):
             decoded = tx['decoded']
             vin = decoded['vin']
             vout = decoded['vout']
-            node0.generate(1)
+            self.generate(node0, 1)
             print(f"vin: {len(vin)} vout: {len(vout)} fee: {tx['fee']}")
 
         unspent = node1.listunspent()
@@ -99,7 +98,7 @@ class CTTest(BitcoinTestFramework):
         # print(issued)
         asset = issued['asset']
         print(f"asset: {asset}")
-        self.nodes[0].generate(1)
+        self.generate(node0, 1)
         txid = issued['txid']
         tx = self.nodes[0].gettransaction(txid)
         print(f"fee: {tx['fee']}")
@@ -115,14 +114,14 @@ class CTTest(BitcoinTestFramework):
             decoded = tx['decoded']
             vin = decoded['vin']
             vout = decoded['vout']
-            self.nodes[0].generate(1)
+            self.generate(node0, 1, sync_fun=self.no_op)
             tx = self.nodes[0].gettransaction(txid, True, True)
             tx['hex'] = "snip"
-            # print(f"tx: {tx}")
+            print(f"tx: {tx}")
             mempool = self.nodes[0].getmempoolinfo()
-            # print(f"mempool: {mempool}")
+            print(f"mempool: {mempool}")
             raw = self.nodes[0].getrawmempool()
-            # print(f"raw: {raw}")
+            print(f"raw: {raw}")
             assert tx['confirmations'] > 0
             print(f"vin: {len(vin)} vout: {len(vout)} size: {tx['decoded']['vsize']} fee: {tx['fee']}")
 

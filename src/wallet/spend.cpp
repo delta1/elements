@@ -1733,7 +1733,7 @@ static bool CreateTransactionInternal(
     }
 
     if (nFeeRet > wallet.m_default_max_tx_fee) {
-        LogPrintf("nFeeRet: %d max: %d\n", nFeeRet, m_default_max_tx_fee);
+        LogPrintf("nFeeRet: %d max: %d\n", nFeeRet, wallet.m_default_max_tx_fee);
         error = TransactionErrorString(TransactionError::MAX_FEE_EXCEEDED);
         return false;
     }
