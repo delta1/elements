@@ -1,0 +1,27 @@
+on: [pull_request, push]
+
+name: Code Coverage
+
+jobs:
+  coverage_report:
+    name: Coverage
+    runs-on: ubuntu-latest
+    env:
+      PACKAGES: "build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 lcov clang llvm python3-zmq qtbase5-dev qttools5-dev-tools libevent-dev bsdmainutils libboost-dev libdb5.3++-dev libminiupnpc-dev libnatpmp-dev libzmq3-dev libqrencode-dev libsqlite3-dev"
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4.1.1
+    - name: Build
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install $PACKAGES
+        ./autogen.sh
+        ./configure --enable-lcov --enable-lcov-branch-coverage --without-bdb CC=clang CXX=clang++
+        make -j4
+        make -j4 total_coverage.info
+    - uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./total_coverage.info
+        fail_ci_if_error: false # optional (default = false)
+        verbose: true # optional (default = false)
