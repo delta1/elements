@@ -25,3 +25,9 @@ jobs:
         files: ./total_coverage.info
         fail_ci_if_error: false # optional (default = false)
         verbose: true # optional (default = false)
+    - uses: actions/upload-artifact@v3
+      with:
+        name: coverage
+        path: |
+          total.coverage/
+          total_coverage.info
