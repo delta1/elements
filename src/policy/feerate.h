@@ -52,6 +52,12 @@ public:
      */
     CAmount GetFee(uint32_t num_bytes) const;
     /**
+     * ELEMENTS:
+     * Return the fee in satoshis for the given size in bytes, after dividing by the discount factor.
+     * If the calculated fee would have fractional satoshis, then the returned fee will always be rounded up to the nearest satoshi.
+     */
+    CAmount GetFee(uint32_t num_bytes, unsigned int discount) const;
+    /**
      * Return the fee in satoshis for a size of 1000 bytes
      */
     CAmount GetFeePerK() const { return GetFee(1000); }

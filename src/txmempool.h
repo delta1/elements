@@ -165,6 +165,7 @@ public:
 
     // ELEMENTS:
     std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
+    bool IsConfidential(const CCoinsViewCache& view) const;
 };
 
 // Helpers for modifying CTxMemPool::mapTx, which is a boost multi_index.

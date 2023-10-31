@@ -76,7 +76,7 @@ class WalletTest(BitcoinTestFramework):
 
         assert_equal(len(tx['vin']), num_utxos + 1)
         assert_equal(len(tx['vout']), 3)
-        assert_equal(tx['fee'], {'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23': Decimal('0.00112380')}) # fee output
+        assert_equal(tx['fee'], {'b2e15d0d7a0c94e4e2ce0fe6e8691b9e451377f6e46e8045a86f7c4b5d4f0f23': Decimal('0.00011238')}) # fee output
 
         # send and mine the tx
         self.log.info(f"Send the raw transaction")

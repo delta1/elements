@@ -18,6 +18,9 @@ class CTxOut;
 
 // ELEMENTS:
 extern CAsset policyAsset;
+extern unsigned int nCtFeeDiscountFactor;
+/** Default for -nctfeediscountfactor, which is the dividing factor for discounting the fees of Confidential Transactions **/
+static const unsigned int DEFAULT_CT_FEE_DISCOUNT_FACTOR = 10;
 
 /** Default for -blockmaxweight, which controls the range of block weights the mining code will create **/
 static const unsigned int DEFAULT_BLOCK_MAX_WEIGHT = MAX_BLOCK_WEIGHT - 4000;

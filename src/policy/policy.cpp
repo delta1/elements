@@ -16,6 +16,7 @@
 
 // ELEMENTS:
 CAsset policyAsset;
+unsigned int nCtFeeDiscountFactor;
 
 CAmount GetDustThreshold(const CTxOut& txout, const CFeeRate& dustRelayFeeIn)
 {

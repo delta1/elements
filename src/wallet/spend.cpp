@@ -819,6 +819,27 @@ static bool fillBlindDetails(BlindDetails* det, CWallet* wallet, CMutableTransac
     return true;
 }
 
+// check if all coins and outputs are blinded, except fee outputs
+bool allBlinded(const std::vector<CInputCoin>& coins, const std::vector<CTxOut>& vout)
+{
+    for (auto& coin: coins) {
+        if (coin.txout.nValue.IsExplicit() || coin.txout.nAsset.IsExplicit()) {
+            return false;
+        }
+    }
+
+    for (auto& out: vout) {
+        if (out.IsFee()) {
+            continue;
+        }
+        if (out.nAsset.IsExplicit() || out.nValue.IsExplicit()) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool CWallet::CreateTransactionInternal(
         const std::vector<CRecipient>& vecSend,
         CTransactionRef& tx,
@@ -1377,7 +1398,13 @@ bool CWallet::CreateTransactionInternal(
         error = _("Signing transaction failed");
         return false;
     }
-    nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+
+    // ELEMENTS: discount fee for confidential transactions
+    if (allBlinded(selected_coins, tx_blinded.vout)) {
+        nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes, ::nCtFeeDiscountFactor);
+    } else {
+        nFeeRet = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+    }
 
     // Subtract fee from the change output if not subtracting it from recipient outputs
     CAmount fee_needed = nFeeRet;
@@ -1397,7 +1424,7 @@ bool CWallet::CreateTransactionInternal(
         // without causing the transaction to fail to balance. So keep it, and merely
         // zero it out.
         if (was_blinded && blind_details->num_to_blind == 1) {
-            assert (may_need_blinded_dummy);
+            assert(may_need_blinded_dummy);
             change_position->scriptPubKey = CScript() << OP_RETURN;
             change_position->nValue = 0;
         } else {
@@ -1409,7 +1436,6 @@ bool CWallet::CreateTransactionInternal(
                 tx_blinded.witness.vtxoutwit.erase(tx_blinded.witness.vtxoutwit.begin() + nChangePosInOut);
             }
             if (blind_details) {
-
                 blind_details->o_amounts.erase(blind_details->o_amounts.begin() + nChangePosInOut);
                 blind_details->o_assets.erase(blind_details->o_assets.begin() + nChangePosInOut);
                 blind_details->o_pubkeys.erase(blind_details->o_pubkeys.begin() + nChangePosInOut);

@@ -536,6 +536,20 @@ private:
         return true;
     }
 
+    // ELEMENTS:
+    bool CheckFeeRate(size_t package_size, CAmount package_fee, TxValidationState& state, unsigned int discount) EXCLUSIVE_LOCKS_REQUIRED(cs_main, m_pool.cs)
+    {
+        CAmount mempoolRejectFee = m_pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFee(package_size);
+        if (mempoolRejectFee > 0 && package_fee < mempoolRejectFee) {
+            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "mempool min fee not met", strprintf("%d < %d", package_fee, mempoolRejectFee));
+        }
+
+        if (package_fee < ::minRelayTxFee.GetFee(package_size, discount)) {
+            return state.Invalid(TxValidationResult::TX_MEMPOOL_POLICY, "discounted min relay fee not met", strprintf("%d < %d", package_fee, ::minRelayTxFee.GetFee(package_size)));
+        }
+        return true;
+    }
+
 private:
     CTxMemPool& m_pool;
     CCoinsViewCache m_view;
@@ -802,9 +816,14 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         return state.Invalid(TxValidationResult::TX_NOT_STANDARD, "bad-txns-too-many-sigops",
                 strprintf("%d", nSigOpsCost));
 
+    bool check_fee = CheckFeeRate(nSize, ws.m_modified_fees, state);
+    // ELEMENTS: check discounted fee for CT
+    if (entry->IsConfidential(&m_view)) {
+        check_fee = CheckFeeRate(nSize, ws.m_modified_fees, state, ::nCtFeeDiscountFactor);
+    }
     // No transactions are allowed below minRelayTxFee except from disconnected
     // blocks
-    if (!bypass_limits && !CheckFeeRate(nSize, nModifiedFees, state)) return false;
+    if (!bypass_limits && !check_fee) return false;
 
     const CTxMemPool::setEntries setIterConflicting = m_pool.GetIterSet(setConflicts);
     // Calculate in-mempool ancestors, up to a limit.

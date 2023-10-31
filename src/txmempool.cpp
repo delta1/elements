@@ -336,6 +336,28 @@ void CTxMemPoolEntry::UpdateAncestorState(int64_t modifySize, CAmount modifyFee,
     assert(int(nSigOpCostWithAncestors) >= 0);
 }
 
+bool CTxMemPoolEntry::IsConfidential(const CCoinsViewCache& view) const {
+    // todo: cache?
+    for (const CTxIn& txin: tx->vin) {
+        if (txin.m_is_pegin || spendsCoinbase) {
+            return false;
+        }
+        const Coin &coin = view.AccessCoin(txin.prevout);
+        if (coin.out.nAsset.IsExplicit() || coin.out.nValue.IsExplicit()) {
+            return false;
+        }
+    }
+    for (const CTxOut& txout: tx->vout) {
+        if (txout.IsFee()) {
+            continue;
+        }
+        if (txout.nAsset.IsExplicit() || txout.nValue.IsExplicit()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 CTxMemPool::CTxMemPool(CBlockPolicyEstimator* estimator, int check_ratio)
     : m_check_ratio(check_ratio), minerPolicyEstimator(estimator)
 {

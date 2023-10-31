@@ -36,6 +36,13 @@ CAmount CFeeRate::GetFee(uint32_t num_bytes) const
     return nFee;
 }
 
+CAmount CFeeRate::GetFee(uint32_t num_bytes, unsigned int discount) const
+{
+    auto nFee = GetFee(num_bytes) / discount;
+
+    return nFee;
+}
+
 std::string CFeeRate::ToString(const FeeEstimateMode& fee_estimate_mode) const
 {
     switch (fee_estimate_mode) {

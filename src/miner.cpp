@@ -432,7 +432,12 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
             packageSigOpsCost = modit->nSigOpCostWithAncestors;
         }
 
-        if (packageFees < blockMinFeeRate.GetFee(packageSize)) {
+        auto min_fee = blockMinFeeRate.GetFee(packageSize);
+        const CCoinsViewCache& view = m_chainstate.CoinsTip();
+        if (iter->IsConfidential(view)) {
+            min_fee = blockMinFeeRate.GetFee(packageSize, ::nCtFeeDiscountFactor);
+        }
+        if (packageFees < min_fee) {
             // Everything else we might consider has a lower fee rate
             return;
         }
