@@ -505,6 +505,11 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
         if (auto bnb_result{SelectCoinsBnB(positive_groups, nTargetValue, coin_selection_params.m_cost_of_change)}) {
             bnb_result->ComputeAndSetWaste(CAmount(0));
             results.push_back(*bnb_result);
+            auto set = (*bnb_result).GetInputSet();
+            LogPrintf("push bnb result size: %d\n", set.size());
+            for (auto& input: set) {
+                LogPrintf("input value: %d\n", input.value);
+            }
         }
 
         // We include the minimum final change for SRD as we do want to avoid making really small change.
@@ -513,6 +518,11 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
         if (auto srd_result{SelectCoinsSRD(positive_groups, srd_target)}) {
             srd_result->ComputeAndSetWaste(coin_selection_params.m_cost_of_change);
             results.push_back(*srd_result);
+            auto set = (*srd_result).GetInputSet();
+            LogPrintf("push srd result size: %d\n", set.size());
+            for (auto& input: set) {
+                LogPrintf("input value: %d\n", input.value);
+            }
         }
     }
 
@@ -528,8 +538,19 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
     if (auto knapsack_result{KnapsackSolver(all_groups, mapTargetValue_copy)}) {
          knapsack_result->ComputeAndSetWaste(coin_selection_params.m_cost_of_change);
          results.push_back(*knapsack_result);
+        auto set = (*knapsack_result).GetInputSet();
+        LogPrintf("push knapsack result size: %d\n", set.size());
+            for (auto& input: set) {
+                LogPrintf("input value: %d\n", input.value);
+            }
     }
 
+    LogPrintf("num results: %d\n", results.size());
+    for (auto& result: results) {
+        for (auto& input: result.GetInputSet()) {
+            LogPrintf("input value: %d - outpoint: %s\n", input.value, input.outpoint.ToString());
+        }
+    }
     if (results.size() == 0) {
         // No solution found
         return std::nullopt;
@@ -538,6 +559,11 @@ std::optional<SelectionResult> AttemptSelection(const CWallet& wallet, const CAm
     // Choose the result with the least waste
     // If the waste is the same, choose the one which spends more inputs.
     auto& best_result = *std::min_element(results.begin(), results.end());
+    auto set = best_result.GetInputSet();
+    LogPrintf("best result size: %d\n", set.size());
+            for (auto& input: set) {
+                LogPrintf("input value: %d\n", input.value);
+            }
     return best_result;
 }
 
@@ -693,17 +719,22 @@ std::optional<SelectionResult> SelectCoins(const CWallet& wallet, const std::vec
 
         // If possible, fund the transaction with confirmed UTXOs only. Prefer at least six
         // confirmations on outputs received from other wallets and only spend confirmed change.
+        LogPrintf("selection 1\n");
         if (auto r1{AttemptSelection(wallet, value_to_select, CoinEligibilityFilter(1, 6, 0), vCoins, coin_selection_params)}) return r1;
+        LogPrintf("selection 2\n");
         if (auto r2{AttemptSelection(wallet, value_to_select, CoinEligibilityFilter(1, 1, 0), vCoins, coin_selection_params)}) return r2;
 
         // Fall back to using zero confirmation change (but with as few ancestors in the mempool as
         // possible) if we cannot fund the transaction otherwise.
         if (wallet.m_spend_zero_conf_change) {
+        LogPrintf("selection 3\n");
             if (auto r3{AttemptSelection(wallet, value_to_select, CoinEligibilityFilter(0, 1, 2), vCoins, coin_selection_params)}) return r3;
+        LogPrintf("selection 4\n");
             if (auto r4{AttemptSelection(wallet, value_to_select, CoinEligibilityFilter(0, 1, std::min((size_t)4, max_ancestors/3), std::min((size_t)4, max_descendants/3)),
                                    vCoins, coin_selection_params)}) {
                 return r4;
             }
+        LogPrintf("selection 5\n");
             if (auto r5{AttemptSelection(wallet, value_to_select, CoinEligibilityFilter(0, 1, max_ancestors/2, max_descendants/2),
                                    vCoins, coin_selection_params)}) {
                 return r5;
@@ -711,6 +742,7 @@ std::optional<SelectionResult> SelectCoins(const CWallet& wallet, const std::vec
             // If partial groups are allowed, relax the requirement of spending OutputGroups (groups
             // of UTXOs sent to the same address, which are obviously controlled by a single wallet)
             // in their entirety.
+        LogPrintf("selection 6\n");
             if (auto r6{AttemptSelection(wallet, value_to_select, CoinEligibilityFilter(0, 1, max_ancestors-1, max_descendants-1, true /* include_partial_groups */),
                                    vCoins, coin_selection_params)}) {
                 return r6;
@@ -718,6 +750,7 @@ std::optional<SelectionResult> SelectCoins(const CWallet& wallet, const std::vec
             // Try with unsafe inputs if they are allowed. This may spend unconfirmed outputs
             // received from other wallets.
             if (coin_control.m_include_unsafe_inputs) {
+        LogPrintf("selection 7\n");
                 if (auto r7{AttemptSelection(wallet, value_to_select,
                     CoinEligibilityFilter(0 /* conf_mine */, 0 /* conf_theirs */, max_ancestors-1, max_descendants-1, true /* include_partial_groups */),
                     vCoins, coin_selection_params)}) {
@@ -728,6 +761,7 @@ std::optional<SelectionResult> SelectCoins(const CWallet& wallet, const std::vec
             // mempool ancestor/descendant policy to be accepted to mempool and broadcasted, but
             // OutputGroups use heuristics that may overestimate ancestor/descendant counts.
             if (!fRejectLongChains) {
+        LogPrintf("selection 8\n");
                 if (auto r8{AttemptSelection(wallet, value_to_select,
                                       CoinEligibilityFilter(0, 1, std::numeric_limits<uint64_t>::max(), std::numeric_limits<uint64_t>::max(), true /* include_partial_groups */),
                                       vCoins, coin_selection_params)}) {
@@ -1198,6 +1232,10 @@ static bool CreateTransactionInternal(
     // Get available coins
     std::vector<COutput> vAvailableCoins;
     AvailableCoins(wallet, vAvailableCoins, &coin_control, 1, MAX_MONEY, MAX_MONEY, 0);
+    LogPrintf("vAvailableCoins size: %d\n", vAvailableCoins.size());
+    for (auto& coin: vAvailableCoins) {
+        LogPrintf("coin: %s\n", coin.ToString(wallet));
+    }
 
     // Choose coins to use
     std::optional<SelectionResult> result = SelectCoins(wallet, vAvailableCoins, /* nTargetValue */ map_selection_target, coin_control, coin_selection_params);

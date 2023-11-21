@@ -619,6 +619,8 @@ bool SelectionResult::operator<(SelectionResult other) const
     Assert(m_waste.has_value());
     Assert(other.m_waste.has_value());
     // As this operator is only used in std::min_element, we want the result that has more inputs when waste are equal.
+    LogPrintf("m_waste: %d inputs size: %d\n", *m_waste, m_selected_inputs.size());
+    LogPrintf("other.m_waste: %d other inputs size: %d\n", *other.m_waste, other.m_selected_inputs.size());
     return *m_waste < *other.m_waste || (*m_waste == *other.m_waste && m_selected_inputs.size() > other.m_selected_inputs.size());
 }
 } // namespace wallet

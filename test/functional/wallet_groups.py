@@ -54,14 +54,27 @@ class WalletGroupTest(BitcoinTestFramework):
         self.log.info("Test sending transactions picks one UTXO group and leaves the rest")
         txid1 = self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(), 0.2)
         tx1 = self.nodes[1].getrawtransaction(txid1, True)
+        txid = tx1['txid']
+        print(f"txid: {txid}")
         # txid1 should have 1 input and 2 outputs
         assert_equal(1, len(tx1["vin"]))
         assert_equal(2+1, len(tx1["vout"]))
         # one output should be 0.2, the other should be ~0.3
+        for vin in tx1['vin']:
+            print(f"vin: {vin}")
+            tx = self.nodes[1].gettransaction(vin['txid'])
+            print(f"tx: {tx}")
+            # txout = self.nodes[1].gettxout(vin['txid'], vin['vout'])
+            # print(f"txout: {txout}")
+        for vout in tx1['vout']:
+            print(f"vout: {vout}")
         v = [vout["value"] for vout in tx1["vout"] if vout["scriptPubKey"]["type"] != "fee"]
+        print(f"v: {v}")
         v.sort()
+        print(f"v sorted: {v}")
         assert_approx(v[0], vexp=0.2, vspan=0.0001)
         assert_approx(v[1], vexp=0.3, vspan=0.0001)
+        assert False
 
         txid2 = self.nodes[2].sendtoaddress(self.nodes[0].getnewaddress(), 0.2)
         tx2 = self.nodes[2].getrawtransaction(txid2, True)
