@@ -1341,6 +1341,7 @@ RPCHelpMan unblindrawtransaction()
 
 static CTransactionRef SendGenerationTransaction(const CScript& asset_script, const CPubKey &asset_pubkey, const CScript& token_script, const CPubKey &token_pubkey, CAmount asset_amount, CAmount token_amount, IssuanceDetails* issuance_details, CWallet* pwallet)
 {
+    LogPrintf("sendgenerationtransaction start. get token and balance.\n");
     CAsset reissue_token = issuance_details->reissuance_token;
     CAmount curBalance = GetBalance(*pwallet).m_mine_trusted[reissue_token];
 
@@ -1348,6 +1349,7 @@ static CTransactionRef SendGenerationTransaction(const CScript& asset_script, co
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "No available reissuance tokens in wallet.");
     }
 
+    LogPrintf("sendgenerationtransaction create recipients\n");
     std::vector<CRecipient> vecSend;
     // Signal outputs to skip "funding" with fixed asset numbers 1, 2, ...
     // We don't know the asset during initial issuance until inputs are chosen
@@ -1375,13 +1377,16 @@ static CTransactionRef SendGenerationTransaction(const CScript& asset_script, co
     CCoinControl dummy_control;
     BlindDetails blind_details;
     CTransactionRef tx_ref;
+    LogPrintf("sendgenerationtransaction create transaction\n");
     if (!CreateTransaction(*pwallet, vecSend, tx_ref, nFeeRequired, nChangePosRet, error, dummy_control, fee_calc_out, true, &blind_details, issuance_details)) {
         throw JSONRPCError(RPC_WALLET_ERROR, error.original);
     }
 
     mapValue_t map_value;
+    LogPrintf("sendgenerationtransaction commit transaction\n");
     pwallet->CommitTransaction(tx_ref, std::move(map_value), {} /* orderForm */, &blind_details);
 
+    LogPrintf("sendgenerationtransaction return\n");
     return tx_ref;
 }
 
@@ -1412,16 +1417,19 @@ RPCHelpMan issueasset()
                 },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
+    LogPrintf("issueasset start. get wallet.\n");
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     if (!wallet) return NullUniValue;
     CWallet* const pwallet = wallet.get();
 
+    LogPrintf("issueasset lock mutex\n");
     LOCK(pwallet->cs_wallet);
 
     if (!g_con_elementsmode) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Issuance can only be done on elements-style chains. Note: `-regtest` is Bitcoin's regtest mode, instead try `-chain=<custom chain name>`");
     }
 
+    LogPrintf("issueasset parse values\n");
     CAmount nAmount = AmountFromValue(request.params[0]);
     CAmount nTokens = AmountFromValue(request.params[1]);
     if (nAmount == 0 && nTokens == 0) {
@@ -1436,10 +1444,13 @@ RPCHelpMan issueasset()
         contract_hash = ParseHashV(request.params[3], "contract_hash");
     }
 
-    if (!pwallet->IsLocked())
+    if (!pwallet->IsLocked()) {
+        LogPrintf("issueasset topupkeypool\n");
         pwallet->TopUpKeyPool();
+    }
 
     // Generate a new key that is added to wallet
+    LogPrintf("issueasset get blinding pubkeys\n");
     bilingual_str error;
     CPubKey newKey;
     CTxDestination asset_dest;
@@ -1464,22 +1475,28 @@ RPCHelpMan issueasset()
     IssuanceDetails issuance_details;
     issuance_details.blind_issuance = blind_issuances;
     issuance_details.contract_hash = contract_hash;
+    LogPrintf("issueasset send generation transaction\n");
     CTransactionRef tx_ref = SendGenerationTransaction(GetScriptForDestination(asset_dest), asset_dest_blindpub, GetScriptForDestination(token_dest), token_dest_blindpub, nAmount, nTokens, &issuance_details, pwallet);
 
     // Calculate asset type, assumes first vin is used for issuance
     CAsset asset;
     CAsset token;
     CHECK_NONFATAL(!tx_ref->vin.empty());
+    LogPrintf("issueasset generate asset entropy\n");
     GenerateAssetEntropy(issuance_details.entropy, tx_ref->vin[0].prevout, issuance_details.contract_hash);
+    LogPrintf("issueasset calculate asset\n");
     CalculateAsset(asset, issuance_details.entropy);
+    LogPrintf("issueasset calculate reissuance token\n");
     CalculateReissuanceToken(token, issuance_details.entropy, blind_issuances);
 
+    LogPrintf("issueasset return values\n");
     UniValue ret(UniValue::VOBJ);
     ret.pushKV("txid", tx_ref->GetHash().GetHex());
     ret.pushKV("vin", 0);
     ret.pushKV("entropy", issuance_details.entropy.GetHex());
     ret.pushKV("asset", asset.GetHex());
     ret.pushKV("token", token.GetHex());
+    LogPrintf("issueasset done\n");
     return ret;
 },
     };
@@ -1507,16 +1524,19 @@ RPCHelpMan reissueasset()
                 },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
+    LogPrintf("reissueasset start. get wallet.\n");
     std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
     if (!wallet) return NullUniValue;
     CWallet* const pwallet = wallet.get();
 
+    LogPrintf("reissueasset lock mutex\n");
     LOCK(pwallet->cs_wallet);
 
     if (!g_con_elementsmode) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Issuance can only be done on elements-style chains. Note: `-regtest` is Bitcoin's regtest mode, instead try `-chain=<custom chain name>`");
     }
 
+    LogPrintf("reissueasset parse values\n");
     std::string assetstr = request.params[0].get_str();
     CAsset asset = GetAssetFromString(assetstr);
 
@@ -1526,10 +1546,12 @@ RPCHelpMan reissueasset()
     }
 
     if (!pwallet->IsLocked()) {
+        LogPrintf("reissueasset topupkeypool\n");
         pwallet->TopUpKeyPool();
     }
 
     // Find the entropy and reissuance token in wallet
+    LogPrintf("reissueasset find tokens in wallet\n");
     IssuanceDetails issuance_details;
     issuance_details.reissuance_asset = asset;
     std::map<uint256, std::pair<CAsset, CAsset> > tokenMap = pwallet->GetReissuanceTokenTypes();
@@ -1547,6 +1569,7 @@ RPCHelpMan reissueasset()
     }
 
     // Add destination for the to-be-created asset
+    LogPrintf("reissueasset get blinding pubkeys\n");
     bilingual_str error;
     CTxDestination asset_dest;
     if (!pwallet->GetNewDestination(OutputType::BECH32, "", asset_dest, error)) {
@@ -1562,9 +1585,11 @@ RPCHelpMan reissueasset()
     CPubKey token_dest_blindpub = pwallet->GetBlindingPubKey(GetScriptForDestination(token_dest));
 
     // Attempt a send.
+    LogPrintf("reissueasset send generation transaction\n");
     CTransactionRef tx_ref = SendGenerationTransaction(GetScriptForDestination(asset_dest), asset_dest_blindpub, GetScriptForDestination(token_dest), token_dest_blindpub, nAmount, -1, &issuance_details, pwallet);
     CHECK_NONFATAL(!tx_ref->vin.empty());
 
+    LogPrintf("reissueasset return values\n");
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("txid", tx_ref->GetHash().GetHex());
     for (uint64_t i = 0; i < tx_ref->vin.size(); i++) {
@@ -1574,6 +1599,7 @@ RPCHelpMan reissueasset()
         }
     }
 
+    LogPrintf("reissueasset done\n");
     return obj;
 },
     };
