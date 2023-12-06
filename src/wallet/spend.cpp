@@ -923,17 +923,21 @@ static bool CreateTransactionInternal(
         BlindDetails* blind_details,
         const IssuanceDetails* issuance_details) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet)
 {
+    LogPrintf("createtransactioninternal start\n");
     if (blind_details || issuance_details) {
         assert(g_con_elementsmode);
     }
 
+    LogPrintf("createtransactioninternal reset blind details\n");
     if (blind_details) {
         // Clear out previous blinding/data info as needed
         resetBlindDetails(blind_details);
     }
 
+    LogPrintf("createtransactioninternal assert lock\n");
     AssertLockHeld(wallet.cs_wallet);
 
+    LogPrintf("createtransactioninternal create new tx\n");
     CMutableTransaction txNew; // The resulting transaction that we make
     txNew.nLockTime = GetLocktimeForNewTransaction(wallet.chain(), wallet.GetLastBlockHash(), wallet.GetLastBlockHeight());
 
@@ -973,6 +977,7 @@ static bool CreateTransactionInternal(
         }
     }
 
+    LogPrintf("createtransactioninternal make change map\n");
     // Create change script that will be used if we need change
     // ELEMENTS: A map that keeps track of the change script for each asset and also
     // the index of the reservedest used for that script (-1 if none).
@@ -1065,6 +1070,7 @@ static bool CreateTransactionInternal(
         }
     }
     assert(mapScriptChange.size() > 0);
+    LogPrintf("createtransactioninternal set sizes\n");
     CTxOut change_prototype_txout(mapScriptChange.begin()->first, 0, mapScriptChange.begin()->second.second);
     // TODO CA: Set this for each change output
     coin_selection_params.change_output_size = GetSerializeSize(change_prototype_txout);
@@ -1084,6 +1090,7 @@ static bool CreateTransactionInternal(
     }
 
     // Get size of spending the change output
+    LogPrintf("createtransactioninternal get change spend size\n");
     int change_spend_size = CalculateMaximumSignedInputSize(change_prototype_txout, &wallet);
     // If the wallet doesn't know how to sign change output, assume p2sh-p2wpkh
     // as lower-bound to allow BnB to do it's thing
@@ -1094,10 +1101,12 @@ static bool CreateTransactionInternal(
     }
 
     // Set discard feerate
+    LogPrintf("createtransactioninternal get discard feerate\n");
     coin_selection_params.m_discard_feerate = GetDiscardRate(wallet);
 
     // Get the fee rate to use effective values in coin selection
     FeeCalculation feeCalc;
+    LogPrintf("createtransactioninternal get min feerate\n");
     coin_selection_params.m_effective_feerate = GetMinimumFeeRate(wallet, coin_control, &feeCalc);
     // Do not, ever, assume that it's fine to change the fee rate if the user has explicitly
     // provided one
@@ -1129,6 +1138,7 @@ static bool CreateTransactionInternal(
     // ELEMENTS: If we have blinded inputs but no blinded outputs (which, since the wallet
     //  makes an effort to not produce change, is a common case) then we need to add a
     //  dummy output.
+    LogPrintf("createtransactioninternal check dummy\n");
     bool may_need_blinded_dummy = !!blind_details;
     for (const auto& recipient : vecSend)
     {
@@ -1169,6 +1179,7 @@ static bool CreateTransactionInternal(
     }
     // If we are going to issue an asset, add the issuance data to the noinputs_size so that
     // we allocate enough coins for them.
+    LogPrintf("createtransactioninternal check issuane details\n");
     if (issuance_details) {
         size_t issue_count = 0;
         for (unsigned int i = 0; i < txNew.vout.size(); i++) {
@@ -1200,6 +1211,7 @@ static bool CreateTransactionInternal(
     AvailableCoins(wallet, vAvailableCoins, &coin_control, 1, MAX_MONEY, MAX_MONEY, 0);
 
     // Choose coins to use
+    LogPrintf("createtransactioninternal select coins\n");
     std::optional<SelectionResult> result = SelectCoins(wallet, vAvailableCoins, /* nTargetValue */ map_selection_target, coin_control, coin_selection_params);
     if (!result) {
         error = _("Insufficient funds");
@@ -1259,6 +1271,7 @@ static bool CreateTransactionInternal(
         }
     }
 
+    LogPrintf("createtransactioninternal create change outputs\n");
     // Create all the change outputs in their respective places, inserting them
     // in increasing order so that none of them affect each others' indices
     for (unsigned int i = 0; i < change_pos.size(); i++) {
@@ -1315,6 +1328,7 @@ static bool CreateTransactionInternal(
     }
 
     // Add fee output.
+    LogPrintf("createtransactioninternal add fee output\n");
     if (g_con_elementsmode) {
         CTxOut fee(::policyAsset, 0, CScript());
         assert(fee.IsFee());
@@ -1356,6 +1370,7 @@ static bool CreateTransactionInternal(
     }
 
     // ELEMENTS add issuance details and blinding details
+    LogPrintf("createtransactioninternal add issuance and blinding details\n");
     std::vector<CKey> issuance_asset_keys;
     std::vector<CKey> issuance_token_keys;
     if (issuance_details) {
@@ -1376,8 +1391,11 @@ static bool CreateTransactionInternal(
             CAsset asset;
             CAsset token;
             // Initial issuance always uses vin[0]
+    LogPrintf("createtransactioninternal generate asset entropy\n");
             GenerateAssetEntropy(entropy, txNew.vin[0].prevout, issuance_details->contract_hash);
+    LogPrintf("createtransactioninternal calculate asset\n");
             CalculateAsset(asset, entropy);
+    LogPrintf("createtransactioninternal calculate reissuance token\n");
             CalculateReissuanceToken(token, entropy, issuance_details->blind_issuance);
             CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(txNew.vin[0].prevout.hash.begin(), txNew.vin[0].prevout.hash.end()) << txNew.vin[0].prevout.n);
             txNew.vin[0].assetIssuance.assetEntropy = issuance_details->contract_hash;
@@ -1410,6 +1428,7 @@ static bool CreateTransactionInternal(
             }
         // Asset being reissued with explicitly named asset/token
         } else if (asset_index != -1) {
+    LogPrintf("createtransactioninternal else asset index branch\n");
             assert(reissuance_index != -1);
             // Fill in output with issuance
             txNew.vout[asset_index].nAsset = issuance_details->reissuance_asset;
@@ -1433,14 +1452,17 @@ static bool CreateTransactionInternal(
     }
 
     // Do "initial blinding" for fee estimation purposes
+    LogPrintf("createtransactioninternal do initial blinding\n");
     TxSize tx_sizes;
     CMutableTransaction tx_blinded = txNew;
     if (blind_details) {
+    LogPrintf("createtransactioninternal fill blind details\n");
         if (!fillBlindDetails(blind_details, &wallet, tx_blinded, selected_coins, error)) {
             return false;
         }
         txNew = tx_blinded; // sigh, `fillBlindDetails` may have modified txNew
 
+    LogPrintf("createtransactioninternal blind transaction\n");
         int ret = BlindTransaction(blind_details->i_amount_blinds, blind_details->i_asset_blinds, blind_details->i_assets, blind_details->i_amounts, blind_details->o_amount_blinds, blind_details->o_asset_blinds, blind_details->o_pubkeys, issuance_asset_keys, issuance_token_keys, tx_blinded);
         assert(ret != -1);
         if (ret != blind_details->num_to_blind) {
@@ -1448,6 +1470,7 @@ static bool CreateTransactionInternal(
             return false;
         }
 
+    LogPrintf("createtransactioninternal calc max signed tx size\n");
         tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), &wallet, &coin_control);
     } else {
         tx_sizes = CalculateMaximumSignedTxSize(CTransaction(txNew), &wallet, &coin_control);
@@ -1472,6 +1495,7 @@ static bool CreateTransactionInternal(
     // 1. The change output would be dust
     // 2. The change is within the (almost) exact match window, i.e. it is less than or equal to the cost of the change output (cost_of_change)
     CAmount change_amount = change_position->nValue.GetAmount();
+    LogPrintf("createtransactioninternal do drop change to fees test\n");
     if (IsDust(*change_position, coin_selection_params.m_discard_feerate) || change_amount <= coin_selection_params.m_cost_of_change)
     {
         bool was_blinded = blind_details && blind_details->o_pubkeys[nChangePosInOut].IsValid();
@@ -1529,6 +1553,7 @@ static bool CreateTransactionInternal(
 
     // The only time that fee_needed should be less than the amount available for fees (in change_and_fee - change_amount) is when
     // we are subtracting the fee from the outputs. If this occurs at any other time, it is a bug.
+    LogPrintf("createtransactioninternal check subtract fee outputs\n");
     if (!coin_selection_params.m_subtract_fee_outputs && fee_needed > map_change_and_fee.at(policyAsset) - change_amount) {
         wallet.WalletLogPrintf("ERROR: not enough coins to cover for fee (needed: %d, total: %d, change: %d)\n",
             fee_needed, map_change_and_fee.at(policyAsset), change_amount);
@@ -1587,6 +1612,7 @@ static bool CreateTransactionInternal(
     }
 
     // ELEMENTS: Give up if change keypool ran out and change is required
+    LogPrintf("createtransactioninternal check change keypool\n");
     for (const auto& maybe_change_asset : change_pos) {
         if (maybe_change_asset) {
             auto used = mapScriptChange.extract(*maybe_change_asset);
@@ -1597,6 +1623,7 @@ static bool CreateTransactionInternal(
     }
 
     // ELEMENTS update fee output
+    LogPrintf("createtransactioninternal update fee output\n");
     if (g_con_elementsmode) {
         for (auto& txout : txNew.vout) {
             if (txout.IsFee()) {
@@ -1607,6 +1634,7 @@ static bool CreateTransactionInternal(
     }
 
     // ELEMENTS do actual blinding
+    LogPrintf("createtransactioninternal do actual blinding\n");
     if (blind_details) {
         // Print blinded transaction info before we possibly blow it away when !sign.
         std::string summary = "CreateTransaction created blinded transaction:\nIN: ";
@@ -1646,6 +1674,7 @@ static bool CreateTransactionInternal(
         }
 
         if (sign) {
+    LogPrintf("createtransactioninternal blind transaction actual\n");
             int ret = BlindTransaction(blind_details->i_amount_blinds, blind_details->i_asset_blinds, blind_details->i_assets, blind_details->i_amounts, blind_details->o_amount_blinds, blind_details->o_asset_blinds,  blind_details->o_pubkeys, issuance_asset_keys, issuance_token_keys, txNew);
             assert(ret != -1);
             if (ret != blind_details->num_to_blind) {
@@ -1657,6 +1686,7 @@ static bool CreateTransactionInternal(
     }
 
     // Release any change keys that we didn't use.
+    LogPrintf("createtransactioninternal release unused keys\n");
     for (const auto& it : mapScriptChange) {
         int index = it.second.first;
         if (index < 0) {
@@ -1668,6 +1698,7 @@ static bool CreateTransactionInternal(
 
 
     if (sign) {
+    LogPrintf("createtransactioninternal sign transaction\n");
         if (!wallet.SignTransaction(txNew)) {
             error = _("Signing transaction failed");
             return false;
@@ -1675,6 +1706,7 @@ static bool CreateTransactionInternal(
     }
 
     // Normalize the witness in case it is not serialized before mempool
+    LogPrintf("createtransactioninternal normalize witness\n");
     if (!txNew.HasWitness()) {
         txNew.witness.SetNull();
     }
@@ -1683,6 +1715,7 @@ static bool CreateTransactionInternal(
     tx = MakeTransactionRef(std::move(txNew));
 
     // Limit size
+    LogPrintf("createtransactioninternal limit size\n");
     if ((sign && GetTransactionWeight(*tx) > MAX_STANDARD_TX_WEIGHT) ||
         (!sign && tx_sizes.weight > MAX_STANDARD_TX_WEIGHT))
     {
@@ -1718,6 +1751,7 @@ static bool CreateTransactionInternal(
               feeCalc.est.fail.start, feeCalc.est.fail.end,
               (feeCalc.est.fail.totalConfirmed + feeCalc.est.fail.inMempool + feeCalc.est.fail.leftMempool) > 0.0 ? 100 * feeCalc.est.fail.withinTarget / (feeCalc.est.fail.totalConfirmed + feeCalc.est.fail.inMempool + feeCalc.est.fail.leftMempool) : 0.0,
               feeCalc.est.fail.withinTarget, feeCalc.est.fail.totalConfirmed, feeCalc.est.fail.inMempool, feeCalc.est.fail.leftMempool);
+    LogPrintf("createtransactioninternal end\n");
     return true;
 }
 
@@ -1734,6 +1768,7 @@ bool CreateTransaction(
         BlindDetails* blind_details,
         const IssuanceDetails* issuance_details)
 {
+    LogPrintf("createtransaction start\n");
     if (vecSend.empty()) {
         error = _("Transaction must have at least one recipient");
         return false;
@@ -1756,8 +1791,10 @@ bool CreateTransaction(
 
     int nChangePosIn = nChangePosInOut;
     Assert(!tx); // tx is an out-param. TODO change the return type from bool to tx (or nullptr)
+    LogPrintf("createtransaction call internal\n");
     bool res = CreateTransactionInternal(wallet, vecSend, tx, nFeeRet, nChangePosInOut, error, coin_control, fee_calc_out, sign, blind_details, issuance_details);
     // try with avoidpartialspends unless it's enabled already
+    LogPrintf("createtransaction returned from internal\n");
     if (res && nFeeRet > 0 /* 0 means non-functional fee rate estimation */ && wallet.m_max_aps_fee > -1 && !coin_control.m_avoid_partial_spends) {
         CCoinControl tmp_cc = coin_control;
         tmp_cc.m_avoid_partial_spends = true;
@@ -1781,6 +1818,7 @@ bool CreateTransaction(
             }
         }
     }
+    LogPrintf("createtransaction end\n");
     return res;
 }
 
