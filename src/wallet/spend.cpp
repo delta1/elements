@@ -179,6 +179,7 @@ TxSize CalculateMaximumSignedTxSize(const CTransaction &tx, const CWallet *walle
 
 void AvailableCoins(const CWallet& wallet, std::vector<COutput> &vCoins, const CCoinControl *coinControl, const CAmount &nMinimumAmount, const CAmount &nMaximumAmount, const CAmount &nMinimumSumAmount, const uint64_t nMaximumCount, const CAsset* asset_filter) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet)
 {
+    LogPrintf("availablecoins start\n");
     AssertLockHeld(wallet.cs_wallet);
 
     vCoins.clear();
@@ -191,6 +192,7 @@ void AvailableCoins(const CWallet& wallet, std::vector<COutput> &vCoins, const C
     const bool only_safe = {coinControl ? !coinControl->m_include_unsafe_inputs : true};
 
     std::set<uint256> trusted_parents;
+    LogPrintf("availablecoins start loop\n");
     for (const auto& entry : wallet.mapWallet)
     {
         const uint256& wtxid = entry.first;
@@ -282,6 +284,7 @@ void AvailableCoins(const CWallet& wallet, std::vector<COutput> &vCoins, const C
                 continue;
             }
 
+    LogPrintf("availablecoins getsolvingprovider\n");
             std::unique_ptr<SigningProvider> provider = wallet.GetSolvingProvider(wtx.tx->vout[i].scriptPubKey);
 
             bool solvable = provider ? IsSolvable(*provider, wtx.tx->vout[i].scriptPubKey) : false;
@@ -294,12 +297,14 @@ void AvailableCoins(const CWallet& wallet, std::vector<COutput> &vCoins, const C
                 nTotal += outValue;
 
                 if (nTotal >= nMinimumSumAmount) {
+    LogPrintf("availablecoins return1\n");
                     return;
                 }
             }
 
             // Checks the maximum number of UTXO's.
             if (nMaximumCount > 0 && vCoins.size() >= nMaximumCount) {
+    LogPrintf("availablecoins return2\n");
                 return;
             }
         }
@@ -1179,7 +1184,7 @@ static bool CreateTransactionInternal(
     }
     // If we are going to issue an asset, add the issuance data to the noinputs_size so that
     // we allocate enough coins for them.
-    LogPrintf("createtransactioninternal check issuane details\n");
+    LogPrintf("createtransactioninternal check issuance details\n");
     if (issuance_details) {
         size_t issue_count = 0;
         for (unsigned int i = 0; i < txNew.vout.size(); i++) {
@@ -1201,6 +1206,7 @@ static bool CreateTransactionInternal(
         }
     }
 
+    LogPrintf("createtransactioninternal get available coins\n");
     // Include the fees for things that aren't inputs, excluding the change output
     const CAmount not_input_fees = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.tx_noinputs_size);
     CAmountMap map_selection_target = map_recipients_sum;
