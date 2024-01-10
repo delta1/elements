@@ -213,7 +213,7 @@ struct TestMemPoolEntryHelper
     TestMemPoolEntryHelper &SpendsCoinbase(bool _flag) { spendsCoinbase = _flag; return *this; }
     TestMemPoolEntryHelper &SigOpsCost(unsigned int _sigopsCost) { sigOpCost = _sigopsCost; return *this; }
     // ELEMENTS:
-    TestMemPoolEntryHelper &PeginsSpent(std::set<std::pair<uint256, COutPoint> >& _setPeginsSpent) { setPeginsSpent = _setPeginsSpent; return *this; }
+    TestMemPoolEntryHelper &PeginsSpent(std::set<std::pair<uint256, COutPoint>>& _setPeginsSpent) { setPeginsSpent = _setPeginsSpent; return *this; }
 };
 
 CBlock getBlock13b8a();

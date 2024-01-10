@@ -49,8 +49,8 @@ public:
         return m_offline_keys.size();
     }
 
-    static bool FromBytes(CPAKList &paklist, const std::vector<std::vector<unsigned char> >& offline_keys, const std::vector<std::vector<unsigned char> >& online_keys);
-    void ToBytes(std::vector<std::vector<unsigned char> >& offline_keys, std::vector<std::vector<unsigned char> >& online_keys) const;
+    static bool FromBytes(CPAKList &paklist, const std::vector<std::vector<unsigned char>>& offline_keys, const std::vector<std::vector<unsigned char>>& online_keys);
+    void ToBytes(std::vector<std::vector<unsigned char>>& offline_keys, std::vector<std::vector<unsigned char>>& online_keys) const;
 };
 
 /**

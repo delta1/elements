@@ -263,7 +263,7 @@ bool IsValidPeginWitness(const CScriptWitness& pegin_witness, const std::vector<
     // of Bitcoin serialization. This is useful for further abstraction by outsourcing
     // the other validity checks to RPC calls.
 
-    const std::vector<std::vector<unsigned char> >& stack = pegin_witness.stack;
+    const std::vector<std::vector<unsigned char>>& stack = pegin_witness.stack;
     // Must include all elements
     if (stack.size() != 6) {
         err_msg = "Not enough stack items.";

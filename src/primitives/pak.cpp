@@ -39,7 +39,7 @@ bool CPAKList::operator==(const CPAKList &other) const
     return true;
 }
 
-bool CPAKList::FromBytes(CPAKList &paklist, const std::vector<std::vector<unsigned char> >& offline_keys_bytes, const std::vector<std::vector<unsigned char> >& online_keys_bytes)
+bool CPAKList::FromBytes(CPAKList &paklist, const std::vector<std::vector<unsigned char>>& offline_keys_bytes, const std::vector<std::vector<unsigned char>>& online_keys_bytes)
 {
     if(offline_keys_bytes.size() != online_keys_bytes.size()
         || offline_keys_bytes.size() > SECP256K1_WHITELIST_MAX_N_KEYS) {
@@ -65,7 +65,7 @@ bool CPAKList::FromBytes(CPAKList &paklist, const std::vector<std::vector<unsign
     return true;
 }
 
-void CPAKList::ToBytes(std::vector<std::vector<unsigned char> >& offline_keys, std::vector<std::vector<unsigned char> >& online_keys) const
+void CPAKList::ToBytes(std::vector<std::vector<unsigned char>>& offline_keys, std::vector<std::vector<unsigned char>>& online_keys) const
 {
     offline_keys.resize(0);
     online_keys.resize(0);

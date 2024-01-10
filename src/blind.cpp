@@ -188,7 +188,7 @@ bool UnblindConfidentialPair(const CKey& blinding_key, const CConfidentialValue&
 }
 
 // Create surjection proof
-bool SurjectOutput(CTxOutWitness& txoutwit, const std::vector<secp256k1_fixed_asset_tag>& surjection_targets, const std::vector<secp256k1_generator>& target_asset_generators, const std::vector<uint256 >& target_asset_blinders, const std::vector<const unsigned char*> asset_blindptrs, const secp256k1_generator& output_asset_gen, const CAsset& asset)
+bool SurjectOutput(CTxOutWitness& txoutwit, const std::vector<secp256k1_fixed_asset_tag>& surjection_targets, const std::vector<secp256k1_generator>& target_asset_generators, const std::vector<uint256>& target_asset_blinders, const std::vector<const unsigned char*> asset_blindptrs, const secp256k1_generator& output_asset_gen, const CAsset& asset)
 {
     int ret;
     // 1 to 3 targets
@@ -283,7 +283,7 @@ void CreateValueCommitment(CConfidentialValue& conf_value, secp256k1_pedersen_co
     assert(conf_value.IsValid());
 }
 
-int BlindTransaction(std::vector<uint256 >& input_value_blinding_factors, const std::vector<uint256 >& input_asset_blinding_factors, const std::vector<CAsset >& input_assets, const std::vector<CAmount >& input_amounts, std::vector<uint256 >& out_val_blind_factors, std::vector<uint256 >& out_asset_blind_factors, const std::vector<CPubKey>& output_pubkeys, const std::vector<CKey>& issuance_blinding_privkey, const std::vector<CKey>& token_blinding_privkey, CMutableTransaction& tx, std::vector<std::vector<unsigned char> >* auxiliary_generators)
+int BlindTransaction(std::vector<uint256>& input_value_blinding_factors, const std::vector<uint256>& input_asset_blinding_factors, const std::vector<CAsset>& input_assets, const std::vector<CAmount>& input_amounts, std::vector<uint256>& out_val_blind_factors, std::vector<uint256>& out_asset_blind_factors, const std::vector<CPubKey>& output_pubkeys, const std::vector<CKey>& issuance_blinding_privkey, const std::vector<CKey>& token_blinding_privkey, CMutableTransaction& tx, std::vector<std::vector<unsigned char>>* auxiliary_generators)
 {
     // Sanity check input data and output_pubkey size, clear other output data
     assert(tx.vout.size() >= output_pubkeys.size());
