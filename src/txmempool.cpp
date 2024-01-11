@@ -118,6 +118,11 @@ void CTxMemPoolEntry::UpdateLockPoints(const LockPoints& lp)
 
 size_t CTxMemPoolEntry::GetTxSize() const
 {
+    // ELEMENTS: calculate discounted vsize if enabled for CTs
+    if (Params().GetAcceptDiscountedCT() && tx->IsConfidential()) {
+        return GetDiscountedVirtualTransactionSize(*tx);
+    }
+
     return GetVirtualTransactionSize(nTxWeight, sigOpCost);
 }
 

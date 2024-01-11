@@ -56,6 +56,8 @@ class SighashRangeproofTest(BitcoinTestFramework):
             "-con_blocksubsidy=0",
             "-con_connect_genesis_outputs=1",
             "-txindex=1",
+            "-accept_discounted_ct=0", # fixes max-fee-exceeded for discounted CT
+            "-create_discounted_ct=0",
         ]] * self.num_nodes
         self.extra_args[0].append("-anyonecanspendaremine=1") # first node gets the coins
 

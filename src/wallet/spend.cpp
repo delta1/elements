@@ -174,6 +174,11 @@ TxSize CalculateMaximumSignedTxSize(const CTransaction &tx, const CWallet *walle
     CTransaction ctx(txNew);
     int64_t vsize = GetVirtualTransactionSize(ctx);
     int64_t weight = GetTransactionWeight(ctx);
+    // ELEMENTS: use discounted vsize for CTs if enabled
+    if (Params().GetCreateDiscountedCT() && tx.IsConfidential()) {
+        vsize = GetDiscountedVirtualTransactionSize(ctx);
+    }
+
     return TxSize{vsize, weight};
 }
 

@@ -135,4 +135,10 @@ static inline int64_t GetVirtualTransactionInputSize(const CTransaction& tx)
     return GetVirtualTransactionInputSize(tx, 0, 0, 0);
 }
 
+// ELEMENTS: use the serialized size without witness for discounted vsize of Confidential Transactions
+static inline int64_t GetDiscountedVirtualTransactionSize(const CTransaction& tx)
+{
+    return ::GetSerializeSize(tx, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
+}
+
 #endif // BITCOIN_POLICY_POLICY_H

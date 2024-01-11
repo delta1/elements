@@ -515,6 +515,8 @@ public:
     const uint32_t nLockTime;
     // For elements we need to keep track of some extra state for script witness outside of vin
     const CTxWitness witness;
+    // ELEMENTS: enable discounted fees for Confidential Transactions
+    bool IsConfidential() const;
 
 private:
     /** Memory only. */
