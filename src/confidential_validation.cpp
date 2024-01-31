@@ -65,6 +65,7 @@ bool CRangeCheck::operator()() {
 bool CBalanceCheck::operator()() {
     if (!secp256k1_pedersen_verify_tally(secp256k1_ctx_verify_amounts, vpCommitsIn.data(), vpCommitsIn.size(), vpCommitsOut.data(), vpCommitsOut.size())) {
         error = SCRIPT_ERR_PEDERSEN_TALLY;
+        LogPrintf("cbalancecheck error: %d\n", error);
         return false;
     }
 
@@ -131,14 +132,27 @@ static bool VerifyIssuanceAmount(secp256k1_pedersen_commitment& value_commit, se
     return true;
 }
 
+static void log_hex(unsigned char* data, size_t size) {
+    size_t i;
+    LogPrintf("commit_hex: ");
+    for (i = 0; i < size; i++) {
+        LogPrintf("%02x", data[i]);
+    }
+    LogPrintf("\n");
+}
+
 bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, std::vector<CCheck*>* checks, const bool store_result) {
+    LogPrintf("VerifyAmounts\n");
+    LogPrintf("checks == nullptr? %d\n", checks == nullptr);
     assert(!tx.IsCoinBase());
     assert(inputs.size() == tx.vin.size());
 
     std::vector<secp256k1_pedersen_commitment> vData;
-    std::vector<secp256k1_pedersen_commitment *> vpCommitsIn, vpCommitsOut;
+    std::vector<secp256k1_pedersen_commitment*> vpCommitsIn, vpCommitsOut;
 
-    vData.reserve((tx.vin.size() + tx.vout.size() + GetNumIssuances(tx)));
+    auto num = GetNumIssuances(tx);
+    LogPrintf("vin: %d vout: %d num_iss: %d\n", tx.vin.size(), tx.vout.size(), num);
+    vData.reserve((tx.vin.size() + tx.vout.size() + num));
     secp256k1_pedersen_commitment *p = vData.data();
     secp256k1_pedersen_commitment commit;
     secp256k1_generator gen;
@@ -160,37 +174,54 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
         const CConfidentialValue& val = inputs[i].nValue;
         const CConfidentialAsset& asset = inputs[i].nAsset;
 
-        if (val.IsNull() || asset.IsNull())
+        if (val.IsNull() || asset.IsNull()) {
+            LogPrintf("valisnull\n");
             return false;
+        }
 
         if (asset.IsExplicit()) {
             ret = secp256k1_generator_generate(secp256k1_ctx_verify_amounts, &gen, asset.GetAsset().begin());
             assert(ret != 0);
         }
         else if (asset.IsCommitment()) {
-            if (secp256k1_generator_parse(secp256k1_ctx_verify_amounts, &gen, &asset.vchCommitment[0]) != 1)
+            if (secp256k1_generator_parse(secp256k1_ctx_verify_amounts, &gen, &asset.vchCommitment[0]) != 1) {
+                LogPrintf("genparse\n");
                 return false;
+            }
         }
         else {
+            LogPrintf("elsefalse\n");
             return false;
         }
 
         target_generators.push_back(gen);
 
         if (val.IsExplicit()) {
+            LogPrintf("in val is explicit: %d\n", val.GetAmount());
             if (!MoneyRange(val.GetAmount()))
+            {
+                LogPrintf("moneyrange\n");
                 return false;
+            }
 
             // Fails if val.GetAmount() == 0
-            if (secp256k1_pedersen_commit(secp256k1_ctx_verify_amounts, &commit, explicit_blinds, val.GetAmount(), &gen) != 1)
+            if (secp256k1_pedersen_commit(secp256k1_ctx_verify_amounts, &commit, explicit_blinds, val.GetAmount(), &gen) != 1) {
+                LogPrintf("pedcommit\n");
                 return false;
+            }
         } else if (val.IsCommitment()) {
-            if (secp256k1_pedersen_commitment_parse(secp256k1_ctx_verify_amounts, &commit, &val.vchCommitment[0]) != 1)
+            LogPrintf("in val is commitment: %s\n", val.GetHex());
+            if (secp256k1_pedersen_commitment_parse(secp256k1_ctx_verify_amounts, &commit, &val.vchCommitment[0]) != 1) {
+                LogPrintf("pedparse\n");
                 return false;
+            }
         } else {
+                LogPrintf("else2\n");
                 return false;
         }
 
+        LogPrintf("input commitment\n");
+        log_hex(commit.data, sizeof(commit.data));
         vData.push_back(commit);
         vpCommitsIn.push_back(p);
         p++;
@@ -228,6 +259,7 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
             // Must check that prevout is the blinded issuance token
             // prevout's asset tag = assetTokenID + assetBlindingNonce
             if (secp256k1_generator_generate_blinded(secp256k1_ctx_verify_amounts, &gen, assetTokenID.begin(), issuance.assetBlindingNonce.begin()) != 1) {
+                LogPrintf("genblind\n");
                 return false;
             }
             // Serialize the generator for direct comparison
@@ -236,18 +268,20 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
 
             // Belt-and-suspenders: Check that asset commitment from issuance input is correct size
             if (asset.vchCommitment.size() != sizeof(derived_generator)) {
+                LogPrintf("sizegen\n");
                 return false;
             }
 
             // We have already checked the outputs' generator commitment for general validity, so directly compare serialized bytes
             if (memcmp(asset.vchCommitment.data(), derived_generator, sizeof(derived_generator))) {
+                LogPrintf("comparebytes\n");
                 return false;
             }
         }
 
         // Process issuance of asset
-
         if (!issuance.nAmount.IsValid()) {
+                LogPrintf("isvalid\n");
             return false;
         }
         if (!issuance.nAmount.IsNull()) {
@@ -255,25 +289,30 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
             // This can be relaxed in a future update as a HF by passing in an empty rangeproof
             // to `VerifyIssuanceAmount` instead.
             if (i >= tx.witness.vtxinwit.size()) {
+                LogPrintf("witsize\n");
                 return false;
             }
             if (!VerifyIssuanceAmount(commit, gen, assetID, issuance.nAmount, tx.witness.vtxinwit[i].vchIssuanceAmountRangeproof, checks, store_result)) {
+                LogPrintf("verifyissuanceamount\n");
                 return false;
             }
             target_generators.push_back(gen);
+        LogPrintf("issuance namount commitment\n");
+        log_hex(commit.data, sizeof(commit.data));
             vData.push_back(commit);
             vpCommitsIn.push_back(p);
             p++;
         }
 
         // Process issuance of reissuance tokens
-
         if (!issuance.nInflationKeys.IsValid()) {
+                LogPrintf("inflationkeys\n");
             return false;
         }
         if (!issuance.nInflationKeys.IsNull()) {
             // Only initial issuance can have reissuance tokens
             if (!issuance.assetBlindingNonce.IsNull()) {
+                LogPrintf("assetblindingnonce\n");
                 return false;
             }
 
@@ -281,12 +320,16 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
             // This can be relaxed in a future update as a HF by passing in an empty rangeproof
             // to `VerifyIssuanceAmount` instead.
             if (i >= tx.witness.vtxinwit.size()) {
+                LogPrintf("witsize2\n");
                 return false;
             }
             if (!VerifyIssuanceAmount(commit, gen, assetTokenID, issuance.nInflationKeys, tx.witness.vtxinwit[i].vchInflationKeysRangeproof, checks, store_result)) {
+                LogPrintf("verifyissuance2\n");
                 return false;
             }
             target_generators.push_back(gen);
+        LogPrintf("issuance inflationkeys commitment\n");
+        log_hex(commit.data, sizeof(commit.data));
             vData.push_back(commit);
             vpCommitsIn.push_back(p);
             p++;
@@ -298,27 +341,42 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
         const CConfidentialValue& val = tx.vout[i].nValue;
         const CConfidentialAsset& asset = tx.vout[i].nAsset;
         if (!asset.IsValid())
+        {
+            LogPrintf("false\n");
             return false;
+        }
         if (!val.IsValid())
+        {
+            LogPrintf("false\n");
             return false;
+        }
         if (!tx.vout[i].nNonce.IsValid())
+        {
+                LogPrintf("false\n");
             return false;
+        }
 
         if (asset.IsExplicit()) {
             ret = secp256k1_generator_generate(secp256k1_ctx_verify_amounts, &gen, asset.GetAsset().begin());
             assert(ret != 0);
         }
         else if (asset.IsCommitment()) {
-            if (secp256k1_generator_parse(secp256k1_ctx_verify_amounts, &gen, &asset.vchCommitment[0]) != 1)
+            if (secp256k1_generator_parse(secp256k1_ctx_verify_amounts, &gen, &asset.vchCommitment[0]) != 1) {
+                LogPrintf("false\n");
                 return false;
+            }
         }
         else {
+                LogPrintf("false\n");
             return false;
         }
 
         if (val.IsExplicit()) {
-            if (!MoneyRange(val.GetAmount()))
+            LogPrintf("out val is explicit: %d\n", val.GetAmount());
+            if (!MoneyRange(val.GetAmount())) {
+                LogPrintf("false\n");
                 return false;
+            }
 
             if (val.GetAmount() == 0) {
                 if (tx.vout[i].scriptPubKey.IsUnspendable()) {
@@ -326,6 +384,7 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
                 } else {
                     // No spendable 0-value outputs
                     // Reason: A spendable output of 0 reissuance tokens would allow reissuance without reissuance tokens.
+                LogPrintf("false\n");
                     return false;
                 }
             }
@@ -335,19 +394,29 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
             assert(ret == 1);
         }
         else if (val.IsCommitment()) {
-            if (secp256k1_pedersen_commitment_parse(secp256k1_ctx_verify_amounts, &commit, &val.vchCommitment[0]) != 1)
+            LogPrintf("out val is commitment: %d\n", val.GetHex());
+            if (secp256k1_pedersen_commitment_parse(secp256k1_ctx_verify_amounts, &commit, &val.vchCommitment[0]) != 1) {
+                LogPrintf("false\n");
                 return false;
+            }
         } else {
+                LogPrintf("false\n");
             return false;
         }
 
+        LogPrintf("output commitment\n");
+        log_hex(commit.data, sizeof(commit.data));
         vData.push_back(commit);
         vpCommitsOut.push_back(p);
         p++;
     }
 
     // Check balance
+    LogPrintf("balancecheck in: %d out: %d vdata: %d\n", vpCommitsIn.size(), vpCommitsOut.size(), vData.size());
     if (QueueCheck(checks, new CBalanceCheck(vData, vpCommitsIn, vpCommitsOut)) != SCRIPT_ERR_OK) {
+        LogPrintf("balancecheck\n");
+        LogPrintf("balancecheck in: %d out: %d\n", vpCommitsIn.size(), vpCommitsOut.size());
+        LogPrintf("vdata size: %d\n", vData.size());
         return false;
     }
 
@@ -360,7 +429,10 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
         if (val.IsExplicit())
         {
             if (ptxoutwit && !ptxoutwit->vchRangeproof.empty())
+            {
+                LogPrintf("false\n");
                 return false;
+            }
             continue;
         }
         if (asset.IsExplicit()) {
@@ -369,9 +441,11 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
             secp256k1_generator_serialize(secp256k1_ctx_verify_amounts, &vchAssetCommitment[0], &gen);
         }
         if (!ptxoutwit) {
+                LogPrintf("false\n");
             return false;
         }
         if (QueueCheck(checks, new CRangeCheck(&val, ptxoutwit->vchRangeproof, vchAssetCommitment, tx.vout[i].scriptPubKey, store_result)) != SCRIPT_ERR_OK) {
+                LogPrintf("false\n");
             return false;
         }
     }
@@ -384,24 +458,35 @@ bool VerifyAmounts(const std::vector<CTxOut>& inputs, const CTransaction& tx, st
         // No need for surjection proof
         if (asset.IsExplicit()) {
             if (ptxoutwit && !ptxoutwit->vchSurjectionproof.empty()) {
+                LogPrintf("false\n");
                 return false;
             }
             continue;
         }
-        if (!ptxoutwit)
+        if (!ptxoutwit) {
+                LogPrintf("false\n");
             return false;
+        }
         if (secp256k1_generator_parse(secp256k1_ctx_verify_amounts, &gen, &asset.vchCommitment[0]) != 1)
+        {
+                LogPrintf("false\n");
             return false;
+        }
 
         secp256k1_surjectionproof proof;
         if (secp256k1_surjectionproof_parse(secp256k1_ctx_verify_amounts, &proof, &ptxoutwit->vchSurjectionproof[0], ptxoutwit->vchSurjectionproof.size()) != 1)
+        {
+                LogPrintf("false\n");
             return false;
+        }
 
         if (QueueCheck(checks, new CSurjectionCheck(proof, target_generators, gen, wtxid, store_result)) != SCRIPT_ERR_OK) {
+                LogPrintf("false\n");
             return false;
         }
     }
 
+                LogPrintf("true\n");
     return true;
 }
 

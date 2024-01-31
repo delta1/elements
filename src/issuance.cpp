@@ -1,5 +1,6 @@
 
 #include <issuance.h>
+#include <logging.h>
 
 #include <primitives/transaction.h>
 #include <consensus/amount.h>
@@ -17,6 +18,7 @@ size_t GetNumIssuances(const CTransaction& tx)
             }
         }
     }
+    LogPrintf("num_issuances: %d\n", num_issuances);
     return num_issuances;
 }
 

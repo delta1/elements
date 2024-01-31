@@ -1374,13 +1374,14 @@ static CTransactionRef SendGenerationTransaction(const CScript& asset_script, co
     FeeCalculation fee_calc_out;
     CCoinControl dummy_control;
     BlindDetails blind_details;
+    auto temp = issuance_details->blind_issuance ? &blind_details : nullptr;
     CTransactionRef tx_ref;
-    if (!CreateTransaction(*pwallet, vecSend, tx_ref, nFeeRequired, nChangePosRet, error, dummy_control, fee_calc_out, true, &blind_details, issuance_details)) {
+    if (!CreateTransaction(*pwallet, vecSend, tx_ref, nFeeRequired, nChangePosRet, error, dummy_control, fee_calc_out, true, temp, issuance_details)) {
         throw JSONRPCError(RPC_WALLET_ERROR, error.original);
     }
 
     mapValue_t map_value;
-    pwallet->CommitTransaction(tx_ref, std::move(map_value), {} /* orderForm */, &blind_details);
+    pwallet->CommitTransaction(tx_ref, std::move(map_value), {} /* orderForm */, temp);
 
     return tx_ref;
 }
@@ -1493,6 +1494,7 @@ RPCHelpMan reissueasset()
                 {
                     {"asset", RPCArg::Type::STR, RPCArg::Optional::NO, "The asset you want to re-issue. The corresponding token must be in your wallet."},
                     {"assetamount", RPCArg::Type::AMOUNT, RPCArg::Optional::NO, "Amount of additional asset to generate. Note that the amount is BTC-like, with 8 decimal places."},
+                    {"blind", RPCArg::Type::BOOL, RPCArg::Default{true}, "Whether to blind the reissuance."},
                 },
                 RPCResult{
                     RPCResult::Type::OBJ, "", "",
@@ -1524,6 +1526,7 @@ RPCHelpMan reissueasset()
     if (nAmount <= 0) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Reissuance must create a non-zero amount.");
     }
+    bool blind_issuances = request.params.size() < 3 || request.params[2].get_bool();
 
     if (!pwallet->IsLocked()) {
         pwallet->TopUpKeyPool();
@@ -1532,7 +1535,9 @@ RPCHelpMan reissueasset()
     // Find the entropy and reissuance token in wallet
     IssuanceDetails issuance_details;
     issuance_details.reissuance_asset = asset;
-    std::map<uint256, std::pair<CAsset, CAsset> > tokenMap = pwallet->GetReissuanceTokenTypes();
+    issuance_details.blind_issuance = blind_issuances;
+    std::map<uint256, std::pair<CAsset, CAsset>> tokenMap = pwallet->GetReissuanceTokenTypes();
+    LogPrintf("tokenmap size: %d\n", tokenMap.size());
     for (const auto& it : tokenMap) {
         if (it.second.second == asset) {
             issuance_details.entropy = it.first;
@@ -1545,6 +1550,9 @@ RPCHelpMan reissueasset()
     if (issuance_details.reissuance_token.IsNull()) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Asset reissuance token definition could not be found in wallet.");
     }
+    LogPrintf("issuance_details: issuing: %d blind_issuance: %d contract_hash: %s reissuance_asset: %s reissuance_token: %s entropy: %s  \n",
+    issuance_details.issuing, issuance_details.blind_issuance, issuance_details.contract_hash.GetHex(), issuance_details.reissuance_asset.GetHex(),
+    issuance_details.reissuance_token.GetHex(), issuance_details.entropy.GetHex());
 
     // Add destination for the to-be-created asset
     bilingual_str error;
@@ -1553,6 +1561,7 @@ RPCHelpMan reissueasset()
         throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, error.original);
     }
     CPubKey asset_dest_blindpub = pwallet->GetBlindingPubKey(GetScriptForDestination(asset_dest));
+    LogPrintf("asset_dest_blindpub: %d %d %s\n", asset_dest_blindpub.IsValid(), asset_dest_blindpub.IsFullyValid(), asset_dest_blindpub.GetHash().GetHex());
 
     // Add destination for tokens we are moving
     CTxDestination token_dest;
@@ -1560,6 +1569,7 @@ RPCHelpMan reissueasset()
         throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, error.original);
     }
     CPubKey token_dest_blindpub = pwallet->GetBlindingPubKey(GetScriptForDestination(token_dest));
+    LogPrintf("token_dest_blindpub: %d %d %s\n", token_dest_blindpub.IsValid(), token_dest_blindpub.IsFullyValid(), token_dest_blindpub.GetHash().GetHex());
 
     // Attempt a send.
     CTransactionRef tx_ref = SendGenerationTransaction(GetScriptForDestination(asset_dest), asset_dest_blindpub, GetScriptForDestination(token_dest), token_dest_blindpub, nAmount, -1, &issuance_details, pwallet);

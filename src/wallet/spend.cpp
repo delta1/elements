@@ -857,7 +857,7 @@ static bool fillBlindDetails(BlindDetails* det, CWallet* wallet, CMutableTransac
     //
     // First, if there are blinded inputs but not outputs to blind
     // We need this to go through, even though no privacy is gained.
-    if (num_inputs_blinded > 0 &&  det->num_to_blind == 0) {
+    if (num_inputs_blinded > 0 && det->num_to_blind == 0) {
         // We need to make sure to dupe an asset that is in input set
         //TODO Have blinding do some extremely minimal rangeproof
         CTxOut newTxOut(det->o_assets.back(), 0, CScript() << OP_RETURN);
@@ -1086,7 +1086,7 @@ static bool CreateTransactionInternal(
     // Get size of spending the change output
     int change_spend_size = CalculateMaximumSignedInputSize(change_prototype_txout, &wallet);
     // If the wallet doesn't know how to sign change output, assume p2sh-p2wpkh
-    // as lower-bound to allow BnB to do it's thing
+    // as lower-bound to allow BnB to do its thing
     if (change_spend_size == -1) {
         coin_selection_params.change_spend_size = DUMMY_NESTED_P2WPKH_INPUT_SIZE;
     } else {
@@ -1130,6 +1130,7 @@ static bool CreateTransactionInternal(
     //  makes an effort to not produce change, is a common case) then we need to add a
     //  dummy output.
     bool may_need_blinded_dummy = !!blind_details;
+    LogPrintf("1may_need_blinded_dummy: %d\n", may_need_blinded_dummy);
     for (const auto& recipient : vecSend)
     {
         CTxOut txout(recipient.asset, recipient.nAmount, recipient.scriptPubKey);
@@ -1161,11 +1162,12 @@ static bool CreateTransactionInternal(
         }
     }
     if (may_need_blinded_dummy && !coin_selection_params.m_subtract_fee_outputs) {
+        LogPrintf("adding dummy output...\n");
         // dummy output: 33 bytes value, 2 byte scriptPubKey, 33 bytes asset, 1 byte nonce, 66 bytes dummy rangeproof, 1 byte null surjectionproof
         // FIXME actually, we currently just hand off to BlindTransaction which will put
         //  a full rangeproof and surjectionproof. We should fix this when we overhaul
         //  the blinding logic.
-        coin_selection_params.tx_noinputs_size += 70 + 66 +(MAX_RANGEPROOF_SIZE + DEFAULT_SURJECTIONPROOF_SIZE + WITNESS_SCALE_FACTOR - 1)/WITNESS_SCALE_FACTOR;
+        coin_selection_params.tx_noinputs_size += 70 + 66 + (MAX_RANGEPROOF_SIZE + DEFAULT_SURJECTIONPROOF_SIZE + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR;
     }
     // If we are going to issue an asset, add the issuance data to the noinputs_size so that
     // we allocate enough coins for them.
@@ -1206,8 +1208,18 @@ static bool CreateTransactionInternal(
         return false;
     }
 
+    LogPrintf("result input set size: %d\n", result->GetInputSet().size());
+    for (const auto& coin : result->GetInputSet()) {
+        if (coin.txout.nValue.IsExplicit()) {
+            LogPrintf("result input: %d\n", coin.txout.nValue.GetAmount());
+        } else {
+            LogPrintf("result input: [confidential]\n");
+        }
+    }
+
     // If all of our inputs are explicit, we don't need a blinded dummy
-    if (may_need_blinded_dummy) {
+    LogPrintf("may_need_blinded_dummy: %d\n", may_need_blinded_dummy);
+    // if (may_need_blinded_dummy) {
         may_need_blinded_dummy = false;
         for (const auto& coin : result->GetInputSet()) {
             if (!coin.txout.nValue.IsExplicit()) {
@@ -1215,7 +1227,8 @@ static bool CreateTransactionInternal(
                 break;
             }
         }
-    }
+    // }
+    LogPrintf("may_need_blinded_dummy: %d\n", may_need_blinded_dummy);
 
     // Always make a change output
     // We will reduce the fee from this change output later, and remove the output if it is too small.
@@ -1359,6 +1372,9 @@ static bool CreateTransactionInternal(
     std::vector<CKey> issuance_asset_keys;
     std::vector<CKey> issuance_token_keys;
     if (issuance_details) {
+        LogPrintf("1 issuance_details: issuing: %d blind_issuance: %d contract_hash: %s reissuance_asset: %s reissuance_token: %s entropy: %s  \n",
+        issuance_details->issuing, issuance_details->blind_issuance, issuance_details->contract_hash.GetHex(), issuance_details->reissuance_asset.GetHex(),
+        issuance_details->reissuance_token.GetHex(), issuance_details->entropy.GetHex());
         // Fill in issuances now that inputs are set
         assert(txNew.vin.size() > 0);
         int asset_index = -1;
@@ -1370,8 +1386,11 @@ static bool CreateTransactionInternal(
                 token_index = i;
             }
         }
+        LogPrintf("asset_index: %d\n", asset_index);
+        LogPrintf("token_index: %d\n", token_index);
         // Initial issuance request
         if (issuance_details->reissuance_asset.IsNull() && issuance_details->reissuance_token.IsNull() && (asset_index != -1 || token_index != -1)) {
+            LogPrintf("initial_issuance\n");
             uint256 entropy;
             CAsset asset;
             CAsset token;
@@ -1410,6 +1429,7 @@ static bool CreateTransactionInternal(
             }
         // Asset being reissued with explicitly named asset/token
         } else if (asset_index != -1) {
+            LogPrintf("reissuance_index: %d\n", reissuance_index);
             assert(reissuance_index != -1);
             // Fill in output with issuance
             txNew.vout[asset_index].nAsset = issuance_details->reissuance_asset;
@@ -1422,9 +1442,13 @@ static bool CreateTransactionInternal(
 
             // If blinded token derivation, blind the issuance
             CAsset temp_token;
-            CalculateReissuanceToken(temp_token, issuance_details->entropy, true);
+            CalculateReissuanceToken(temp_token, issuance_details->entropy, issuance_details->blind_issuance);
+            LogPrintf("temp_token depend: %s\n", temp_token.GetHex());
+            // CalculateReissuanceToken(temp_token, issuance_details->entropy, true);
+            // LogPrintf("temp_token true: %s\n", temp_token.GetHex());
+            LogPrintf("reissuance_token: %s\n", issuance_details->reissuance_token.GetHex());
             if (temp_token == issuance_details->reissuance_token && blind_details) {
-            CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(txNew.vin[reissuance_index].prevout.hash.begin(), txNew.vin[reissuance_index].prevout.hash.end()) << txNew.vin[reissuance_index].prevout.n);
+                CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(txNew.vin[reissuance_index].prevout.hash.begin(), txNew.vin[reissuance_index].prevout.hash.end()) << txNew.vin[reissuance_index].prevout.n);
                 issuance_asset_keys.resize(reissuance_index);
                 issuance_asset_keys.push_back(wallet.GetBlindingKey(&blindingScript));
                 blind_details->num_to_blind++;
@@ -1435,16 +1459,24 @@ static bool CreateTransactionInternal(
     // Do "initial blinding" for fee estimation purposes
     TxSize tx_sizes;
     CMutableTransaction tx_blinded = txNew;
-    if (blind_details) {
+    bool should_blind_issuance = issuance_details && issuance_details->blind_issuance;
+    LogPrintf("should_blind_issuance: %d\n", should_blind_issuance);
+    LogPrintf("blind_details null?: %d\n", blind_details == nullptr);
+    if (blind_details || should_blind_issuance) {
         if (!fillBlindDetails(blind_details, &wallet, tx_blinded, selected_coins, error)) {
             return false;
         }
         txNew = tx_blinded; // sigh, `fillBlindDetails` may have modified txNew
 
+        LogPrintf("tx_blinded: vin: %d vout: %d\n", tx_blinded.vin.size(), tx_blinded.vout.size());
+        LogPrintf("issuance_asset_keys: %d\n", issuance_asset_keys.size());
+        LogPrintf("issuance_token_keys: %d\n", issuance_token_keys.size());
         int ret = BlindTransaction(blind_details->i_amount_blinds, blind_details->i_asset_blinds, blind_details->i_assets, blind_details->i_amounts, blind_details->o_amount_blinds, blind_details->o_asset_blinds, blind_details->o_pubkeys, issuance_asset_keys, issuance_token_keys, tx_blinded);
         assert(ret != -1);
         if (ret != blind_details->num_to_blind) {
-            error = _("Unable to blind the transaction properly. This should not happen.");
+            wallet.WalletLogPrintf("ERROR: tried to blind %d outputs but only blinded %d\n", (int) blind_details->num_to_blind, (int) ret);
+            auto msg = strprintf("Unable to blind the transaction for fee estimation. Tried to blind %d outputs but only blinded %d.\n", blind_details->num_to_blind, ret);
+            error = Untranslated(msg);
             return false;
         }
 
@@ -1480,7 +1512,7 @@ static bool CreateTransactionInternal(
         // without causing the transaction to fail to balance. So keep it, and merely
         // zero it out.
         if (was_blinded && blind_details->num_to_blind == 1) {
-            assert (may_need_blinded_dummy);
+            assert(may_need_blinded_dummy);
             change_position->scriptPubKey = CScript() << OP_RETURN;
             change_position->nValue = 0;
         } else {
@@ -1650,7 +1682,7 @@ static bool CreateTransactionInternal(
             assert(ret != -1);
             if (ret != blind_details->num_to_blind) {
                 wallet.WalletLogPrintf("ERROR: tried to blind %d outputs but only blinded %d\n", (int) blind_details->num_to_blind, (int) ret);
-                error = _("Unable to blind the transaction properly. This should not happen.");
+                error = _("Unable to blind the transaction properly. This should not happen.2");
                 return false;
             }
         }

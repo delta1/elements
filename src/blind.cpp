@@ -283,7 +283,7 @@ void CreateValueCommitment(CConfidentialValue& conf_value, secp256k1_pedersen_co
     assert(conf_value.IsValid());
 }
 
-int BlindTransaction(std::vector<uint256 >& input_value_blinding_factors, const std::vector<uint256 >& input_asset_blinding_factors, const std::vector<CAsset >& input_assets, const std::vector<CAmount >& input_amounts, std::vector<uint256 >& out_val_blind_factors, std::vector<uint256 >& out_asset_blind_factors, const std::vector<CPubKey>& output_pubkeys, const std::vector<CKey>& issuance_blinding_privkey, const std::vector<CKey>& token_blinding_privkey, CMutableTransaction& tx, std::vector<std::vector<unsigned char> >* auxiliary_generators)
+int BlindTransaction(std::vector<uint256>& input_value_blinding_factors, const std::vector<uint256>& input_asset_blinding_factors, const std::vector<CAsset>& input_assets, const std::vector<CAmount>& input_amounts, std::vector<uint256>& out_val_blind_factors, std::vector<uint256>& out_asset_blind_factors, const std::vector<CPubKey>& output_pubkeys, const std::vector<CKey>& issuance_blinding_privkey, const std::vector<CKey>& token_blinding_privkey, CMutableTransaction& tx, std::vector<std::vector<unsigned char>>* auxiliary_generators)
 {
     // Sanity check input data and output_pubkey size, clear other output data
     assert(tx.vout.size() >= output_pubkeys.size());
@@ -303,6 +303,16 @@ int BlindTransaction(std::vector<uint256 >& input_value_blinding_factors, const 
     std::vector<uint64_t> blinded_amounts;
     value_blindptrs.reserve(tx.vout.size() + tx.vin.size());
     asset_blindptrs.reserve(tx.vout.size() + tx.vin.size());
+
+    LogPrintf("input_value_blinding_factors: %d\n", input_value_blinding_factors.size());
+    LogPrintf("input_asset_blinding_factors: %d\n", input_asset_blinding_factors.size());
+    LogPrintf("input_assets: %d\n", input_assets.size());
+    LogPrintf("input_amounts: %d\n", input_amounts.size());
+    LogPrintf("out_val_blind_factors: %d\n", out_val_blind_factors.size());
+    LogPrintf("out_asset_blind_factors: %d\n", out_asset_blind_factors.size());
+    LogPrintf("output_pubkeys: %d\n", output_pubkeys.size());
+    LogPrintf("issuance_blinding_privkey: %d\n", issuance_blinding_privkey.size());
+    LogPrintf("token_blinding_privkey: %d\n", token_blinding_privkey.size());
 
     int ret;
     int num_blind_attempts = 0, num_issuance_blind_attempts = 0, num_blinded = 0;
@@ -439,14 +449,14 @@ int BlindTransaction(std::vector<uint256 >& input_value_blinding_factors, const 
         if (!issuance.IsNull()) {
             // Marked for blinding
             if (issuance_blinding_privkey.size() > nIn && issuance_blinding_privkey[nIn].IsValid()) {
-                if(issuance.nAmount.IsExplicit() && tx.witness.vtxinwit[nIn].vchIssuanceAmountRangeproof.empty()) {
+                if (issuance.nAmount.IsExplicit() && tx.witness.vtxinwit[nIn].vchIssuanceAmountRangeproof.empty()) {
                     num_to_blind++;
                 } else {
                     return -1;
                 }
             }
             if (token_blinding_privkey.size() > nIn && token_blinding_privkey[nIn].IsValid()) {
-                if(issuance.nInflationKeys.IsExplicit() && tx.witness.vtxinwit[nIn].vchInflationKeysRangeproof.empty()) {
+                if (issuance.nInflationKeys.IsExplicit() && tx.witness.vtxinwit[nIn].vchInflationKeysRangeproof.empty()) {
                     num_to_blind++;
                 } else {
                     return -1;
@@ -630,6 +640,16 @@ int BlindTransaction(std::vector<uint256 >& input_value_blinding_factors, const 
         }
     }
 
+    // int num_blind_attempts = 0, num_issuance_blind_attempts = 0, num_blinded = 0;
+    //Total blinded inputs that you own (that you are balancing against)
+    // int num_known_input_blinds = 0;
+    //Number of outputs and issuances to blind
+    // int num_to_blind = 0;
+    LogPrintf("num_blind_attempts: %d\n", num_blind_attempts);
+    LogPrintf("num_issuance_blind_attempts: %d\n", num_issuance_blind_attempts);
+    LogPrintf("num_blinded: %d\n", num_blinded);
+    LogPrintf("num_known_input_blinds: %d\n", num_known_input_blinds);
+    LogPrintf("num_to_blind: %d\n", num_to_blind);
     return num_blinded;
 }
 

@@ -422,12 +422,14 @@ class BIP68Test(BitcoinTestFramework):
     def test_version2_relay(self):
         inputs = [ ]
         outputs = [{ self.nodes[1].getnewaddress() : 1.0 }]
+        print(outputs)
         rawtx = self.nodes[1].createrawtransaction(inputs, outputs)
         rawtxfund = self.nodes[1].fundrawtransaction(rawtx)['hex']
         tx = tx_from_hex(rawtxfund)
         tx.nVersion = 2
         tx_signed = self.nodes[1].signrawtransactionwithwallet(tx.serialize().hex())["hex"]
-        self.nodes[1].sendrawtransaction(tx_signed)
+        txid = self.nodes[1].sendrawtransaction(tx_signed)
+        print(txid)
 
 if __name__ == '__main__':
     BIP68Test().main()

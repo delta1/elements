@@ -72,12 +72,12 @@ public:
 
     bool IsExplicit() const
     {
-        return vchCommitment.size()==nExplicitSize && vchCommitment[0]==1;
+        return vchCommitment.size() == nExplicitSize && vchCommitment[0] == 1;
     }
 
     bool IsCommitment() const
     {
-        return vchCommitment.size()==nCommittedSize && (vchCommitment[0]==PrefixA || vchCommitment[0]==PrefixB);
+        return vchCommitment.size() == nCommittedSize && (vchCommitment[0] == PrefixA || vchCommitment[0] == PrefixB);
     }
 
     bool IsValid() const

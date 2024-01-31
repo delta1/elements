@@ -579,6 +579,8 @@ public:
     {
         return !witness.IsNull();
     }
+    // ELEMENTS
+    bool IsIssuance() const;
 };
 
 /** A mutable version of CTransaction. */

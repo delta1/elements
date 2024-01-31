@@ -162,3 +162,14 @@ std::string CTransaction::ToString() const
         str += "    " + tx_out.ToString() + "\n";
     return str;
 }
+
+// ELEMENTS
+bool CTransaction::IsIssuance() const
+{
+    for (const auto& input : vin) {
+        if (input.assetIssuance.IsNull()) {
+            return false;
+        }
+    }
+    return true;
+}

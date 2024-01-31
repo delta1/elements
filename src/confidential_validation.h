@@ -61,7 +61,7 @@ class CBalanceCheck : public CCheck
 {
 private:
     std::vector<secp256k1_pedersen_commitment> vData;
-    std::vector<secp256k1_pedersen_commitment *> vpCommitsIn, vpCommitsOut;
+    std::vector<secp256k1_pedersen_commitment*> vpCommitsIn, vpCommitsOut;
 
 public:
     CBalanceCheck(std::vector<secp256k1_pedersen_commitment>& vData_, std::vector<secp256k1_pedersen_commitment*>& vpCommitsIn_, std::vector<secp256k1_pedersen_commitment*>& vpCommitsOut_)  {

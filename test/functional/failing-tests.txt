@@ -1,0 +1,6 @@
+feature_confidential_transactions.py --legacy-wallet | ✖ Failed  | 9 s
+feature_sighash_rangeproof.py --legacy-wallet        | ✖ Failed  | 2 s
+rpc_fundrawtransaction.py --descriptors              | ✖ Failed  | 3 s
+rpc_fundrawtransaction.py --legacy-wallet            | ✖ Failed  | 4 s
+wallet_elements_regression_1172.py --legacy-wallet   | ✖ Failed  | 5 s
+wallet_elements_regression_1259.py --legacy-wallet   | ✖ Failed  | 15 s

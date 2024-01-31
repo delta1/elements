@@ -4022,7 +4022,7 @@ void CWalletTx::WipeUnknownBlindingData(const CWallet& wallet)
 }
 
 std::map<uint256, std::pair<CAsset, CAsset> > CWallet::GetReissuanceTokenTypes() const {
-    std::map<uint256, std::pair<CAsset, CAsset> > tokenMap;
+    std::map<uint256, std::pair<CAsset, CAsset>> tokenMap;
     {
         LOCK(cs_wallet);
         for (std::map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
