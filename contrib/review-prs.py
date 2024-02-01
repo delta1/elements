@@ -15,13 +15,13 @@ from typing import List, Dict, Any
 
 BITCOIN_MASTER = "bitcoin/master"
 ELEMENTS_MASTER = "upstream/master"
-MERGED_MASTER = "origin/merged-master"
+MERGED_MASTER = "jamesdorfman/merged-master"
 MERGED_MASTER_REVIEWED = "merged-master-reviewed"
 
 # NOTE: We don't use /tmp/ anymore, as on many systems (incl. macOS), random
 # files in the worktree will start to go missing a few days after its creation,
 # because of temp-directory-cleaning scripts that work on a file-by-file basis.
-WORKTREE_LOCATION = "/tmp/elements-merge-review-worktree"
+WORKTREE_LOCATION = "/home/byron/code/elements-merge-review-worktree"
 
 def print_startup_warning() -> None:
     print()
