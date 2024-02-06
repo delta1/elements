@@ -135,4 +135,10 @@ static inline int64_t GetVirtualTransactionInputSize(const CTransaction& tx)
     return GetVirtualTransactionInputSize(tx, 0, 0, 0);
 }
 
+// ELEMENTS: use a smaller virtual size for discounted Confidential Transactions
+static inline int64_t GetDiscountedVirtualTransactionSize(const CTransaction& tx)
+{
+    return  ::GetSerializeSize(tx, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) + (::GetSerializeSize(tx.witness.vtxinwit) / WITNESS_SCALE_FACTOR);
+}
+
 #endif // BITCOIN_POLICY_POLICY_H

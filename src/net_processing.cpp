@@ -4596,7 +4596,11 @@ void PeerManagerImpl::MaybeSendFeefilter(CNode& pto, std::chrono::microseconds c
     if (current_time > pto.m_tx_relay->m_next_send_feefilter) {
         CAmount filterToSend = g_filter_rounder.round(currentFilter);
         // We always have a fee filter of at least minRelayTxFee
-        filterToSend = std::max(filterToSend, ::minRelayTxFee.GetFeePerK());
+        CAmount minFilter = ::minRelayTxFee.GetFeePerK();
+        // ELEMENTS: reduce the feefilter if we accept discounted CTs
+        //           this is necessary for the CTs to be relayed
+        if (Params().GetAcceptDiscountCT()) minFilter /= 10;
+        filterToSend = std::max(filterToSend, minFilter);
         if (filterToSend != pto.m_tx_relay->lastSentFeeFilter) {
             m_connman.PushMessage(&pto, CNetMsgMaker(pto.GetCommonVersion()).Make(NetMsgType::FEEFILTER, filterToSend));
             pto.m_tx_relay->lastSentFeeFilter = filterToSend;
