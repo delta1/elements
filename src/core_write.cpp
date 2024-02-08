@@ -236,9 +236,10 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry,
     entry.pushKV("version", static_cast<int64_t>(static_cast<uint32_t>(tx.nVersion)));
     entry.pushKV("size", (int)::GetSerializeSize(tx, PROTOCOL_VERSION));
     entry.pushKV("vsize", (GetTransactionWeight(tx) + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR);
-    // ELEMENTS
+    // ELEMENTS: add discountvsize
     if (Params().GetAcceptDiscountCT() && tx.IsConfidential()) {
-        int size = ::GetSerializeSize(tx, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) + (::GetSerializeSize(tx.witness.vtxinwit) / WITNESS_SCALE_FACTOR);
+        // this is inlined here since we don't have access to GetDiscountedVirtualTransactionSize from policy.h
+        int size = ::GetSerializeSize(tx, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) + (::GetSerializeSize(tx.witness.vtxinwit, PROTOCOL_VERSION) + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR;
         entry.pushKV("discountvsize", size);
     } else {
         entry.pushKV("discountvsize", (GetTransactionWeight(tx) + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR);

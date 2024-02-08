@@ -915,7 +915,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     // No transactions are allowed below minRelayTxFee except from disconnected
     // blocks
     bool fee_check = CheckFeeRate(ws.m_vsize, ws.m_modified_fees, state);
-    // ELEMENTS
+    // ELEMENTS: discounted fees for CTs
     if (Params().GetAcceptDiscountCT() && tx.IsConfidential()) {
         fee_check = CheckFeeRate(GetDiscountedVirtualTransactionSize(tx), ws.m_modified_fees, state);
     }

@@ -45,7 +45,7 @@ class NetTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = True
         self.num_nodes = 2
-        self.extra_args = [["-minrelaytxfee=0.00001000", "-acceptdiscountct=0"], ["-minrelaytxfee=0.00000500", "-acceptdiscountct=0"]]
+        self.extra_args = [["-minrelaytxfee=0.00001000"], ["-minrelaytxfee=0.00000500"]]
         self.supports_cli = False
 
     def run_test(self):

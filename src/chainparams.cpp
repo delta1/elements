@@ -887,7 +887,7 @@ protected:
         const CScript default_script(CScript() << OP_TRUE);
         consensus.fedpegScript = StrHexToScriptWithDefault(args.GetArg("-fedpegscript", ""), default_script);
         consensus.start_p2wsh_script = args.GetIntArg("-con_start_p2wsh_script", consensus.start_p2wsh_script);
-        accept_discount_ct = args.GetBoolArg("-acceptdiscountct", true);
+        accept_discount_ct = args.GetBoolArg("-acceptdiscountct", false);
         create_discount_ct = args.GetBoolArg("-creatediscountct", false);
 
         // Calculate pegged Bitcoin asset
@@ -1120,7 +1120,7 @@ public:
         enforce_pak = true;
 
         multi_data_permitted = true;
-        accept_discount_ct = true;
+        accept_discount_ct = args.GetBoolArg("-acceptdiscountct", true);
         create_discount_ct = args.GetBoolArg("-creatediscountct", false);
 
         parentGenesisBlockHash = uint256S("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
@@ -1265,7 +1265,7 @@ public:
  */
 class CLiquidV1TestParams : public CLiquidV1Params {
 public:
-    explicit CLiquidV1TestParams(const ArgsManager& args): CLiquidV1Params(args)
+    explicit CLiquidV1TestParams(const ArgsManager& args) : CLiquidV1Params(args)
     {
         // Our goal here is to override ONLY the things from liquidv1 that make no sense for a test chain / which are pointless and burdensome to require people to override manually.
 

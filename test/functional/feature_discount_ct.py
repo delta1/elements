@@ -155,11 +155,11 @@ class CTTest(BitcoinTestFramework):
             assert_equal(len(vin), 2)
             assert_equal(len(vout), 3)
             if 'bitcoin' in decoded['fee']:
-                assert_equal(decoded['fee']['bitcoin'], Decimal('-0.00000436'))
+                assert_equal(decoded['fee']['bitcoin'], Decimal('-0.00000437'))
             else:
-                assert_equal(decoded['fee'][bitcoin], Decimal('0.00000436'))
+                assert_equal(decoded['fee'][bitcoin], Decimal('0.00000437'))
             assert_equal(decoded['vsize'], 2575)
-            assert_equal(decoded['discountvsize'], 436)
+            assert_equal(decoded['discountvsize'], 437)
 
         # node0 should report the same discountvsize and vsize
         tx = node0.getrawtransaction(txid, True)

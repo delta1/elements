@@ -163,8 +163,9 @@ std::string CTransaction::ToString() const
     return str;
 }
 
-bool CTransaction::IsConfidential() const {
-    for (const auto& out: this->vout) {
+bool CTransaction::IsConfidential() const
+{
+    for (const auto& out : this->vout) {
         if (out.IsFee()) continue;
         if (out.nValue.IsExplicit() || out.nAsset.IsExplicit()) return false;
     }
