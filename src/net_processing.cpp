@@ -4599,7 +4599,7 @@ void PeerManagerImpl::MaybeSendFeefilter(CNode& pto, std::chrono::microseconds c
         CAmount minFilter = ::minRelayTxFee.GetFeePerK();
         // ELEMENTS: reduce the feefilter if we accept discounted CTs
         //           this is necessary for the CTs to be relayed
-        if (Params().GetAcceptDiscountCT()) minFilter /= 10;
+        // if (Params().GetAcceptDiscountCT()) minFilter /= 10;
         filterToSend = std::max(filterToSend, minFilter);
         if (filterToSend != pto.m_tx_relay->lastSentFeeFilter) {
             m_connman.PushMessage(&pto, CNetMsgMaker(pto.GetCommonVersion()).Make(NetMsgType::FEEFILTER, filterToSend));
@@ -4968,7 +4968,8 @@ bool PeerManagerImpl::SendMessages(CNode* pto)
                         auto txid = txinfo.tx->GetHash();
                         auto wtxid = txinfo.tx->GetWitnessHash();
                         // Peer told you to not send transactions at that feerate? Don't bother sending it.
-                        if (txinfo.fee < filterrate.GetFee(txinfo.vsize)) {
+                        // ELEMENTS:
+                        if (txinfo.fee < filterrate.GetFee(txinfo.discountvsize)) {
                             continue;
                         }
                         if (pto->m_tx_relay->pfilter && !pto->m_tx_relay->pfilter->IsRelevantAndUpdate(*txinfo.tx)) continue;

@@ -965,7 +965,13 @@ void CTxMemPool::queryHashes(std::vector<uint256>& vtxid) const
 }
 
 static TxMempoolInfo GetInfo(CTxMemPool::indexed_transaction_set::const_iterator it) {
-    return TxMempoolInfo{it->GetSharedTx(), it->GetTime(), it->GetFee(), it->GetTxSize(), it->GetModifiedFee() - it->GetFee()};
+    // ELEMENTS:
+    size_t discountvsize = it->GetTxSize();
+    CTransaction tx = it->GetTx();
+    if (Params().GetAcceptDiscountCT() && tx.IsConfidential()) {
+        discountvsize = GetDiscountedVirtualTransactionSize(tx);
+    }
+    return TxMempoolInfo{it->GetSharedTx(), it->GetTime(), it->GetFee(), it->GetTxSize(), it->GetModifiedFee() - it->GetFee(), discountvsize};
 }
 
 std::vector<TxMempoolInfo> CTxMemPool::infoAll() const
