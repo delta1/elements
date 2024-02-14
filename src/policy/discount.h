@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef ELEMENTS_POLICY_DISCOUNT_H
-#define ELEMENTS_POLICY_DISCOUNT_H
+#ifndef BITCOIN_POLICY_DISCOUNT_H
+#define BITCOIN_POLICY_DISCOUNT_H
 
 #include <consensus/consensus.h>
 #include <cstdint>
@@ -34,4 +34,4 @@ static inline int64_t GetDiscountedVirtualTransactionSize(const CTransaction& tx
     return discountvsize;
 }
 
-#endif // ELEMENTS_POLICY_DISCOUNT_H
+#endif // BITCOIN_POLICY_DISCOUNT_H
