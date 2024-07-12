@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - run: sysctl -a | grep machdep.cpu
+      - name: deps
+        run: brew install automake libtool boost pkg-config libevent berkeley-db@4
+      - name: build
+        run: |
+          ./autogen.sh
+          ./configure
+          make -j3 src/elementsd
+          make -j3 src/elements-cli
+          make -j3 src/elements-wallet
+      - name: test
+        run: |
+          ./test/functional/test_runner.py --jobs 3
