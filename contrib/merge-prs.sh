@@ -23,7 +23,7 @@ FUZZ_CORPUS="${BITCOIN_QA_ASSETS}/fuzz_seed_corpus/"
 # BEWARE: On some systems /tmp/ gets periodically cleaned, which may cause
 #   random files from this directory to disappear based on timestamp, and
 #   make git very confused
-WORKTREE="/tmp/merge-worktree"
+WORKTREE="/home/byron/code/elements-worktree"
 #mkdir -p "${HOME}/.tmp"
 
 # These should be tuned to your machine; below values are for an 8-core
@@ -156,7 +156,11 @@ quietly () {
 notify () {
     local MESSAGE="$1"
     local JSON="{\"content\": \"$MESSAGE\"}"
-    curl -d "$JSON" -H "Content-Type: application/json" "$WEBHOOK"
+    if [ -n "$WEBHOOK" ]; then
+        curl -d "$JSON" -H "Content-Type: application/json" "$WEBHOOK"
+    else
+        echo "$MESSAGE"
+    fi
     if [[ "$2" == "1" ]]; then
 	    exit 1
     fi
