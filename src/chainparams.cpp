@@ -7,12 +7,13 @@
 
 #include <chainparamsseeds.h>
 #include <consensus/merkle.h>
+#include <crypto/sha256.h>
 #include <deploymentinfo.h>
 #include <hash.h> // for signet block challenge hash
 #include <issuance.h>
 #include <primitives/transaction.h>
+#include <util/moneystr.h>
 #include <util/system.h>
-#include <crypto/sha256.h>
 
 #include <assert.h>
 
@@ -225,6 +226,8 @@ public:
         multi_data_permitted = false;
         accept_discount_ct = false;
         create_discount_ct = false;
+        pegin_subsidy_height = 0;
+        pegin_subsidy_threshold = 0;
         consensus.has_parent_chain = false;
         g_signed_blocks = false;
         g_con_elementsmode = false;
@@ -365,6 +368,8 @@ public:
         multi_data_permitted = false;
         accept_discount_ct = false;
         create_discount_ct = false;
+        pegin_subsidy_height = 0;
+        pegin_subsidy_threshold = 0;
         consensus.has_parent_chain = false;
         g_signed_blocks = false;
         g_con_elementsmode = false;
@@ -523,6 +528,8 @@ public:
         multi_data_permitted = false;
         accept_discount_ct = false;
         create_discount_ct = false;
+        pegin_subsidy_height = 0;
+        pegin_subsidy_threshold = 0;
         consensus.has_parent_chain = false;
         g_signed_blocks = false; // lol
         g_con_elementsmode = false;
@@ -618,6 +625,8 @@ public:
         multi_data_permitted = false;
         accept_discount_ct = false;
         create_discount_ct = false;
+        pegin_subsidy_height = 0;
+        pegin_subsidy_threshold = 0;
         consensus.has_parent_chain = false;
         g_signed_blocks = false;
         g_con_elementsmode = false;
@@ -897,6 +906,15 @@ protected:
         consensus.start_p2wsh_script = args.GetIntArg("-con_start_p2wsh_script", consensus.start_p2wsh_script);
         create_discount_ct = args.GetBoolArg("-creatediscountct", false);
         accept_discount_ct = args.GetBoolArg("-acceptdiscountct", false) || create_discount_ct;
+        pegin_subsidy_height = args.GetIntArg("-peginsubsidyheight", std::numeric_limits<int>::max());
+        if (pegin_subsidy_height < 0) {
+            throw std::runtime_error(strprintf("Invalid block height (%d) for -peginsubsidyheight. Must be positive.", pegin_subsidy_height));
+        }
+        if (std::optional<CAmount> threshold = ParseMoney(args.GetArg("-peginsubsidythreshold", "0"))) {
+            pegin_subsidy_threshold = threshold.value();
+        } else {
+            throw std::runtime_error(strprintf("Invalid -peginsubsidythreshold"));
+        }
 
         // Calculate pegged Bitcoin asset
         std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
@@ -1130,6 +1148,15 @@ public:
         multi_data_permitted = true;
         create_discount_ct = args.GetBoolArg("-creatediscountct", false);
         accept_discount_ct = args.GetBoolArg("-acceptdiscountct", false) || create_discount_ct;
+        pegin_subsidy_height = args.GetIntArg("-peginsubsidyheight", std::numeric_limits<int>::max());
+        if (pegin_subsidy_height < 0) {
+            throw std::runtime_error(strprintf("Invalid block height (%d) for -peginsubsidyheight. Must be positive.", pegin_subsidy_height));
+        }
+        if (std::optional<CAmount> threshold = ParseMoney(args.GetArg("-peginsubsidythreshold", "0"))) {
+            pegin_subsidy_threshold = threshold.value();
+        } else {
+            throw std::runtime_error(strprintf("Invalid -peginsubsidythreshold"));
+        }
 
         parentGenesisBlockHash = uint256S("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
         const bool parent_genesis_is_null = parentGenesisBlockHash == uint256();
@@ -1480,6 +1507,15 @@ public:
         multi_data_permitted = args.GetBoolArg("-multi_data_permitted", multi_data_permitted);
         create_discount_ct = args.GetBoolArg("-creatediscountct", create_discount_ct);
         accept_discount_ct = args.GetBoolArg("-acceptdiscountct", accept_discount_ct) || create_discount_ct;
+        pegin_subsidy_height = args.GetIntArg("-peginsubsidyheight", std::numeric_limits<int>::max());
+        if (pegin_subsidy_height < 0) {
+            throw std::runtime_error(strprintf("Invalid block height (%d) for -peginsubsidyheight. Must be positive.", pegin_subsidy_height));
+        }
+        if (std::optional<CAmount> threshold = ParseMoney(args.GetArg("-peginsubsidythreshold", "0"))) {
+            pegin_subsidy_threshold = threshold.value();
+        } else {
+            throw std::runtime_error(strprintf("Invalid -peginsubsidythreshold"));
+        }
 
         if (args.IsArgSet("-parentgenesisblockhash")) {
             parentGenesisBlockHash = uint256S(args.GetArg("-parentgenesisblockhash", ""));

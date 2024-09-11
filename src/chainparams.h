@@ -137,6 +137,8 @@ public:
     bool GetMultiDataPermitted() const { return multi_data_permitted; }
     bool GetAcceptDiscountCT() const { return accept_discount_ct; }
     bool GetCreateDiscountCT() const { return create_discount_ct; }
+    int GetPeginSubsidyHeight() const { return pegin_subsidy_height; }
+    CAmount GetPeginSubsidyThreshold() const { return pegin_subsidy_threshold; }
 
 protected:
     CChainParams() {}
@@ -171,6 +173,8 @@ protected:
     bool multi_data_permitted;
     bool accept_discount_ct;
     bool create_discount_ct;
+    int pegin_subsidy_height;
+    CAmount pegin_subsidy_threshold;
 };
 
 /**

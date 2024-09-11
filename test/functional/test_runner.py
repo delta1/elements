@@ -189,6 +189,7 @@ BASE_SCRIPTS = [
     # ELEMENTS: discounted Confidential Transactions
     'feature_discount_ct.py',
     'feature_discount_ct_ordering.py',
+    'feature_pegin_subsidy.py',
     'wallet_multiwallet.py --legacy-wallet',
     'wallet_multiwallet.py --descriptors',
     'wallet_multiwallet.py --usecli',
