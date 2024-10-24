@@ -445,6 +445,14 @@ static bool EvalChecksigPreTapscript(const valtype& vchSig, const valtype& vchPu
     return true;
 }
 
+static void print_hex(const unsigned char* data, size_t size) {
+    size_t i;
+    for (i = 0; i < size; i++) {
+        printf("%02x", data[i]);
+    }
+    printf("\n");
+}
+
 static bool EvalTapScriptCheckSigFromStack(const valtype& sig, const valtype& vchPubKey, ScriptExecutionData& execdata, unsigned int flags, const valtype& msg, SigVersion sigversion, ScriptError* serror, bool& success)
 {
     // This code follows the behaviour of EvalCheckSigTapscript
@@ -2836,7 +2844,19 @@ bool GenericTransactionSignatureChecker<T>::VerifyECDSASignature(const std::vect
 template <class T>
 bool GenericTransactionSignatureChecker<T>::VerifySchnorrSignature(Span<const unsigned char> sig, const XOnlyPubKey& pubkey, const uint256& sighash) const
 {
-    return pubkey.VerifySchnorr(sighash, sig);
+    std::cout << "sig: ";
+    print_hex(sig.data(), sig.size());
+    std::cout << "pubkey: ";
+    print_hex(pubkey.data(), pubkey.size());
+    std::cout << "sighash: " << sighash.GetHex() << std::endl;;
+
+    auto r = pubkey.VerifySchnorr(sighash, sig);
+    if (r) {
+        std::cout << "verify passed\n";
+    } else {
+        std::cout << "verify failed\n";
+    }
+    return r;
 }
 
 template <class T>

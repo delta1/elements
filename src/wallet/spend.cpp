@@ -1812,7 +1812,10 @@ static BResult<CreatedTransactionResult> CreateTransactionInternal(
 
 
     if (sign) {
-        if (!wallet.SignTransaction(txNew)) {
+        auto s = wallet.SignTransaction(txNew);
+                std::cout << "signed: " << s << std::endl;
+        if (!s) {
+                std::cout << "internal return: " << __LINE__ << std::endl;
             return _("Signing transaction failed");
         }
     }
@@ -1889,7 +1892,10 @@ BResult<CreatedTransactionResult> CreateTransaction(
     auto res = CreateTransactionInternal(wallet, vecSend, change_pos, coin_control, sign, blind_details, issuance_details);
     TRACE4(coin_selection, normal_create_tx_internal, wallet.GetName().c_str(), res.HasRes(),
            res ? res.GetObj().fee : 0, res ? res.GetObj().change_pos : 0);
-    if (!res) return res;
+    if (!res) {
+        std::cout << "returning\n";
+        return res;
+    }
     const auto& txr_ungrouped = res.GetObj();
     // try with avoidpartialspends unless it's enabled already
     if (txr_ungrouped.fee > 0 /* 0 means non-functional fee rate estimation */ && wallet.m_max_aps_fee > -1 && !coin_control.m_avoid_partial_spends) {
