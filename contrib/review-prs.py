@@ -15,7 +15,7 @@ from typing import List, Dict, Any
 
 BITCOIN_MASTER = "bitcoin/master"
 ELEMENTS_MASTER = "upstream/master"
-MERGED_MASTER = "jamesdorfman/merged-master"
+MERGED_MASTER = "merged-master"
 MERGED_MASTER_REVIEWED = "merged-master-reviewed"
 
 # NOTE: We don't use /tmp/ anymore, as on many systems (incl. macOS), random
@@ -28,7 +28,7 @@ def print_startup_warning() -> None:
     print("To prepare to use this script, make sure the following things are set up:")
     print(" - The remotes 'bitcoin' and 'upstream' should point to Bitcoin Core and")
     print("   Elements upstream repos, respectively.")
-    print(f" - The latest {MERGED_MASTER_REVIEWED} branch should be checked out locally.")
+    print(f" - The latest {MERGED_MASTER_REVIEWED} branch should be checked out locally in the worktree location {WORKTREE_LOCATION}.")
     print(f" - We are currently using '{MERGED_MASTER}' as our branch to review.")
     print("   To change this, edit the constant MERGED_MASTER in the script.")
     print(" - We will reuse or create a git worktree at:")
