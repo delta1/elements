@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-BASE_ORIG=merged-master
+BASE_ORIG=merged-master-25
 BASE="${BASE_ORIG}"
 BITCOIN_UPSTREAM_REMOTE=bitcoin
 BITCOIN_UPSTREAM="${BITCOIN_UPSTREAM_REMOTE}/master"
@@ -10,10 +10,10 @@ ELEMENTS_UPSTREAM_REMOTE=upstream
 ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Set these to whether you want to merge from Bitcoin or Elements
-TARGET_UPSTREAM=$BITCOIN_UPSTREAM
-TARGET_NAME="Bitcoin"
-#TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
-#TARGET_NAME="Elements"
+#TARGET_UPSTREAM=$BITCOIN_UPSTREAM
+#TARGET_NAME="Bitcoin"
+TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
+TARGET_NAME="Elements"
 
 # Replace this with the location where we should put the fuzz test corpus
 BITCOIN_QA_ASSETS="${HOME}/code/bitcoin/qa-assets"
@@ -229,7 +229,7 @@ do
         quietly git -C "$WORKTREE" clean -xf
         echo "autogen & configure"
         quietly ./autogen.sh
-        quietly ./configure --with-seccomp=no
+        quietly ./configure --with-incompatible-bdb --with-seccomp=no
         # The following is an expansion of `make check` that skips the libsecp
         # tests and also the benchmarks (though it does build them!)
         echo "Building"
