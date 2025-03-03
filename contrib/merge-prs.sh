@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eo pipefail
+set -o pipefail
 
 BASE_ORIG=merged-master
 BASE="${BASE_ORIG}"
@@ -43,6 +43,9 @@ DO_TEST=1
 DO_FUZZ=0
 DO_CHERRY=0
 UNDO_CHERRY=0
+ANALYZE=0
+NUM=30
+COUNT=0
 
 if [[ "$1" == "setup" ]]; then
     echo "Setting up..."
@@ -98,6 +101,10 @@ elif [[ "$1" == "step-test" ]]; then
 elif [[ "$1" == "step-fuzz" ]]; then
     SKIP_MERGE=1
     KEEP_GOING=0
+    DO_BUILD=0
+    DO_TEST=0
+elif [[ "$1" == "analyze" ]]; then
+    ANALYZE=1
     DO_BUILD=0
     DO_TEST=0
 else
@@ -169,7 +176,6 @@ notify () {
 ## Sort by unix timestamp and iterate over them
 echo "$COMMITS" | tac | while read -r line
 do
-    echo -e "$line"
     ## Extract data and output what we're doing
     DATE=$(echo "$line" | cut -d ' ' -f 2)
     HASH=$(echo "$line" | cut -d ' ' -f 3)
@@ -182,12 +188,32 @@ do
     if [[ "$PR_ID" == "pull" ]]; then
 	PR_ID="${PR_ID_ALT}"
     fi
-    #echo -e "$CHAIN PR \e[37m$PR_ID \e[33m$HASH\e[0m on \e[32m$DATE\e[0m "
 
+	GIT_HEAD=$(git rev-parse HEAD)
+	# echo "HEAD is at $GIT_HEAD"
 
     ## Do it
     if [[ "$1" == "list-only" ]]; then
+        echo -e "$line"
         continue
+    fi
+    if [[ "$1" == "analyze" ]]; then
+        (( COUNT++ ))
+        CRITICAL_FILES=("src/wallet/spend.h", "src/wallet/spend.cpp")
+        MERGE_FILE="/tmp/$HASH.merge"
+        DIFF_FILE="/tmp/$HASH.diff"
+        git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH into merged_master ($CHAIN PR $PR_ID)" > "$MERGE_FILE"
+        git -C "$WORKTREE" diff > "$DIFF_FILE"
+        git -C "$WORKTREE" reset --hard "$GIT_HEAD" > /dev/null
+        FILES=$(grep "CONFLICT" "$MERGE_FILE")
+        NUM_FILES=$(grep -c "CONFLICT" "$MERGE_FILE")
+        NUM_CONFLICTS=$(grep -c "<<<<<<<" "$DIFF_FILE")
+        echo "$COUNT. Merge up to $PR_ID ($HASH) has $NUM_CONFLICTS conflicts in $NUM_FILES files."
+        if [[ "$COUNT" == "$NUM" ]]; then
+            exit 1
+        else
+            continue
+        fi
     fi
     notify "starting merge of $PR_ID"
 
@@ -211,15 +237,13 @@ do
         git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH into merged_master ($CHAIN PR $PR_ID)" || notify "fail merge" 1
     fi
 
-    if [[ "$DO_CHERRY" == "1" ]]; then
-	HED=$(git rev-parse HEAD)
-	echo "HEAD is at $HED"
+    # if [[ "$DO_CHERRY" == "1" ]]; then
 	# cherry-pick build fixes
 	#git -C "$WORKTREE" cherry-pick fb63ca0e8ce87f13c54a08a7eb0e82716c9daa03 #23716
 	#git -C "$WORKTREE" cherry-pick 3f6b84f6f34a3a8a3b2a0d24c24e49243670453e
 	#git -C "$WORKTREE" cherry-pick dc5d6b0d4793ca978f71f69ef7d6b818794676c2 #24104
 	#git -C "$WORKTREE" cherry-pick d0a5e7952ac59ba815f84cadbefa77981e551eda #22713
-    fi
+    # fi
 
     if [[ "$DO_BUILD" == "1" ]]; then
         # Clean up
@@ -266,8 +290,8 @@ do
     fi
 
     if [[ "$DO_CHERRY" == "1" && "$UNDO_CHERRY" == "1" ]]; then
-	# undo cherry-picks
-	git reset --hard "$HED"
+        # undo cherry-picks
+        git reset --hard "$GIT_HEAD"
     fi
 
     if [[ "$KEEP_GOING" == "0" ]]; then
