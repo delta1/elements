@@ -225,7 +225,9 @@ do
     notify "starting merge of $PR_ID"
 
     # check for stoppers and halt if found
-    STOPPERS=()
+    # a stopper is normally the PR after the version has been changed
+    # ie. the branch point we want to stop at for this version
+    STOPPERS=("#29249")
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
