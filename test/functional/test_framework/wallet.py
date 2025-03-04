@@ -250,7 +250,8 @@ class MiniWallet:
         locktime=0,
         sequence=0,
         fee_per_output=1000,
-        target_weight=0
+        target_weight=0,
+        fee=Decimal("0") # ELEMENTS
     ):
         """
         Create and return a transaction that spends the given UTXOs and creates a
@@ -263,13 +264,14 @@ class MiniWallet:
 
         # calculate output amount
         inputs_value_total = sum([int(COIN * utxo['value']) for utxo in utxos_to_spend])
-        outputs_value_total = inputs_value_total - fee_per_output * num_outputs
+        outputs_value_total = inputs_value_total - (fee or (fee_per_output * num_outputs))
         amount_per_output = amount_per_output or (outputs_value_total // num_outputs)
 
         # create tx
         tx = CTransaction()
         tx.vin = [CTxIn(COutPoint(int(utxo_to_spend['txid'], 16), utxo_to_spend['vout']), nSequence=seq) for utxo_to_spend,seq in zip(utxos_to_spend, sequence)]
         tx.vout = [CTxOut(amount_per_output, bytearray(self._scriptPubKey)) for _ in range(num_outputs)]
+        tx.vout.append(CTxOut(fee or (fee_per_output * num_outputs)))
         tx.nLockTime = locktime
 
         if self._mode == MiniWalletMode.RAW_P2PK:
@@ -320,7 +322,7 @@ class MiniWallet:
         assert send_value > 0
 
         # create tx
-        tx = self.create_self_transfer_multi(utxos_to_spend=[utxo_to_spend], locktime=locktime, sequence=sequence, amount_per_output=int(COIN * send_value), target_weight=target_weight)
+        tx = self.create_self_transfer_multi(utxos_to_spend=[utxo_to_spend], locktime=locktime, sequence=sequence, amount_per_output=int(COIN * send_value), target_weight=target_weight, fee=fee)
         if not target_weight:
             assert_equal(tx["tx"].get_vsize(), vsize)
 
