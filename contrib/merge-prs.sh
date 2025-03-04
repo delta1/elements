@@ -50,7 +50,7 @@ DO_FUZZ=0
 DO_CHERRY=0
 UNDO_CHERRY=0
 ANALYZE=0
-NUM=30
+NUM=20
 COUNT=0
 
 if [[ "$1" == "setup" ]]; then
