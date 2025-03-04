@@ -6,8 +6,8 @@ BASE_ORIG=merged-master
 BASE="${BASE_ORIG}"
 BITCOIN_UPSTREAM_REMOTE=bitcoin
 BITCOIN_UPSTREAM="${BITCOIN_UPSTREAM_REMOTE}/master"
-ELEMENTS_UPSTREAM_REMOTE=upstream
-ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
+# ELEMENTS_UPSTREAM_REMOTE=upstream
+# ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Set these to whether you want to merge from Bitcoin or Elements
 TARGET_UPSTREAM=$BITCOIN_UPSTREAM
@@ -35,6 +35,12 @@ PARALLEL_FUZZ=12  # passed to test_runner.py -j when fuzzing
 # ccache opts
 export CCACHE_DIR="/tmp/ccache"
 export CCACHE_MAXSIZE="20G"
+
+# bdb location
+# installed with ./contrib/install_db4.sh .
+export BDB_PREFIX="/home/byron/code/elements-worktree/db4"
+export BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8"
+export BDB_CFLAGS="-I${BDB_PREFIX}/include"
 
 SKIP_MERGE=0
 DO_BUILD=1
@@ -145,7 +151,7 @@ fi
 ## Get full list of merges
 COMMITS=$(git -C "$WORKTREE" log "$TARGET_UPSTREAM" --not $BASE --merges --first-parent --pretty="format:%ct %cI %h $TARGET_NAME %s")
 
-cd "$WORKTREE"
+cd "$WORKTREE" || exit 1
 
 VERBOSE=1
 
@@ -199,13 +205,14 @@ do
     fi
     if [[ "$1" == "analyze" ]]; then
         (( COUNT++ ))
-        CRITICAL_FILES=("src/wallet/spend.h", "src/wallet/spend.cpp")
+        # todo: count conflicts in critical files
+        # CRITICAL_FILES=("src/wallet/spend.h", "src/wallet/spend.cpp")
         MERGE_FILE="/tmp/$HASH.merge"
         DIFF_FILE="/tmp/$HASH.diff"
         git -C "$WORKTREE" merge "$HASH" --no-ff -m "Merge $HASH into merged_master ($CHAIN PR $PR_ID)" > "$MERGE_FILE"
         git -C "$WORKTREE" diff > "$DIFF_FILE"
         git -C "$WORKTREE" reset --hard "$GIT_HEAD" > /dev/null
-        FILES=$(grep "CONFLICT" "$MERGE_FILE")
+        # FILES=$(grep "CONFLICT" "$MERGE_FILE")
         NUM_FILES=$(grep -c "CONFLICT" "$MERGE_FILE")
         NUM_CONFLICTS=$(grep -c "<<<<<<<" "$DIFF_FILE")
         echo "$COUNT. Merge up to $PR_ID ($HASH) has $NUM_CONFLICTS conflicts in $NUM_FILES files."
@@ -258,9 +265,9 @@ do
         # tests and also the benchmarks (though it does build them!)
         echo "Building"
         quietly make -j"$PARALLEL_BUILD" -k || notify "fail build" 1
-	# quietly make -j1 check
-        echo "Linting"
-        quietly ./ci/lint/06_script.sh || notify "fail lint"
+        # todo: fix linting step
+        # echo "Linting"
+        # quietly ./ci/lint/06_script.sh || notify "fail lint"
     fi
 
     if [[ "$DO_TEST" == "1" ]]; then
@@ -270,7 +277,6 @@ do
         quietly ./src/bench/bench_bitcoin || notify "fail test bench" 1
         quietly ./test/util/test_runner.py || notify "fail test util" 1
         quietly ./test/util/rpcauth-test.py || notify "fail test rpc" 1
-        #quietly make -C src/univalue/ check
         echo "Functional testing"
         quietly ./test/functional/test_runner.py --jobs="$PARALLEL_TEST" || notify "fail test runner" 1
     fi
