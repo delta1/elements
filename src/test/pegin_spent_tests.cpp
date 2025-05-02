@@ -32,7 +32,8 @@ public:
         return CCoinsView::IsPeginSpent(outpoint);
     }
 
-    CCoinsMap mapCoinsWritten;
+    CCoinsMapMemoryResource resource;
+    CCoinsMap mapCoinsWritten{0, CCoinsMap::hasher{}, CCoinsMap::key_equal{}, &resource};
     bool BatchWrite(CCoinsMap &mapCoins, const uint256 &hashBlock, bool erase) override {
         mapCoinsWritten.clear();
         for (CCoinsMap::iterator it = mapCoins.begin(); it != mapCoins.end(); it = mapCoins.erase(it)) {
@@ -75,7 +76,8 @@ BOOST_AUTO_TEST_CASE(PeginSpent_validity)
     outpoint2.second.n = 0;
     BOOST_CHECK(!coinsCache.IsPeginSpent(outpoint2));
 
-    CCoinsMap mapCoins;
+    CCoinsMapMemoryResource resource;
+    CCoinsMap mapCoins{0, CCoinsMap::hasher{}, CCoinsMap::key_equal{}, &resource};
     CCoinsCacheEntry entry;
     std::pair<uint256, COutPoint> outpoint3(std::make_pair(GetRandHash(), COutPoint(GetRandHash(), 42)));
 
