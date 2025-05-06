@@ -598,8 +598,18 @@ util::Result<SelectionResult> ChooseSelectionResult(const CAmountMap& mapTargetV
     // Vector of results. We will choose the best one based on waste.
     // std::vector<std::tuple<CAmount, std::set<CInputCoin>, CAmountMap>> results;
     std::vector<SelectionResult> results;
+    std::vector<util::Result<SelectionResult>> errors;
+    auto append_error = [&] (const util::Result<SelectionResult>& result) {
+        // If any specific error message appears here, then something different from a simple "no selection found" happened.
+        // Let's save it, so it can be retrieved to the user if no other selection algorithm succeeded.
+        if (HasErrorMsg(result)) {
+            errors.emplace_back(result);
+        }
+    };
+    // Maximum allowed weight
+    int max_inputs_weight = MAX_STANDARD_TX_WEIGHT - (coin_selection_params.tx_noinputs_size * WITNESS_SCALE_FACTOR);
 
-    // ELEMENTS: BnB only for policy asset?
+    // ELEMENTS: BnB and SRD only for single asset
     if (mapTargetValue.size() == 1) {
         // Note that unlike KnapsackSolver, we do not include the fee for creating a change output as BnB will not create a change output.
 
@@ -629,60 +639,47 @@ util::Result<SelectionResult> ChooseSelectionResult(const CAmountMap& mapTargetV
         }
         // END ELEMENTS
 
-        if (auto bnb_result{SelectCoinsBnB(groups.positive_group, nTargetValue, coin_selection_params.m_cost_of_change)}) {
+        if (auto bnb_result{SelectCoinsBnB(groups.positive_group, nTargetValue, coin_selection_params.m_cost_of_change, max_inputs_weight)}) {
             results.push_back(*bnb_result);
-        }
+        } else append_error(bnb_result);
+
+        // As Knapsack and SRD can create change, also deduce change weight.
+        max_inputs_weight -= (coin_selection_params.change_output_size * WITNESS_SCALE_FACTOR);
 
         // Include change for SRD as we want to avoid making really small change if the selection just
         // barely meets the target. Just use the lower bound change target instead of the randomly
         // generated one, since SRD will result in a random change amount anyway; avoid making the
         // target needlessly large.
         const CAmount srd_target = target_with_change + CHANGE_LOWER;
-        if (auto srd_result{SelectCoinsSRD(groups.positive_group, srd_target, coin_selection_params.rng_fast)}) {
+        if (auto srd_result{SelectCoinsSRD(groups.positive_group, srd_target, coin_selection_params.rng_fast, max_inputs_weight)}) {
             srd_result->ComputeAndSetWaste(coin_selection_params.min_viable_change, coin_selection_params.m_cost_of_change, coin_selection_params.m_change_fee);
             results.push_back(*srd_result);
-        }
+        } else append_error(srd_result);
     }
 
     // The knapsack solver has some legacy behavior where it will spend dust outputs. We retain this behavior, so don't filter for positive only here.
     // While mapTargetValue includes the transaction fees for non-input things, it does not include the fee for creating a change output.
     // So we need to include that for KnapsackSolver as well, as we are expecting to create a change output.
-    CAmountMap mapTargetValue_copy = mapTargetValue;
-    if (!coin_selection_params.m_subtract_fee_outputs) {
-        mapTargetValue_copy[::policyAsset] += coin_selection_params.m_change_fee;
-    }
-
     CAmountMap map_target_with_change = mapTargetValue;
     // While nTargetValue includes the transaction fees for non-input things, it does not include the fee for creating a change output.
     // So we need to include that for KnapsackSolver and SRD as well, as we are expecting to create a change output.
     if (!coin_selection_params.m_subtract_fee_outputs) {
         map_target_with_change[::policyAsset] += coin_selection_params.m_change_fee;
     }
-    if (auto knapsack_result{KnapsackSolver(groups.mixed_group, mapTargetValue, coin_selection_params.m_min_change_target, coin_selection_params.rng_fast)}) {
+    if (auto knapsack_result{KnapsackSolver(groups.mixed_group, map_target_with_change, coin_selection_params.m_min_change_target, coin_selection_params.rng_fast, max_inputs_weight)}) {
         knapsack_result->ComputeAndSetWaste(coin_selection_params.min_viable_change, coin_selection_params.m_cost_of_change, coin_selection_params.m_change_fee);
         results.push_back(*knapsack_result);
-    }
+    } else append_error(knapsack_result);
 
     if (results.empty()) {
-        // No solution found
-        return util::Error();
-    }
-
-    std::vector<SelectionResult> eligible_results;
-    std::copy_if(results.begin(), results.end(), std::back_inserter(eligible_results), [coin_selection_params](const SelectionResult& result) {
-        const auto initWeight{coin_selection_params.tx_noinputs_size * WITNESS_SCALE_FACTOR};
-        return initWeight + result.GetWeight() <= static_cast<int>(MAX_STANDARD_TX_WEIGHT);
-    });
-
-    if (eligible_results.empty()) {
-        return util::Error{_("The inputs size exceeds the maximum weight. "
-                             "Please try sending a smaller amount or manually consolidating your wallet's UTXOs")};
+        // No solution found, retrieve the first explicit error (if any).
+        // future: add 'severity level' to errors so the worst one can be retrieved instead of the first one.
+        return errors.empty() ? util::Error() : errors.front();
     }
 
     // Choose the result with the least waste
     // If the waste is the same, choose the one which spends more inputs.
-    auto& best_result = *std::min_element(eligible_results.begin(), eligible_results.end());
-    return best_result;
+    return *std::min_element(results.begin(), results.end());
 }
 
 util::Result<SelectionResult> SelectCoins(const CWallet& wallet, CoinsResult& available_coins, const PreSelectedInputs& pre_set_inputs,
