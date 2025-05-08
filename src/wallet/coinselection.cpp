@@ -461,19 +461,20 @@ util::Result<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, c
         }
 
         if (inner_groups.size() == 0) {
-            // No output groups for this asset.
-            return std::nullopt;
+            std::string msg = tfm::format("No output groups for this asset: %d", it->first.GetHex());
+            return util::Error{_(msg.c_str())};
         }
 
-        if (auto inner_result = KnapsackSolver(inner_groups, it->second, change_target, rng, it->first)) {
+        if (auto inner_result = KnapsackSolver(inner_groups, it->second, change_target, rng, max_weight, it->first)) {
             auto set = inner_result->GetInputSet();
             for (const std::shared_ptr<wallet::COutput>& ic : set) {
                 non_policy_effective_value += ic->GetEffectiveValue();
             }
             result.AddInput(inner_result.value());
         } else {
-            LogPrint(BCLog::SELECTCOINS, "Not enough funds to create target %d for asset %s\n", it->second, it->first.GetHex());
-            return std::nullopt;
+            std::string msg = tfm::format("Not enough funds to create target %d for asset %s\n", it->second, it->first.GetHex());
+            LogPrint(BCLog::SELECTCOINS, msg.c_str());
+            return util::Error{_(msg.c_str())};
         }
     }
 
@@ -510,24 +511,24 @@ util::Result<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, c
         }
 
         if (inner_groups.size() == 0) {
-            // No output groups for this asset.
-            return std::nullopt;
+            return util::Error{_("No output groups for the policy asset.")};
         }
 
-        if (auto inner_result = KnapsackSolver(inner_groups, policy_target, change_target, rng, ::policyAsset)) {
+        if (auto inner_result = KnapsackSolver(inner_groups, policy_target, change_target, rng, max_weight, ::policyAsset)) {
             result.AddInput(*inner_result);
         } else {
-            LogPrint(BCLog::SELECTCOINS, "Not enough funds to create target %d for policy asset %s\n", policy_target, ::policyAsset.GetHex());
-            return std::nullopt;
+            std::string msg = tfm::format("Not enough funds to create target %d for policy asset %s\n", policy_target, ::policyAsset.GetHex());
+            LogPrint(BCLog::SELECTCOINS, msg.c_str());
+            return util::Error{_(msg.c_str())};
         }
     }
 
-    if (result.GetSelectedValue() < mapTargetValue) return std::nullopt;
+    if (result.GetSelectedValue() < mapTargetValue) return util::Error{_("Selected value is less than target value")};
     return result;
 }
 
-std::optional<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmount& nTargetValue,
-                                              CAmount change_target, FastRandomContext& rng, const CAsset& asset)
+util::Result<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmount& nTargetValue,
+                                              CAmount change_target, FastRandomContext& rng, int max_weight, const CAsset& asset)
 {
     CAmountMap map_target{{ asset, nTargetValue }};
     SelectionResult result(map_target, SelectionAlgorithm::KNAPSACK);
