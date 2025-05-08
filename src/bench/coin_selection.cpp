@@ -5,6 +5,7 @@
 #include <bench/bench.h>
 #include <interfaces/chain.h>
 #include <node/context.h>
+#include <policy/policy.h>
 #include <wallet/coinselection.h>
 #include <asset.h>
 #include <policy/policy.h>
@@ -133,7 +134,7 @@ static void BnBExhaustion(benchmark::Bench& bench)
     bench.run([&] {
         // Benchmark
         CAmount target = make_hard_case(17, utxo_pool);
-        SelectCoinsBnB(utxo_pool, target, 0); // Should exhaust
+        SelectCoinsBnB(utxo_pool, target, 0, MAX_STANDARD_TX_WEIGHT); // Should exhaust
 
         // Cleanup
         utxo_pool.clear();
