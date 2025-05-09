@@ -8,6 +8,7 @@
 #include <blindpsbt.h>
 #include <blockfilter.h>
 #include <chain.h>
+#include <common/args.h>
 #include <consensus/amount.h>
 #include <consensus/consensus.h>
 #include <consensus/validation.h>
@@ -39,7 +40,6 @@
 #include <util/moneystr.h>
 #include <util/rbf.h>
 #include <util/string.h>
-#include <util/system.h>
 #include <util/translation.h>
 #include <validation.h>
 #include <wallet/coincontrol.h>

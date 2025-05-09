@@ -9,7 +9,7 @@
 #include <QStringList>
 
 #include <cassert>
-#include <util/system.h>
+#include <common/args.h>
 
 static constexpr auto MAX_DIGITS_BTC = 16;
 

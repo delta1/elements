@@ -140,6 +140,7 @@ BITCOIN_CORE_H = \
   checkqueue.h \
   clientversion.h \
   coins.h \
+  common/args.h \
   common/bloom.h \
   common/init.h \
   common/run_command.h \
@@ -690,7 +691,9 @@ libbitcoin_common_a_SOURCES = \
   block_proof.cpp \
   chainparams.cpp \
   coins.cpp \
+  common/args.cpp \
   common/bloom.cpp \
+  common/config.cpp \
   common/init.cpp \
   common/interfaces.cpp \
   common/run_command.cpp \
@@ -985,6 +988,8 @@ libbitcoinkernel_la_SOURCES = \
   chainparams.cpp \
   clientversion.cpp \
   coins.cpp \
+  common/args.cpp \
+  common/config.cpp \
   compressor.cpp \
   consensus/merkle.cpp \
   consensus/tx_check.cpp \

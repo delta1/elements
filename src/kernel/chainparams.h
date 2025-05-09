@@ -6,6 +6,7 @@
 #ifndef BITCOIN_KERNEL_CHAINPARAMS_H
 #define BITCOIN_KERNEL_CHAINPARAMS_H
 
+#include <common/args.h> // ELEMENTS
 #include <consensus/params.h>
 #include <netaddress.h>
 #include <primitives/block.h>

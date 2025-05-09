@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <consensus/params.h>
-#include <util/system.h> // for gArgs
+#include <common/args.h> // for gArgs
 #include <util/check.h>
 #include <versionbits.h>
 

@@ -9,6 +9,7 @@
 #include <asset.h>
 #include <clientversion.h>
 #include <coins.h>
+#include <common/args.h>
 #include <compat/compat.h>
 #include <consensus/amount.h>
 #include <consensus/consensus.h>

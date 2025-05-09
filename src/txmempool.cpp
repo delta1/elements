@@ -14,6 +14,7 @@
 #include <consensus/validation.h>
 #include <pegins.h>
 #include <policy/discount.h>
+#include <logging.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
 #include <policy/settings.h>

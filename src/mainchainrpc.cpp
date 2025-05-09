@@ -1,5 +1,7 @@
 #include <mainchainrpc.h>
 
+#include <common/args.h>
+#include <logging.h>
 #include <chainparamsbase.h>
 #include <util/system.h>
 #include <util/strencodings.h>
