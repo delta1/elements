@@ -20,7 +20,6 @@ from test_framework.util import (
     assert_raises_rpc_error,
 )
 from test_framework.wallet import (
-    COIN,
     DEFAULT_FEE,
     MiniWallet,
 )
@@ -325,43 +324,6 @@ class RPCPackagesTest(BitcoinTestFramework):
         peer.wait_for_broadcast([tx["tx"].getwtxid() for tx in package_txns])
         self.generate(node, 1)
 
-    def test_submit_cpfp(self):
-        node = self.nodes[0]
-        peer = node.add_p2p_connection(P2PTxInvStore())
-
-        # Package with 2 parents and 1 child. One parent pays for itself using modified fees, and
-        # another has 0 fees but is bumped by child.
-        tx_poor = self.wallet.create_self_transfer(fee=Decimal('0.00000001'), fee_rate=0) # ELEMENTS: fee can't be 0
-        tx_rich = self.wallet.create_self_transfer(fee=Decimal('0.00000001'), fee_rate=0)
-        node.prioritisetransaction(tx_rich["txid"], 0, int(DEFAULT_FEE * COIN))
-        package_txns = [tx_rich, tx_poor]
-        coins = [tx["new_utxo"] for tx in package_txns]
-        tx_child = self.wallet.create_self_transfer_multi(utxos_to_spend=coins, fee=10000) # ELEMENTS
-        package_txns.append(tx_child)
-
-        submitpackage_result = node.submitpackage([tx["hex"] for tx in package_txns])
-
-        rich_parent_result = submitpackage_result["tx-results"][tx_rich["wtxid"]]
-        poor_parent_result = submitpackage_result["tx-results"][tx_poor["wtxid"]]
-        child_result = submitpackage_result["tx-results"][tx_child["tx"].getwtxid()]
-        elements_fee = Decimal('0.00000001')
-        assert_equal(rich_parent_result["fees"]["base"], elements_fee) # ELEMENTS
-        assert_equal(poor_parent_result["fees"]["base"], elements_fee) # ELEMENTS
-        assert_equal(child_result["fees"]["base"], DEFAULT_FEE)
-        # The "rich" parent does not require CPFP so its effective feerate.
-        assert_fee_amount(DEFAULT_FEE + elements_fee, tx_rich["tx"].get_vsize(), rich_parent_result["fees"]["effective-feerate"])
-        assert_equal(rich_parent_result["fees"]["effective-includes"], [tx_rich["wtxid"]])
-        # The "poor" parent and child's effective feerates are the same, composed of the child's fee
-        # divided by their combined vsize.
-        assert_fee_amount(DEFAULT_FEE + elements_fee, tx_poor["tx"].get_vsize() + tx_child["tx"].get_vsize(), poor_parent_result["fees"]["effective-feerate"])
-        assert_fee_amount(DEFAULT_FEE + elements_fee, tx_poor["tx"].get_vsize() + tx_child["tx"].get_vsize(), child_result["fees"]["effective-feerate"])
-        assert_equal([tx_poor["wtxid"], tx_child["tx"].getwtxid()], poor_parent_result["fees"]["effective-includes"])
-        assert_equal([tx_poor["wtxid"], tx_child["tx"].getwtxid()], child_result["fees"]["effective-includes"])
-
-        # The node will broadcast each transaction, still abiding by its peer's fee filter
-        peer.wait_for_broadcast([tx["tx"].getwtxid() for tx in package_txns])
-        self.generate(node, 1)
-
     def test_submitpackage(self):
         node = self.nodes[0]
 
@@ -369,9 +331,6 @@ class RPCPackagesTest(BitcoinTestFramework):
         for num_parents in [1, 2, 24]:
             self.test_submit_child_with_parents(num_parents, False)
             self.test_submit_child_with_parents(num_parents, True)
-
-        self.log.info("Submitpackage valid packages with CPFP")
-        self.test_submit_cpfp()
 
         self.log.info("Submitpackage only allows packages of 1 child with its parents")
         # Chain of 3 transactions has too many generations

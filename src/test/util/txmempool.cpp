@@ -21,6 +21,7 @@ CTxMemPool::Options MemPoolOptionsForTest(const NodeContext& node)
         // Default to always checking mempool regardless of
         // chainparams.DefaultConsistencyChecks for tests
         .check_ratio = 1,
+        .incremental_relay_feerate = CFeeRate(1000), // ELEMENTS: use upstream incremental relay feerate
     };
     const auto err{ApplyArgsManOptions(*node.args, ::Params(), mempool_opts)};
     Assert(!err);
