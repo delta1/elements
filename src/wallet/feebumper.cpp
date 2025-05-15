@@ -224,7 +224,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
     // While we're here, calculate the output amount
     std::map<CAsset, CTxDestination> destinations;
     std::vector<wallet::CRecipient> recipients;
-    CAmount output_value = 0;
+    CAmount new_outputs_value = 0;
     const auto& txouts = outputs.empty() ? wtx.tx->vout : outputs;
     for (const auto& output : txouts) {
         // ELEMENTS:
@@ -243,14 +243,35 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
             ExtractDestination(output.scriptPubKey, change_dest);
             destinations[output.nAsset.GetAsset()] = change_dest;
         }
-        output_value += output.nValue.GetAmount();
+        new_outputs_value += output.nValue.GetAmount();
     }
     new_coin_control.destChange = destinations;
 
-    old_fee = input_value - output_value;
+    old_fee = input_value - new_outputs_value;
     // ELEMENTS
     if (g_con_elementsmode) {
         old_fee = GetFeeMap(*wtx.tx)[::policyAsset];
+    }
+
+    // If no recipients, means that we are sending coins to a change address
+    if (recipients.empty()) {
+        // ELEMENTS
+        assert(new_coin_control.destChange.size() == 1);
+        const auto iter = new_coin_control.destChange.begin();
+        auto asset = iter->first;
+        auto destination = iter->second;
+        // Just as a sanity check, ensure that the change address exist
+        if (std::get_if<CNoDestination>(&destination)) {
+            errors.emplace_back(Untranslated("Unable to create transaction. Transaction must have at least one recipient"));
+            return Result::INVALID_PARAMETER;
+        }
+
+        // Add change as recipient with SFFO flag enabled, so fees are deduced from it.
+        // If the output differs from the original tx output (because the user customized it) a new change output will be created.
+        const auto script = GetScriptForDestination(destination);
+        const CPubKey blinding_pubkey = wallet.GetBlindingKey(&script).GetPubKey();
+        recipients.emplace_back(CRecipient{script, new_outputs_value, asset, blinding_pubkey, /*fSubtractFeeFromAmount=*/true});
+        new_coin_control.destChange.clear();
     }
 
     if (coin_control.m_feerate) {
@@ -264,6 +285,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
             mtx.witness.vtxinwit[i].scriptWitness.SetNull();
         }
         temp_mtx.vout = txouts;
+        temp_mtx.witness.vtxoutwit.clear(); // ELEMENTS
         const int64_t maxTxSize{CalculateMaximumSignedTxSize(CTransaction(temp_mtx), &wallet, &new_coin_control).vsize};
         Result res = CheckFeeRate(wallet, *new_coin_control.m_feerate, maxTxSize, old_fee, errors);
         if (res != Result::OK) {
