@@ -196,14 +196,16 @@ task:
 task:
   name: 'ARM [unit tests, no functional tests] [bullseye]'
   << : *GLOBAL_TASK_TEMPLATE
-  container:
-    image: debian:bullseye
+  arm_container:
+    cpu: 2
+    memory: 8G
+    dockerfile: ci/test_imagefile
     docker_arguments:
       CI_IMAGE_NAME_TAG: debian:bullseye
-  << : *CREDITS_TEMPLATE
+      FILE_ENV: "./ci/test/00_setup_env_arm.sh"
   env:
     << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
-    FILE_ENV: "./ci/test/00_setup_env_arm.sh"
+    QEMU_USER_CMD: ""  # Disable qemu and run the test natively
 
 task:
   name: 'Win64 [unit tests, no gui tests, no boost::process, no functional tests] [jammy]'
