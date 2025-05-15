@@ -502,6 +502,7 @@ RPCHelpMan getbalances()
                     {RPCResult::Type::STR_AMOUNT, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)"},
                     {RPCResult::Type::STR_AMOUNT, "immature", "balance from immature coinbase outputs"},
                 }},
+                RESULT_LAST_PROCESSED_BLOCK,
             }
             },
         RPCExamples{
@@ -542,6 +543,8 @@ RPCHelpMan getbalances()
         balances_watchonly.pushKV("immature", AmountMapToUniv(bal.m_watchonly_immature, ""));
         balances.pushKV("watchonly", balances_watchonly);
     }
+
+    AppendLastProcessedBlock(balances, wallet);
     return balances;
 },
     };
