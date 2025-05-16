@@ -203,11 +203,12 @@ RPCHelpMan getpeginaddress()
     // option for dynafed-enabled ones as well
     ChainstateManager::Options opts{
         .chainparams = chainparams,
+        .datadir = gArgs.GetDataDirNet(),
         .adjusted_time_callback = GetAdjustedTime,
         .minimum_chain_work = UintToArith256(consensus.nMinimumChainWork),
         .assumed_valid_block = consensus.defaultAssumeValid,
     };
-    if (!DeploymentActiveAfter(pwallet->chain().getTip(), ChainstateManager(opts, {}), Consensus::DEPLOYMENT_DYNA_FED) ||
+    if (!DeploymentActiveAfter(pwallet->chain().getTip(), ChainstateManager(opts, {chainparams}), Consensus::DEPLOYMENT_DYNA_FED) ||
                 fedpegscripts.front().first.IsPayToScriptHash()) {
         mainchain_dest = ScriptHash(GetScriptForDestination(mainchain_dest));
     }

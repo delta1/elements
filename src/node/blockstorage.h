@@ -8,6 +8,7 @@
 #include <attributes.h>
 #include <chain.h>
 #include <kernel/blockmanager_opts.h>
+#include <kernel/chainparams.h>
 #include <kernel/cs_main.h>
 #include <protocol.h>
 #include <sync.h>
@@ -91,12 +92,14 @@ class BlockManager
     friend CBlockIndex;
 
 private:
+    const CChainParams& GetParams() const { return m_opts.chainparams; }
+    const Consensus::Params& GetConsensus() const { return m_opts.chainparams.GetConsensus(); }
     /**
      * Load the blocktree off disk and into memory. Populate certain metadata
      * per index entry (nStatus, nChainWork, nTimeMax, etc.) as well as peripheral
      * collections like m_dirty_blockindex.
      */
-    bool LoadBlockIndex(ChainstateManager& chainman, const Consensus::Params& consensus_params)
+    bool LoadBlockIndex(ChainstateManager& chainman)
         EXCLUSIVE_LOCKS_REQUIRED(cs_main);
     void FlushBlockFile(bool fFinalize = false, bool finalize_undo = false);
     void FlushUndoFile(int block_file, bool finalize = false);
@@ -172,7 +175,7 @@ public:
     std::unique_ptr<CBlockTreeDB> m_block_tree_db GUARDED_BY(::cs_main);
 
     bool WriteBlockIndexDB() EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
-    bool LoadBlockIndexDB(ChainstateManager& chainman, const Consensus::Params& consensus_params) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
+    bool LoadBlockIndexDB(ChainstateManager& chainman) EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 
     /**
      * Remove any pruned block & undo files that are still on disk.
@@ -194,11 +197,11 @@ public:
     /** Get block file info entry for one block file */
     CBlockFileInfo* GetBlockFileInfo(size_t n);
 
-    bool WriteUndoDataForBlock(const CBlockUndo& blockundo, BlockValidationState& state, CBlockIndex* pindex, const CChainParams& chainparams)
+    bool WriteUndoDataForBlock(const CBlockUndo& blockundo, BlockValidationState& state, CBlockIndex& block)
         EXCLUSIVE_LOCKS_REQUIRED(::cs_main);
 
     /** Store block on disk. If dbp is not nullptr, then it provides the known position of the block within a block file on disk. */
-    FlatFilePos SaveBlockToDisk(const CBlock& block, int nHeight, CChain& active_chain, const CChainParams& chainparams, const FlatFilePos* dbp);
+    FlatFilePos SaveBlockToDisk(const CBlock& block, int nHeight, CChain& active_chain, const FlatFilePos* dbp);
 
     /** Whether running in -prune mode. */
     [[nodiscard]] bool IsPruneMode() const { return m_prune_mode; }

@@ -41,6 +41,9 @@ class TrimHeadersTest(BitcoinTestFramework):
         self.skip_if_no_wallet()
         self.skip_if_no_bdb()
 
+    def add_options(self, parser):
+        self.add_wallet_options(parser)
+
     # Dynamically generate N keys to be used for block signing.
     def init_keys(self, num_keys):
         self.keys = []
