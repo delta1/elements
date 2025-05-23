@@ -8,6 +8,7 @@
 #include <test/util/setup_common.h>
 #include <test/util/str.h>
 #include <univalue.h>
+#include <util/chaintype.h>
 #include <util/fs.h>
 #include <util/strencodings.h>
 
@@ -580,7 +581,7 @@ BOOST_AUTO_TEST_CASE(util_ReadConfigStream)
     test_args.SetNetworkOnlyArg("-ccc");
     test_args.SetNetworkOnlyArg("-h");
 
-    test_args.SelectConfigNetwork(CBaseChainParams::DEFAULT);
+    test_args.SelectConfigNetwork(ChainTypeToString(ChainType::LIQUID1));
     BOOST_CHECK(test_args.GetArg("-d", "xxx") == "e");
     BOOST_CHECK(test_args.GetArgs("-ccc").size() == 2);
     BOOST_CHECK(test_args.GetArg("-h", "xxx") == "0");
@@ -637,7 +638,7 @@ BOOST_AUTO_TEST_CASE(util_GetArg)
     BOOST_CHECK_EQUAL(testArgs.GetArg("pritest4", "default"), "b");
 }
 
-BOOST_AUTO_TEST_CASE(util_GetChainName)
+BOOST_AUTO_TEST_CASE(util_GetChainTypeString)
 {
     TestArgsManager test_args;
     const auto testnet = std::make_pair("-testnet", ArgsManager::ALLOW_ANY);
@@ -656,39 +657,39 @@ BOOST_AUTO_TEST_CASE(util_GetChainName)
 
     BOOST_CHECK(test_args.ParseParameters(0, (char**)argv_testnet, error));
     std::string default_chain = "liquidv1";
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), default_chain);
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), default_chain);
 
     BOOST_CHECK(test_args.ParseParameters(2, (char**)argv_testnet, error));
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "test");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "test");
 
     BOOST_CHECK(test_args.ParseParameters(2, (char**)argv_regtest, error));
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "regtest");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "regtest");
 
     BOOST_CHECK(test_args.ParseParameters(3, (char**)argv_test_no_reg, error));
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "test");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "test");
 
     BOOST_CHECK(test_args.ParseParameters(3, (char**)argv_both, error));
-    BOOST_CHECK_THROW(test_args.GetChainName(), std::runtime_error);
+    BOOST_CHECK_THROW(test_args.GetChainTypeString(), std::runtime_error);
 
     BOOST_CHECK(test_args.ParseParameters(0, (char**)argv_testnet, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "test");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "test");
 
     BOOST_CHECK(test_args.ParseParameters(2, (char**)argv_testnet, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "test");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "test");
 
     BOOST_CHECK(test_args.ParseParameters(2, (char**)argv_regtest, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_THROW(test_args.GetChainName(), std::runtime_error);
+    BOOST_CHECK_THROW(test_args.GetChainTypeString(), std::runtime_error);
 
     BOOST_CHECK(test_args.ParseParameters(3, (char**)argv_test_no_reg, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "test");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "test");
 
     BOOST_CHECK(test_args.ParseParameters(3, (char**)argv_both, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_THROW(test_args.GetChainName(), std::runtime_error);
+    BOOST_CHECK_THROW(test_args.GetChainTypeString(), std::runtime_error);
 
     // check setting the network to test (and thus making
     // [test] regtest=1 potentially relevant) doesn't break things
@@ -696,23 +697,23 @@ BOOST_AUTO_TEST_CASE(util_GetChainName)
 
     BOOST_CHECK(test_args.ParseParameters(0, (char**)argv_testnet, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "test");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "test");
 
     BOOST_CHECK(test_args.ParseParameters(2, (char**)argv_testnet, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "test");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "test");
 
     BOOST_CHECK(test_args.ParseParameters(2, (char**)argv_regtest, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_THROW(test_args.GetChainName(), std::runtime_error);
+    BOOST_CHECK_THROW(test_args.GetChainTypeString(), std::runtime_error);
 
     BOOST_CHECK(test_args.ParseParameters(2, (char**)argv_test_no_reg, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_EQUAL(test_args.GetChainName(), "test");
+    BOOST_CHECK_EQUAL(test_args.GetChainTypeString(), "test");
 
     BOOST_CHECK(test_args.ParseParameters(3, (char**)argv_both, error));
     test_args.ReadConfigString(testnetconf);
-    BOOST_CHECK_THROW(test_args.GetChainName(), std::runtime_error);
+    BOOST_CHECK_THROW(test_args.GetChainTypeString(), std::runtime_error);
 }
 
 // Test different ways settings can be merged, and verify results. This test can
@@ -756,8 +757,8 @@ struct ArgsMergeTestingSetup : public BasicTestingSetup {
             ForEachNoDup(conf_actions, SET, SECTION_NEGATE, [&] {
                 for (bool soft_set : {false, true}) {
                     for (bool force_set : {false, true}) {
-                        for (const std::string& section : {CBaseChainParams::MAIN, CBaseChainParams::TESTNET, CBaseChainParams::SIGNET}) {
-                            for (const std::string& network : {CBaseChainParams::MAIN, CBaseChainParams::TESTNET, CBaseChainParams::SIGNET}) {
+                        for (const std::string& section : {ChainTypeToString(ChainType::MAIN), ChainTypeToString(ChainType::TESTNET), ChainTypeToString(ChainType::SIGNET)}) {
+                            for (const std::string& network : {ChainTypeToString(ChainType::MAIN), ChainTypeToString(ChainType::TESTNET), ChainTypeToString(ChainType::SIGNET)}) {
                                 for (bool net_specific : {false, true}) {
                                     fn(arg_actions, conf_actions, soft_set, force_set, section, network, net_specific);
                                 }
@@ -914,7 +915,7 @@ BOOST_FIXTURE_TEST_CASE(util_ArgsMerge, ArgsMergeTestingSetup)
     BOOST_CHECK_EQUAL(out_sha_hex, "f0a5a84ec85569ae13bf8c94f0dd5d5c6989c84041fb56bd4fb41e1a09818e40");
 }
 
-// Similar test as above, but for ArgsManager::GetChainName function.
+// Similar test as above, but for ArgsManager::GetChainTypeString function.
 struct ChainMergeTestingSetup : public BasicTestingSetup {
     static constexpr int MAX_ACTIONS = 2;
 
@@ -983,7 +984,7 @@ BOOST_FIXTURE_TEST_CASE(util_ChainMerge, ChainMergeTestingSetup)
 
         desc += " || ";
         try {
-            desc += parser.GetChainName();
+            desc += parser.GetChainTypeString();
         } catch (const std::runtime_error& e) {
             desc += "error: ";
             desc += e.what();

@@ -16,7 +16,7 @@
 
 // For elements serialization rules
 struct ElementsSetup : public TestingSetup {
-        ElementsSetup() : TestingSetup("custom") {}
+        ElementsSetup() : TestingSetup(ChainType::CUSTOM) {}
 };
 
 BOOST_FIXTURE_TEST_SUITE(blind_tests, ElementsSetup)

@@ -138,7 +138,7 @@ static fs::path GetMainchainAuthCookieFile()
 {
     std::string cookie_file = MAINCHAIN_COOKIEAUTH_FILE;
     // Bitcoin mainnet exception
-    if (gArgs.GetChainName() == "liquidv1") {
+    if (gArgs.GetChainTypeMeta().chain_type == ChainType::LIQUID1) {
         cookie_file = ".cookie";
     }
     fs::path cookie_path = fs::PathFromString(gArgs.GetArg("-mainchainrpccookiefile", cookie_file));

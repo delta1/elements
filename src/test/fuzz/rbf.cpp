@@ -28,7 +28,7 @@ void initialize_rbf(void) {
     g_setup = testing_setup.get();
     // ELEMENTS: our mempool needs Params() to be set for multiple reasons -- to check
     //  the discount CT rate, to figure out pegin policy, etc
-    SelectParams(CBaseChainParams::LIQUID1);
+    SelectParams(ChainType::LIQUID1);
 }
 
 FUZZ_TARGET_INIT(rbf, initialize_rbf)

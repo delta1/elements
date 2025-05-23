@@ -457,7 +457,7 @@ static RPCHelpMan getmininginfo()
         obj.pushKV("networkhashps",    getnetworkhashps().HandleRequest(request));
     }
     obj.pushKV("pooledtx",         (uint64_t)mempool.size());
-    obj.pushKV("chain", chainman.GetParams().NetworkIDString());
+    obj.pushKV("chain", chainman.GetParams().GetChainTypeString());
     obj.pushKV("warnings",         GetWarnings(false).original);
     return obj;
 },

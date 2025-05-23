@@ -21,9 +21,9 @@ FUZZ_TARGET(bloom_filter)
     FuzzedDataProvider fuzzed_data_provider(buffer.data(), buffer.size());
     // ELEMENTS: needed as Solver depends on Params()
     if (fuzzed_data_provider.ConsumeBool()) {
-        SelectParams(CBaseChainParams::LIQUID1);
+        SelectParams(ChainType::LIQUID1);
     } else {
-        SelectParams(CBaseChainParams::MAIN);
+        SelectParams(ChainType::MAIN);
     }
 
     CBloomFilter bloom_filter{

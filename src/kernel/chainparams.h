@@ -12,6 +12,7 @@
 #include <primitives/block.h>
 #include <protocol.h>
 #include <uint256.h>
+#include <util/chaintype.h>
 #include <util/hash_type.h>
 #include <util/system.h>
 
@@ -120,8 +121,10 @@ public:
     uint64_t AssumedChainStateSize() const { return m_assumed_chain_state_size; }
     /** Whether it is possible to mine blocks on demand (no retargeting) */
     bool MineBlocksOnDemand() const { return consensus.fPowNoRetargeting; }
-    /** Return the network string */
-    std::string NetworkIDString() const { return strNetworkID; }
+    /** Return the chain type string */
+    std::string GetChainTypeString() const { return m_chain_type.chain_name; }
+    /** Return the chain type */
+    ChainTypeMeta GetChainTypeMeta() const { return m_chain_type; }
     /** Return the list of hostnames to look up for DNS seeds */
     const std::vector<std::string>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
@@ -172,10 +175,10 @@ public:
         bool fastprune{false};
     };
 
-    static std::unique_ptr<const CChainParams> LiquidTestNet(const std::string& chain, const ArgsManager& args, const RegTestOptions& options);
+    static std::unique_ptr<const CChainParams> LiquidTestNet(const ChainTypeMeta chain, const ArgsManager& args, const RegTestOptions& options);
     static std::unique_ptr<const CChainParams> LiquidV1Test(const ArgsManager& args);
     static std::unique_ptr<const CChainParams> LiquidV1(const ArgsManager& args);
-    static std::unique_ptr<const CChainParams> Custom(const std::string& chain, const ArgsManager& args, const RegTestOptions& options);
+    static std::unique_ptr<const CChainParams> Custom(const ChainTypeMeta chain, const ArgsManager& args, const RegTestOptions& options);
     static std::unique_ptr<const CChainParams> RegTest(const RegTestOptions& options);
     static std::unique_ptr<const CChainParams> SigNet(const SigNetOptions& options);
     static std::unique_ptr<const CChainParams> Main();
@@ -194,7 +197,7 @@ protected:
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     std::string bech32_hrp;
     std::string blech32_hrp;
-    std::string strNetworkID;
+    ChainTypeMeta m_chain_type;
     CBlock genesis;
     CAmount initialFreeCoins;
     CAmount initial_reissuance_tokens;

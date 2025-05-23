@@ -7,18 +7,9 @@
 
 #include <common/args.h>
 #include <tinyformat.h>
+#include <util/chaintype.h>
 
 #include <assert.h>
-
-const std::string CBaseChainParams::MAIN = "main";
-const std::string CBaseChainParams::TESTNET = "test";
-const std::string CBaseChainParams::SIGNET = "signet";
-const std::string CBaseChainParams::REGTEST = "regtest";
-const std::string CBaseChainParams::LIQUID1 = "liquidv1";
-const std::string CBaseChainParams::LIQUID1TEST = "liquidv1test";
-const std::string CBaseChainParams::LIQUIDTESTNET = "liquidtestnet";
-
-const std::string CBaseChainParams::DEFAULT = CBaseChainParams::LIQUID1;
 
 void SetupChainParamsBaseOptions(ArgsManager& argsman)
 {
@@ -77,30 +68,39 @@ const CBaseChainParams& BaseParams()
  * Port numbers for incoming Tor connections (8334, 18334, 38334, 18445) have
  * been chosen arbitrarily to keep ranges of used ports tight.
  */
-std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain)
+std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const ChainTypeMeta chain)
 {
-    if (chain == CBaseChainParams::MAIN) {
+    switch (chain.chain_type) {
+    case ChainType::MAIN:
         return std::make_unique<CBaseChainParams>("", 8332, 18332, 8334);
-    } else if (chain == CBaseChainParams::TESTNET) {
+    case ChainType::TESTNET:
         return std::make_unique<CBaseChainParams>("testnet3", 18332, 8332, 18334);
-    } else if (chain == CBaseChainParams::SIGNET) {
+    case ChainType::SIGNET:
         return std::make_unique<CBaseChainParams>("signet", 38332, 18332, 38334);
-    } else if (chain == CBaseChainParams::REGTEST) {
+    case ChainType::REGTEST:
         return std::make_unique<CBaseChainParams>("regtest", 18443, 18332, 18445);
-    } else if (chain == CBaseChainParams::LIQUID1) {
+    case ChainType::LIQUID1:
         return std::make_unique<CBaseChainParams>("liquidv1", 7041, 8332, 37041);
-    } else if (chain == CBaseChainParams::LIQUID1TEST) {
+    case ChainType::LIQUID1TEST:
         return std::make_unique<CBaseChainParams>("liquidv1test", 7040, 18332, 37040);  // Use same ports as customparams
-    } else if (chain == CBaseChainParams::LIQUIDTESTNET) {
-        return std::make_unique<CBaseChainParams>(chain, 7039, 18331, 37039);
+    case ChainType::LIQUIDTESTNET:
+        return std::make_unique<CBaseChainParams>("liquidtestnet", 7039, 18331, 37039);
+    case ChainType::CUSTOM:
+        return std::make_unique<CBaseChainParams>(chain.chain_name, 7040, 18332, 37040);
     }
-
-    // ELEMENTS:
-    return std::make_unique<CBaseChainParams>(chain, 7040, 18332, 37040);
+    return std::make_unique<CBaseChainParams>(chain.chain_name, 7040, 18332, 37040);
 }
 
-void SelectBaseParams(const std::string& chain)
+void SelectBaseParams(const ChainTypeMeta chain)
 {
     globalChainBaseParams = CreateBaseChainParams(chain);
-    gArgs.SelectConfigNetwork(chain);
+    gArgs.SelectConfigNetwork(chain.chain_name);
+}
+
+// ELEMENTS
+std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const ChainType chain) {
+    return CreateBaseChainParams(ChainTypeMetaFrom(chain));
+}
+void SelectBaseParams(const ChainType chain) {
+    SelectBaseParams(ChainTypeMetaFrom(chain));
 }

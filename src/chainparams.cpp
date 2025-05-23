@@ -5,6 +5,7 @@
 
 #include <chainparams.h>
 
+#include <chainparamsbase.h>
 #include <chainparamsseeds.h>
 #include <common/args.h>
 #include <consensus/merkle.h>
@@ -14,6 +15,7 @@
 #include <primitives/transaction.h>
 #include <logging.h>
 #include <script/interpreter.h>
+#include <util/chaintype.h>
 #include <util/string.h>
 #include <crypto/sha256.h>
 
@@ -100,29 +102,35 @@ const CChainParams &Params() {
     return *globalChainParams;
 }
 
-std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, const std::string& chain)
+std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, const ChainTypeMeta chain)
 {
-    // Reserved names for non-custom chains
-    if (chain == CBaseChainParams::MAIN) {
+    switch (chain.chain_type) {
+    case ChainType::MAIN:
         return CChainParams::Main();
-    } else if (chain == CBaseChainParams::TESTNET) {
+    case ChainType::TESTNET:
         return CChainParams::TestNet();
-    } else if (chain == CBaseChainParams::SIGNET) {
+    case ChainType::SIGNET: {
         auto opts = CChainParams::SigNetOptions{};
         ReadSigNetArgs(args, opts);
         return CChainParams::SigNet(opts);
-    } else if (chain == CBaseChainParams::REGTEST) {
+    }
+    case ChainType::REGTEST: {
         auto opts = CChainParams::RegTestOptions{};
         ReadRegTestArgs(args, opts);
         return CChainParams::RegTest(opts);
-    } else if (chain == CBaseChainParams::LIQUID1) {
+    }
+    case ChainType::LIQUID1:
         return CChainParams::LiquidV1(args);
-    } else if (chain == CBaseChainParams::LIQUID1TEST) {
+    case ChainType::LIQUID1TEST:
         return CChainParams::LiquidV1Test(args);
-    } else if (chain == CBaseChainParams::LIQUIDTESTNET) {
+    case ChainType::LIQUIDTESTNET: {
         auto opts = CChainParams::RegTestOptions{};
         ReadRegTestArgs(args, opts);
         return CChainParams::LiquidTestNet(chain, args, opts);
+    }
+    case ChainType::CUSTOM:
+        // just log the custom chain and fallthrough to the catch-all for custom params
+        LogPrintf("CreateChainParams for custom chain: %s\n", chain.chain_name);
     }
 
     auto opts = CChainParams::RegTestOptions{};
@@ -130,8 +138,20 @@ std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, c
     return CChainParams::Custom(chain, args, opts);
 }
 
-void SelectParams(const std::string& network)
+void SelectParams(const ChainTypeMeta chain)
 {
-    SelectBaseParams(network);
-    globalChainParams = CreateChainParams(gArgs, network);
+    SelectBaseParams(chain);
+    globalChainParams = CreateChainParams(gArgs, chain);
+}
+
+// ELEMENTS:
+// keep the original ChainType constructors, which just call our new ChainTypeMeta constructors
+// this helps not to have to change all the other callsites
+// in general: don't use these, they're "lossy" for custom chain names
+std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, const ChainType chain) {
+    return CreateChainParams(args, ChainTypeMetaFrom(chain));
+}
+
+void SelectParams(const ChainType chain) {
+    SelectParams(ChainTypeMetaFrom(chain));
 }

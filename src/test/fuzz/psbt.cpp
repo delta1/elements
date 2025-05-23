@@ -27,7 +27,7 @@ FUZZ_TARGET(psbt)
     FuzzedDataProvider fuzzed_data_provider{buffer.data(), buffer.size()};
     PartiallySignedTransaction psbt_mut;
     // ELEMENTS: needed as Solver depends on Params()
-    SelectParams(CBaseChainParams::LIQUID1);
+    SelectParams(ChainType::LIQUID1);
     std::string error;
     auto str = fuzzed_data_provider.ConsumeRandomLengthString();
     if (!DecodeRawPSBT(psbt_mut, MakeByteSpan(str), error)) {

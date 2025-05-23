@@ -10,6 +10,7 @@
 #include <sync.h>
 #include <tinyformat.h>
 #include <univalue.h>
+#include <util/chaintype.h>
 #include <util/check.h>
 #include <util/fs.h>
 #include <util/fs_helpers.h>
@@ -33,6 +34,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 
 #ifdef LIQUID
 const char * const BITCOIN_CONF_FILENAME = "liquid.conf";
@@ -145,7 +147,7 @@ std::set<std::string> ArgsManager::GetUnsuitableSectionOnlyArgs() const
     if (m_network.empty()) return std::set<std::string> {};
 
     // if it's okay to use the default section for this network, don't worry
-    if (m_network == CBaseChainParams::DEFAULT) return std::set<std::string> {};
+    if (m_network == ChainTypeToString(ChainType::LIQUID1)) return std::set<std::string> {};
 
     for (const auto& arg : m_network_only_args) {
         if (OnlyHasDefaultSectionSetting(m_settings, m_network, SettingName(arg))) {
@@ -431,7 +433,7 @@ util::SettingsValue ArgsManager::GetPersistentSetting(const std::string& name) c
 {
     LOCK(cs_args);
     return util::GetSetting(m_settings, m_network, name, !UseDefaultSection("-" + name),
-        /*ignore_nonpersistent=*/true, /*get_chain_name=*/false);
+        /*ignore_nonpersistent=*/true, /*get_chain_type=*/false);
 }
 
 bool ArgsManager::IsArgNegated(const std::string& strArg) const
@@ -761,40 +763,53 @@ fs::path ArgsManager::GetConfigFilePath() const
     return GetConfigFile(*this, GetPathArg("-conf", BITCOIN_CONF_FILENAME));
 }
 
-std::string ArgsManager::GetChainName() const
+ChainType ArgsManager::GetChainType() const
+{
+    std::variant<ChainType, std::string> arg = GetChainArg();
+    if (auto* parsed = std::get_if<ChainType>(&arg)) return *parsed;
+    throw std::runtime_error(strprintf("Unknown chain %s.", std::get<std::string>(arg)));
+}
+
+std::string ArgsManager::GetChainTypeString() const
+{
+    auto arg = GetChainArg();
+    if (auto* parsed = std::get_if<ChainType>(&arg)) return ChainTypeToString(*parsed);
+    return std::get<std::string>(arg);
+}
+
+std::variant<ChainType, std::string> ArgsManager::GetChainArg() const
 {
     auto get_net = [&](const std::string& arg) {
         LOCK(cs_args);
         util::SettingsValue value = util::GetSetting(m_settings, /* section= */ "", SettingName(arg),
             /* ignore_default_section_config= */ false,
             /*ignore_nonpersistent=*/false,
-            /* get_chain_name= */ true);
+            /* get_chain_type= */ true);
         return value.isNull() ? false : value.isBool() ? value.get_bool() : InterpretBool(value.get_str());
     };
 
     const bool fRegTest = get_net("-regtest");
     const bool fSigNet  = get_net("-signet");
     const bool fTestNet = get_net("-testnet");
-    const bool is_chain_arg_set = IsArgSet("-chain");
+    const auto chain_arg = GetArg("-chain");
 
-    if ((int)is_chain_arg_set + (int)fRegTest + (int)fSigNet + (int)fTestNet > 1) {
+    if ((int)chain_arg.has_value() + (int)fRegTest + (int)fSigNet + (int)fTestNet > 1) {
         throw std::runtime_error("Invalid combination of -regtest, -signet, -testnet and -chain. Can use at most one.");
     }
-    if (fRegTest)
-        return CBaseChainParams::REGTEST;
-    if (fSigNet) {
-        return CBaseChainParams::SIGNET;
+    if (chain_arg) {
+        if (auto parsed = ChainTypeFromString(*chain_arg)) return *parsed;
+        // Not a known string, so return original string
+        return *chain_arg;
     }
-    if (fTestNet)
-        return CBaseChainParams::TESTNET;
-
-    std::string default_chain = CBaseChainParams::DEFAULT;
-    return GetArg("-chain", default_chain);
+    if (fRegTest) return ChainType::REGTEST;
+    if (fSigNet) return ChainType::SIGNET;
+    if (fTestNet) return ChainType::TESTNET;
+    return ChainType::LIQUID1;
 }
 
 bool ArgsManager::UseDefaultSection(const std::string& arg) const
 {
-    return m_network == CBaseChainParams::DEFAULT || m_network_only_args.count(arg) == 0;
+    return m_network == ChainTypeToString(ChainType::LIQUID1) || m_network_only_args.count(arg) == 0;
 }
 
 util::SettingsValue ArgsManager::GetSetting(const std::string& arg) const
@@ -802,7 +817,7 @@ util::SettingsValue ArgsManager::GetSetting(const std::string& arg) const
     LOCK(cs_args);
     return util::GetSetting(
         m_settings, m_network, SettingName(arg), !UseDefaultSection(arg),
-        /*ignore_nonpersistent=*/false, /*get_chain_name=*/false);
+        /*ignore_nonpersistent=*/false, /*get_chain_type=*/false);
 }
 
 std::vector<util::SettingsValue> ArgsManager::GetSettingsList(const std::string& arg) const
@@ -839,6 +854,36 @@ void ArgsManager::LogArgs() const
     }
     logArgsPrefix("Command-line arg:", "", m_settings.command_line_options);
 }
+
+// ELEMENTS
+ChainTypeMeta ArgsManager::GetChainTypeMeta() const
+{
+    auto get_net = [&](const std::string& arg) {
+        LOCK(cs_args);
+        util::SettingsValue value = util::GetSetting(m_settings, /* section= */ "", SettingName(arg),
+            /* ignore_default_section_config= */ false,
+            /* ignore_nonpersistent=*/ false,
+            /* get_chain_type= */ true);
+        return value.isNull() ? false : value.isBool() ? value.get_bool() : InterpretBool(value.get_str());
+    };
+
+    const bool fRegTest = get_net("-regtest");
+    const bool fSigNet  = get_net("-signet");
+    const bool fTestNet = get_net("-testnet");
+    const auto chain_arg = GetArg("-chain");
+
+    if ((int)chain_arg.has_value() + (int)fRegTest + (int)fSigNet + (int)fTestNet > 1) {
+        throw std::runtime_error("Invalid combination of -regtest, -signet, -testnet and -chain. Can use at most one.");
+    }
+    if (chain_arg) {
+        return ChainTypeMetaFrom(*chain_arg);
+    }
+    if (fRegTest) return { ChainType::REGTEST, "regtest" };
+    if (fSigNet) return { ChainType::SIGNET, "signet" };
+    if (fTestNet) return { ChainType::TESTNET, "testnet" };
+    return { ChainType::LIQUID1, "liquidv1" };
+}
+// END ELEMENTS
 
 namespace common {
 #ifdef WIN32

@@ -52,7 +52,7 @@ void initialize_deserialize()
     FUZZ_TARGET_INIT(name, initialize_deserialize)         \
     {                                                      \
         try {                                              \
-            SelectParams(CBaseChainParams::LIQUID1); /* ELEMENTS */ \
+            SelectParams(ChainType::LIQUID1); /* ELEMENTS */ \
             code                                           \
         } catch (const invalid_fuzzing_input_exception&) { \
         }                                                  \

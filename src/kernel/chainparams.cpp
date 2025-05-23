@@ -10,13 +10,13 @@
 #include <consensus/merkle.h>
 #include <consensus/params.h>
 #include <hash.h>
-#include <chainparamsbase.h>
 #include <logging.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <script/interpreter.h>
 #include <script/script.h>
 #include <uint256.h>
+#include <util/chaintype.h>
 #include <util/strencodings.h>
 #include <util/system.h>
 #include <issuance.h>
@@ -190,7 +190,7 @@ static void UpdateElementsActivationParametersFromArgs(Consensus::Params& consen
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
-        strNetworkID = CBaseChainParams::MAIN;
+        m_chain_type = ChainTypeMetaFrom(ChainType::MAIN);
         consensus.signet_blocks = false;
         consensus.signet_challenge.clear();
         consensus.nSubsidyHalvingInterval = 210000;
@@ -341,7 +341,7 @@ public:
 class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
-        strNetworkID = CBaseChainParams::TESTNET;
+        m_chain_type = ChainTypeMetaFrom(ChainType::TESTNET);
         consensus.signet_blocks = false;
         consensus.signet_challenge.clear();
         consensus.nSubsidyHalvingInterval = 210000;
@@ -506,7 +506,7 @@ public:
             vSeeds = *options.seeds;
         }
 
-        strNetworkID = CBaseChainParams::SIGNET;
+        m_chain_type = ChainTypeMetaFrom(ChainType::SIGNET);
         consensus.signet_blocks = true;
         consensus.signet_challenge.assign(bin.begin(), bin.end());
         consensus.nSubsidyHalvingInterval = 210000;
@@ -603,7 +603,7 @@ class CRegTestParams : public CChainParams
 public:
     explicit CRegTestParams(const RegTestOptions& opts)
     {
-        strNetworkID =  CBaseChainParams::REGTEST;
+        m_chain_type = ChainTypeMetaFrom(ChainType::REGTEST);
         consensus.signet_blocks = false;
         consensus.signet_challenge.clear();
         consensus.nSubsidyHalvingInterval = 150;
@@ -964,7 +964,7 @@ protected:
         accept_discount_ct = args.GetBoolArg("-acceptdiscountct", accept_discount_ct) || create_discount_ct;
 
         // Calculate pegged Bitcoin asset
-        std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
+        std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
         uint256 entropy;
         GenerateAssetEntropy(entropy,  COutPoint(uint256(commit), 0), parentGenesisBlockHash);
 
@@ -996,7 +996,7 @@ protected:
             genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 50 * COIN, consensus);
         } else if (consensus.genesis_style == "elements") {
             // Intended compatibility with Liquid v1 and elements-0.14.1
-            std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
+            std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
             genesis = CreateGenesisBlock(consensus, CScript() << commit, CScript(OP_RETURN), 1296688602, 2, 0x207fffff, 1, 0);
             if (initialFreeCoins != 0 || initial_reissuance_tokens != 0) {
                 AppendInitialIssuance(genesis, COutPoint(uint256(commit), 0), parentGenesisBlockHash, (initialFreeCoins > 0) ? 1 : 0, initialFreeCoins, (initial_reissuance_tokens > 0) ? 1 : 0, initial_reissuance_tokens, CScript() << OP_TRUE);
@@ -1012,9 +1012,9 @@ protected:
     }
 
 public:
-    CCustomParams(const std::string& chain, const ArgsManager& args, const RegTestOptions& opts) : CRegTestParams(opts)
+    CCustomParams(const ChainTypeMeta chain, const ArgsManager& args, const RegTestOptions& opts) : CRegTestParams(opts)
     {
-        strNetworkID = chain;
+        m_chain_type = chain;
 
         //default settings
         initialFreeCoins = 0;
@@ -1052,9 +1052,9 @@ public:
  */
 class CLiquidTestNetParams : public CCustomParams {
 public:
-    CLiquidTestNetParams(const std::string& chain, const ArgsManager& args, const RegTestOptions& opts) : CCustomParams(chain, args, opts)
+    CLiquidTestNetParams(const ChainTypeMeta chain, const ArgsManager& args, const RegTestOptions& opts) : CCustomParams(chain, args, opts)
     {
-        strNetworkID = chain;
+        m_chain_type = chain;
         // not a debug chain
         fDefaultConsistencyChecks = false;
 
@@ -1111,7 +1111,7 @@ public:
     explicit CLiquidV1Params(const ArgsManager& args)
     {
 
-        strNetworkID = "liquidv1";
+        m_chain_type = ChainTypeMetaFrom(ChainType::LIQUID1);
         consensus.nSubsidyHalvingInterval = 150;
         consensus.BIP34Height = 0;
         consensus.BIP34Hash = uint256();
@@ -1218,7 +1218,7 @@ public:
 
 
         // Calculate pegged Bitcoin asset
-        std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
+        std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
         uint256 entropy;
         GenerateAssetEntropy(entropy,  COutPoint(uint256(commit), 0), parentGenesisBlockHash);
 
@@ -1360,7 +1360,7 @@ public:
     {
         // Our goal here is to override ONLY the things from liquidv1 that make no sense for a test chain / which are pointless and burdensome to require people to override manually.
 
-        strNetworkID = "liquidv1test";
+        m_chain_type = ChainTypeMetaFrom(ChainType::LIQUID1TEST);
 
         m_is_test_chain = true;
         m_is_mockable_chain = false;
@@ -1584,7 +1584,7 @@ public:
         consensus.total_valid_epochs = args.GetIntArg("-total_valid_epochs", consensus.total_valid_epochs);
 
         // Calculate pegged Bitcoin asset
-        std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
+        std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
         uint256 entropy;
         GenerateAssetEntropy(entropy,  COutPoint(uint256(commit), 0), parentGenesisBlockHash);
         CalculateAsset(consensus.pegged_asset, entropy);
@@ -1615,7 +1615,7 @@ public:
             genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 50 * COIN, consensus);
         } else if (consensus.genesis_style == "elements") {
             // Intended compatibility with Liquid v1 and elements-0.14.1
-            std::vector<unsigned char> commit = CommitToArguments(consensus, strNetworkID);
+            std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
             genesis = CreateGenesisBlock(consensus, CScript() << commit, CScript(OP_RETURN), 1296688602, 2, 0x207fffff, 1, 0);
             if (initialFreeCoins != 0 || initial_reissuance_tokens != 0) {
                 AppendInitialIssuance(genesis, COutPoint(uint256(commit), 0), parentGenesisBlockHash, (initialFreeCoins > 0) ? 1 : 0, initialFreeCoins, (initial_reissuance_tokens > 0) ? 1 : 0, initial_reissuance_tokens, CScript() << OP_TRUE);
@@ -1631,12 +1631,12 @@ public:
     }
 };
 
-std::unique_ptr<const CChainParams> CChainParams::Custom(const std::string& chain, const ArgsManager& args, const RegTestOptions& options)
+std::unique_ptr<const CChainParams> CChainParams::Custom(const ChainTypeMeta chain, const ArgsManager& args, const RegTestOptions& options)
 {
     return std::make_unique<const  CCustomParams>(chain, args, options);
 }
 
-std::unique_ptr<const CChainParams> CChainParams::LiquidTestNet(const std::string& chain, const ArgsManager& args, const RegTestOptions& options)
+std::unique_ptr<const CChainParams> CChainParams::LiquidTestNet(const ChainTypeMeta chain, const ArgsManager& args, const RegTestOptions& options)
 {
     return std::make_unique<const CLiquidTestNetParams>(chain, args, options);
 }

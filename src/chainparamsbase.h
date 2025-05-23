@@ -6,6 +6,8 @@
 #define BITCOIN_CHAINPARAMSBASE_H
 
 #include <cstdint>
+#include <util/chaintype.h>
+
 #include <memory>
 #include <string>
 
@@ -18,19 +20,6 @@ class ArgsManager;
 class CBaseChainParams
 {
 public:
-    ///@{
-    /** Chain name strings */
-    static const std::string MAIN;
-    static const std::string TESTNET;
-    static const std::string SIGNET;
-    static const std::string REGTEST;
-    static const std::string LIQUID1;
-    static const std::string LIQUID1TEST;
-    static const std::string LIQUIDTESTNET;
-    ///@}
-
-    static const std::string DEFAULT;
-
     const std::string& DataDir() const { return strDataDir; }
     uint16_t RPCPort() const { return m_rpc_port; }
     uint16_t OnionServiceTargetPort() const { return m_onion_service_target_port; }
@@ -52,7 +41,7 @@ private:
  * @returns a CBaseChainParams* of the chosen chain.
  * @throws a std::runtime_error if the chain is not supported.
  */
-std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const std::string& chain);
+std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const ChainType chain);
 
 /**
  *Set the arguments for chainparams
@@ -65,7 +54,11 @@ void SetupChainParamsBaseOptions(ArgsManager& argsman);
  */
 const CBaseChainParams& BaseParams();
 
-/** Sets the params returned by Params() to those for the given network. */
-void SelectBaseParams(const std::string& chain);
+/** Sets the params returned by Params() to those for the given chain. */
+void SelectBaseParams(const ChainType chain);
+
+// ELEMENTS
+std::unique_ptr<CBaseChainParams> CreateBaseChainParams(const ChainTypeMeta chain);
+void SelectBaseParams(const ChainTypeMeta chain);
 
 #endif // BITCOIN_CHAINPARAMSBASE_H

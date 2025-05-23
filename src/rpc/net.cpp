@@ -21,6 +21,7 @@
 #include <rpc/util.h>
 #include <sync.h>
 #include <timedata.h>
+#include <util/chaintype.h>
 #include <util/strencodings.h>
 #include <util/string.h>
 #include <util/time.h>
@@ -354,7 +355,7 @@ static RPCHelpMan addconnection()
         },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
-    if (Params().NetworkIDString().find("regtest") == std::string::npos) {
+    if (Params().GetChainTypeMeta().chain_name.find("regtest") == std::string::npos) {
         throw std::runtime_error("addconnection is for regression testing (chain should have \"regtest\" in the name) only.");
     }
 

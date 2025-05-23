@@ -574,7 +574,7 @@ int GuiMain(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    QScopedPointer<const NetworkStyle> networkStyle(NetworkStyle::instantiate(Params().NetworkIDString()));
+    QScopedPointer<const NetworkStyle> networkStyle(NetworkStyle::instantiate(Params().GetChainTypeMeta().chain_type));
     assert(!networkStyle.isNull());
     // Allow for separate UI settings for testnets
     QApplication::setApplicationName(networkStyle->getAppName());
