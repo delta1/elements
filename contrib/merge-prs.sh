@@ -6,8 +6,8 @@ BASE_ORIG=merged-master
 BASE="${BASE_ORIG}"
 BITCOIN_UPSTREAM_REMOTE=bitcoin
 BITCOIN_UPSTREAM="${BITCOIN_UPSTREAM_REMOTE}/master"
-# ELEMENTS_UPSTREAM_REMOTE=upstream
-# ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
+ELEMENTS_UPSTREAM_REMOTE=upstream
+ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Set these to whether you want to merge from Bitcoin or Elements
 TARGET_UPSTREAM=$BITCOIN_UPSTREAM
@@ -227,7 +227,7 @@ do
     # check for stoppers and halt if found
     # a stopper is normally the PR after the version has been changed
     # ie. the branch point we want to stop at for this version
-    STOPPERS=("#29249")
+    STOPPERS=("#28211")
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
@@ -262,7 +262,7 @@ do
         quietly git -C "$WORKTREE" clean -xf
         echo "autogen & configure"
         quietly ./autogen.sh
-        quietly ./configure --with-incompatible-bdb --with-seccomp=no
+        quietly ./configure --with-seccomp=no
         # The following is an expansion of `make check` that skips the libsecp
         # tests and also the benchmarks (though it does build them!)
         echo "Building"
@@ -290,7 +290,7 @@ do
         echo "Building for fuzz"
         quietly ./autogen.sh
         # TODO turn on `,integer` after this rebase
-        quietly ./configure --with-incompatible-bdb --enable-fuzz --with-sanitizers=address,fuzzer,undefined CC="ccache clang" CXX="ccache clang++"
+        quietly ./configure --enable-fuzz --with-sanitizers=address,fuzzer,undefined CC="ccache clang" CXX="ccache clang++"
         quietly make -j"$PARALLEL_BUILD" -k
         echo "Fuzzing"
         quietly ./test/fuzz/test_runner.py -j"$PARALLEL_FUZZ" "${FUZZ_CORPUS}" || notify "fail fuzz" 1
