@@ -8,7 +8,9 @@
 #include <zmq/zmqabstractnotifier.h>
 
 #include <cstdint>
+#include <functional>
 
+class CBlock;
 class CBlockIndex;
 class CTransaction;
 
@@ -45,7 +47,12 @@ public:
 
 class CZMQPublishRawBlockNotifier : public CZMQAbstractPublishNotifier
 {
+private:
+    const std::function<bool(CBlock&, const CBlockIndex&)> m_get_block_by_index;
+
 public:
+    CZMQPublishRawBlockNotifier(std::function<bool(CBlock&, const CBlockIndex&)> get_block_by_index)
+        : m_get_block_by_index{std::move(get_block_by_index)} {}
     bool NotifyBlock(const CBlockIndex *pindex) override;
 };
 
