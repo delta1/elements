@@ -427,16 +427,26 @@ private:
     std::vector<Peer> m_peers;
     std::string ChainToString() const
     {
-        switch (gArgs.GetChainType()) {
+        const ChainTypeMeta chain = gArgs.GetChainTypeMeta(); // ELEMENTS
+        switch (chain.chain_type) {
         case ChainType::TESTNET:
             return " testnet";
         case ChainType::SIGNET:
             return " signet";
         case ChainType::REGTEST:
             return " regtest";
-        default:
+        case ChainType::MAIN:
             return "";
+        case ChainType::LIQUID1:
+            return "liquidv1";
+        case ChainType::LIQUID1TEST:
+            return "liquidv1test";
+        case ChainType::LIQUIDTESTNET:
+            return "liquidtestnet";
+        case ChainType::CUSTOM:
+            return chain.chain_name;
         }
+        assert(false);
     }
     std::string PingTimeToString(double seconds) const
     {
