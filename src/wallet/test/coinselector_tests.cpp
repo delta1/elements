@@ -12,6 +12,7 @@
 #include <wallet/coincontrol.h>
 #include <wallet/coinselection.h>
 #include <wallet/spend.h>
+#include <wallet/test/util.h>
 #include <wallet/test/wallet_test_fixture.h>
 #include <wallet/wallet.h>
 
@@ -33,7 +34,7 @@ typedef std::set<std::shared_ptr<COutput>> CoinSet;
 // ELEMENTS
 static node::NodeContext testNode;
 static auto testChain = interfaces::MakeChain(testNode);
-static wallet::CWallet testWallet(testChain.get(), "", CreateDummyWalletDatabase());
+static wallet::CWallet testWallet(testChain.get(), "", CreateMockableWalletDatabase());
 
 static const CoinEligibilityFilter filter_standard(1, 6, 0);
 static const CoinEligibilityFilter filter_confirmed(1, 1, 0);
@@ -184,7 +185,7 @@ inline std::vector<OutputGroup>& KnapsackGroupOutputs(const CoinsResult& availab
 
 static std::unique_ptr<CWallet> NewWallet(const node::NodeContext& m_node, const std::string& wallet_name = "")
 {
-    std::unique_ptr<CWallet> wallet = std::make_unique<CWallet>(m_node.chain.get(), wallet_name, CreateMockWalletDatabase());
+    std::unique_ptr<CWallet> wallet = std::make_unique<CWallet>(m_node.chain.get(), wallet_name, CreateMockableWalletDatabase());
     BOOST_CHECK(wallet->LoadWallet() == DBErrors::LOAD_OK);
     LOCK(wallet->cs_wallet);
     wallet->SetWalletFlag(WALLET_FLAG_DESCRIPTORS);
