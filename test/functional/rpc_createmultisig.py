@@ -195,8 +195,8 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
 
         # ELEMENTS: since we sent directly to node0 at the start of test, use node0 to send the funds,
         #           instead of self.wallet
-        #spk = bytes.fromhex(node0.validateaddress(madd)["scriptPubKey"])
-        #txid, _ = self.wallet.send_to(from_node=self.nodes[0], scriptPubKey=spk, amount=1300)
+        # spk = address_to_scriptpubkey(madd)
+        # txid = self.wallet.send_to(from_node=self.nodes[0], scriptPubKey=spk, amount=1300)["txid"]
         txid = node0.sendtoaddress(madd, 40)
         tx = node0.getrawtransaction(txid, True)
         vout = [v["n"] for v in tx["vout"] if madd == v["scriptPubKey"].get("address")]
