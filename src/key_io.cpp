@@ -244,6 +244,9 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
         // The rest of the symbols are converted witness program bytes.
         data.reserve(((dec.data.size() - 1) * 5) / 8);
         if (ConvertBits<5, 8, false>([&](unsigned char c) { data.push_back(c); }, dec.data.begin() + 1, dec.data.end())) {
+
+            std::string_view byte_str{data.size() == 1 ? "byte" : "bytes"};
+
             if (version == 0) {
                 {
                     WitnessV0KeyHash keyid;
@@ -260,7 +263,7 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
                     }
                 }
 
-                error_str = strprintf("Invalid Bech32 v0 address program size (%s byte), per BIP141", data.size());
+                error_str = strprintf("Invalid Bech32 v0 address program size (%d %s), per BIP141", data.size(), byte_str);
                 return CNoDestination();
             }
 
@@ -277,7 +280,7 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
             }
 
             if (data.size() < 2 || data.size() > BECH32_WITNESS_PROG_MAX_LEN) {
-                error_str = strprintf("Invalid Bech32 address program size (%s byte)", data.size());
+                error_str = strprintf("Invalid Bech32 address program size (%d %s)", data.size(), byte_str);
                 return CNoDestination();
             }
 
