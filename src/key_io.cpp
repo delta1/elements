@@ -219,7 +219,11 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
     data.clear();
     const auto dec = bech32::Decode(str);
     const std::string& hrp = for_parent ? params.ParentBech32HRP() : params.Bech32HRP();
-    if ((dec.encoding == bech32::Encoding::BECH32 || dec.encoding == bech32::Encoding::BECH32M) && dec.data.size() > 0) {
+    if (dec.encoding == bech32::Encoding::BECH32 || dec.encoding == bech32::Encoding::BECH32M) {
+        if (dec.data.empty()) {
+            error_str = "Empty Bech32 data section";
+            return CNoDestination();
+        }
         // Bech32 decoding
         error_str = "";
 
@@ -256,7 +260,7 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
                     }
                 }
 
-                error_str = "Invalid Bech32 v0 address data size";
+                error_str = strprintf("Invalid Bech32 v0 address program size (%s byte), per BIP141", data.size());
                 return CNoDestination();
             }
 
@@ -273,7 +277,7 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
             }
 
             if (data.size() < 2 || data.size() > BECH32_WITNESS_PROG_MAX_LEN) {
-                error_str = "Invalid Bech32 address data size";
+                error_str = strprintf("Invalid Bech32 address program size (%s byte)", data.size());
                 return CNoDestination();
             }
 
@@ -282,6 +286,9 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
             std::copy(data.begin(), data.end(), unk.program);
             unk.length = data.size();
             return unk;
+        } else {
+            error_str = strprintf("Invalid padding in Bech32 data section");
+            return CNoDestination();
         }
     }
     // ELEMENTS confidential addresses: version + 8to5(ecdhkey || witness program)

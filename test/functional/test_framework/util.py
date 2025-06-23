@@ -464,6 +464,7 @@ def get_auth_cookie(datadir, chain):
                     assert password is None  # Ensure that there is only one rpcpassword line
                     password = line.split("=")[1].strip("\n")
     try:
+        chain = "" if chain == "main" else chain # ELEMENTS: if the test specifies bitcoin mainnet then replace "main" with ""
         with open(os.path.join(datadir, chain, ".cookie"), 'r', encoding="ascii") as f:
             userpass = f.read()
             split_userpass = userpass.split(':')
