@@ -82,6 +82,7 @@ struct PreSelectInputs {
 static void WalletCreateTx(benchmark::Bench& bench, const OutputType output_type, bool allow_other_inputs, std::optional<PreSelectInputs> preset_inputs)
 {
     const auto test_setup = MakeNoLogFileContext<const TestingSetup>();
+    SetMockTime(test_setup->m_node.chainman->GetParams().GenesisBlock().nTime); // ELEMENTS
 
     CWallet wallet{test_setup->m_node.chain.get(), "", CreateMockableWalletDatabase()};
     {
@@ -137,6 +138,7 @@ static void WalletCreateTx(benchmark::Bench& bench, const OutputType output_type
 static void AvailableCoins(benchmark::Bench& bench, const std::vector<OutputType>& output_type)
 {
     const auto test_setup = MakeNoLogFileContext<const TestingSetup>();
+    SetMockTime(test_setup->m_node.chainman->GetParams().GenesisBlock().nTime); // ELEMENTS
     CWallet wallet{test_setup->m_node.chain.get(), "", CreateMockableWalletDatabase()};
     {
         LOCK(wallet.cs_wallet);
