@@ -14,8 +14,8 @@
 #include <primitives/transaction.h>
 #include <primitives/bitcoin/transaction.h>
 #include <random.h>
-#include <util/system.h>
 #include <util/check.h>
+#include <util/insert.h>
 #include <util/result.h>
 
 #include <optional>

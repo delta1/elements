@@ -19,7 +19,6 @@
 #include <core_io.h>
 #include <interfaces/handler.h>
 #include <uint256.h>
-#include <util/system.h>
 #include <policy/policy.h>
 
 #include <algorithm>

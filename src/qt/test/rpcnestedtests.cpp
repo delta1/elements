@@ -5,12 +5,12 @@
 #include <qt/test/rpcnestedtests.h>
 
 #include <chain.h>
+#include <common/system.h>
 #include <interfaces/node.h>
-#include <rpc/server.h>
 #include <qt/rpcconsole.h>
+#include <rpc/server.h>
 #include <test/util/setup_common.h>
 #include <univalue.h>
-#include <util/system.h>
 
 #include <QTest>
 

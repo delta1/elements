@@ -14,7 +14,6 @@
 #include <uint256.h>
 #include <util/chaintype.h>
 #include <util/hash_type.h>
-#include <util/system.h>
 
 #include <cstdint>
 #include <iterator>

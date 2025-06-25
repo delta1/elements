@@ -17,7 +17,6 @@
 #include <validation.h>
 #include <streams.h>
 #include <test/util/setup_common.h>
-#include <util/system.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>

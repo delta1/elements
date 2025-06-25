@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <common/system.h>
 #include <consensus/validation.h>
 #include <interfaces/chain.h>
 #include <policy/fees.h>
@@ -9,7 +10,6 @@
 #include <validation.h> //for mempool access
 #include <util/moneystr.h>
 #include <util/rbf.h>
-#include <util/system.h>
 #include <util/translation.h>
 #include <wallet/coincontrol.h>
 #include <wallet/feebumper.h>

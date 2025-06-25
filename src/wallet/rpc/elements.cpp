@@ -9,6 +9,7 @@
 #include <issuance.h>
 #include <key_io.h>
 #include <mainchainrpc.h>
+#include <node/kernel_notifications.h>
 #include <rpc/rawtransaction_util.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
@@ -201,12 +202,14 @@ RPCHelpMan getpeginaddress()
     CTxDestination mainchain_dest(WitnessV0ScriptHash(calculate_contract(fedpegscripts.front().second, dest_script)));
     // P2SH-wrapped is the only valid choice for non-dynafed chains but still an
     // option for dynafed-enabled ones as well
+    node::KernelNotifications notifications{};
     ChainstateManager::Options opts{
         .chainparams = chainparams,
         .datadir = gArgs.GetDataDirNet(),
         .adjusted_time_callback = GetAdjustedTime,
         .minimum_chain_work = UintToArith256(consensus.nMinimumChainWork),
         .assumed_valid_block = consensus.defaultAssumeValid,
+        .notifications = notifications,
     };
     if (!DeploymentActiveAfter(pwallet->chain().getTip(), ChainstateManager(opts, {chainparams}), Consensus::DEPLOYMENT_DYNA_FED) ||
                 fedpegscripts.front().first.IsPayToScriptHash()) {

@@ -10,7 +10,6 @@
 #include <primitives/confidential.h>
 #include <issuance.h>
 #include <random.h>
-#include <util/system.h>
 
 secp256k1_context* secp256k1_blind_context = nullptr;
 

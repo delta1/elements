@@ -5,6 +5,7 @@
 #include <wallet/coinselection.h>
 #include <wallet/wallet.h>
 
+#include <common/system.h>
 #include <consensus/amount.h>
 #include <consensus/consensus.h>
 #include <logging.h>
@@ -12,7 +13,6 @@
 #include <policy/policy.h>
 #include <util/check.h>
 #include <util/moneystr.h>
-#include <util/system.h>
 
 #include <numeric>
 #include <optional>

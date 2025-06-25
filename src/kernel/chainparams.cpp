@@ -18,7 +18,6 @@
 #include <uint256.h>
 #include <util/chaintype.h>
 #include <util/strencodings.h>
-#include <util/system.h>
 #include <issuance.h>
 #include <deploymentinfo.h>
 

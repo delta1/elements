@@ -10,7 +10,6 @@
 #include <psbt.h>
 #include <issuance.h>
 #include <random.h>
-#include <util/system.h>
 
 std::string GetBlindingStatusError(const BlindingStatus& status)
 {
