@@ -59,7 +59,7 @@ FUZZ_TARGET_INIT(coincontrol, initialize_coincontrol)
                 (void)coin_control.Select(out_point);
             },
             [&] {
-                const CTxOut tx_out{ConsumeMoney(fuzzed_data_provider), ConsumeScript(fuzzed_data_provider)};
+                const CTxOut tx_out{CAsset(), ConsumeMoney(fuzzed_data_provider), ConsumeScript(fuzzed_data_provider)};
                 (void)coin_control.SelectExternal(out_point, tx_out);
             },
             [&] {
