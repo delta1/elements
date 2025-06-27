@@ -58,6 +58,7 @@ class P2PLeakTxTest(BitcoinTestFramework):
         tx_b.vout[0].nValue.setToAmount(tx_b.vout[0].nValue.getAmount() - 9000) # ELEMENTS
         tx_b.vout[1].nValue.setToAmount(tx_b.vout[1].nValue.getAmount() + 9000) # ELEMENTS
         self.gen_node.sendrawtransaction(tx_b.serialize().hex())
+        inbound_peer.wait_until(lambda: "tx" in inbound_peer.last_message and inbound_peer.last_message.get("tx").tx.getwtxid() == tx_b.getwtxid())
 
         self.log.info("Re-request of tx_a after replacement is answered with notfound")
         req_vec = [
