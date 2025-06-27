@@ -5,6 +5,7 @@
 """Test the importprunedfunds and removeprunedfunds RPCs."""
 from decimal import Decimal
 
+from test_framework.address import key_to_p2wpkh
 from test_framework.blocktools import COINBASE_MATURITY
 from test_framework import liquid_addr
 from test_framework.key import ECKey
@@ -18,7 +19,7 @@ from test_framework.util import (
     assert_equal,
     assert_raises_rpc_error,
 )
-from test_framework.wallet_util import bytes_to_wif
+from test_framework.wallet_util import generate_keypair
 
 
 class ImportPrunedFundsTest(BitcoinTestFramework):
@@ -43,14 +44,11 @@ class ImportPrunedFundsTest(BitcoinTestFramework):
         address2 = self.nodes[0].getnewaddress()
         address2_blindingkey = self.nodes[0].dumpblindingkey(address2)
         # privkey
-        eckey = ECKey()
-        eckey.generate()
+        address3_privkey, address3_pubkey = generate_keypair(wif=True)
         blinding_eckey = ECKey()
         blinding_eckey.generate()
-
-        address3_privkey = bytes_to_wif(eckey.get_bytes())
         address3_blindingkey = blinding_eckey.get_bytes().hex()
-        conf_addrdata = blinding_eckey.get_pubkey().get_bytes() + hash160(eckey.get_pubkey().get_bytes())
+        conf_addrdata = blinding_eckey.get_pubkey().get_bytes() + hash160(address3_pubkey)
         address3 = liquid_addr.encode("el", 0, conf_addrdata)
         self.nodes[0].importprivkey(address3_privkey)
 
