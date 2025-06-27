@@ -652,7 +652,7 @@ util::Result<SelectionResult> ChooseSelectionResult(const CAmountMap& mapTargetV
         // generated one, since SRD will result in a random change amount anyway; avoid making the
         // target needlessly large.
         const CAmount srd_target = target_with_change + CHANGE_LOWER;
-        if (auto srd_result{SelectCoinsSRD(groups.positive_group, srd_target, coin_selection_params.rng_fast, max_inputs_weight)}) {
+        if (auto srd_result{SelectCoinsSRD(groups.positive_group, srd_target, coin_selection_params.m_change_fee, coin_selection_params.rng_fast, max_inputs_weight)}) {
             srd_result->ComputeAndSetWaste(coin_selection_params.min_viable_change, coin_selection_params.m_cost_of_change, coin_selection_params.m_change_fee);
             results.push_back(*srd_result);
         } else append_error(srd_result);
