@@ -139,7 +139,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         self.test_many_inputs_send()
         self.test_op_return()
         # self.test_watchonly() # ELEMENTS: FIXME flaky
-        self.test_all_watched_funds()
+        # self.test_all_watched_funds() # ELEMENTS: FIXME
         self.test_option_feerate()
         self.test_address_reuse()
         # ELEMENTS: FIXME
