@@ -87,7 +87,6 @@ void AppTests::appTests()
     // Reset global state to avoid interfering with later tests.
     ClearGlobalAssetDir();
     LogInstance().DisconnectTestLogger();
-    AbortShutdown();
 }
 
 //! Entry point for BitcoinGUI tests.

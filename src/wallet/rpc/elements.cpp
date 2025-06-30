@@ -9,14 +9,17 @@
 #include <issuance.h>
 #include <key_io.h>
 #include <mainchainrpc.h>
+#include <node/context.h>
 #include <node/kernel_notifications.h>
 #include <rpc/rawtransaction_util.h>
 #include <rpc/server.h>
+#include <rpc/server_util.h>
 #include <rpc/util.h>
 #include <script/generic.hpp>
 #include <script/pegins.h>
 #include <secp256k1.h>
 #include <timedata.h>
+#include <util/signalinterrupt.h>
 #include <wallet/coincontrol.h>
 #include <wallet/fees.h>
 #include <wallet/rpc/util.h>
@@ -199,11 +202,8 @@ RPCHelpMan getpeginaddress()
         }
         throw JSONRPCError(RPC_INTERNAL_ERROR, message);
     }
-    CTxDestination mainchain_dest(WitnessV0ScriptHash(calculate_contract(fedpegscripts.front().second, dest_script)));
-    // P2SH-wrapped is the only valid choice for non-dynafed chains but still an
-    // option for dynafed-enabled ones as well
-    node::KernelNotifications notifications{};
-    ChainstateManager::Options opts{
+    node::KernelNotifications notifications{pwallet->chain().context()->exit_status};
+    ChainstateManager::Options chain_opts{
         .chainparams = chainparams,
         .datadir = gArgs.GetDataDirNet(),
         .adjusted_time_callback = GetAdjustedTime,
@@ -211,7 +211,15 @@ RPCHelpMan getpeginaddress()
         .assumed_valid_block = consensus.defaultAssumeValid,
         .notifications = notifications,
     };
-    if (!DeploymentActiveAfter(pwallet->chain().getTip(), ChainstateManager(opts, {chainparams}), Consensus::DEPLOYMENT_DYNA_FED) ||
+    node::BlockManager::Options block_opts{
+        .chainparams = chain_opts.chainparams,
+        .blocks_dir = gArgs.GetBlocksDirPath(),
+        .notifications = chain_opts.notifications,
+    };
+    CTxDestination mainchain_dest(WitnessV0ScriptHash(calculate_contract(fedpegscripts.front().second, dest_script)));
+    // P2SH-wrapped is the only valid choice for non-dynafed chains but still an
+    // option for dynafed-enabled ones as well
+    if (!DeploymentActiveAfter(pwallet->chain().getTip(), ChainstateManager(util::SignalInterrupt(), chain_opts, block_opts), Consensus::DEPLOYMENT_DYNA_FED) ||
                 fedpegscripts.front().first.IsPayToScriptHash()) {
         mainchain_dest = ScriptHash(GetScriptForDestination(mainchain_dest));
     }
