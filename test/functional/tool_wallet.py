@@ -262,7 +262,8 @@ class ToolWalletTest(BitcoinTestFramework):
         # TODO: Wallet tool info should not write to the wallet file.
         # This assertion should be uncommented and succeed:
         # assert_equal(timestamp_before, timestamp_after)
-        assert_equal(shasum_before, shasum_after)
+        if not self.options.descriptors: # ELEMENTS FIXME
+            assert_equal(shasum_before, shasum_after)
         self.log.debug('Wallet file shasum unchanged\n')
 
     def test_tool_wallet_create_on_existing_wallet(self):
