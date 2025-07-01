@@ -73,7 +73,7 @@ uint32_t read_u32(const unsigned char **buf) {
 
 #define MAX_LEN (1024 * 1024)
 
-FUZZ_TARGET_INIT(simplicity, initialize_simplicity)
+FUZZ_TARGET(simplicity, .init = initialize_simplicity)
 {
     const unsigned char *buf = buffer.data();
 

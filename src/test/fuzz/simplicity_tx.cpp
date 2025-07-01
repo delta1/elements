@@ -66,7 +66,7 @@ void initialize_simplicity_tx()
     INPUT_ASSET_CONF.vchCommitment[0] = 0x0a;
 }
 
-FUZZ_TARGET_INIT(simplicity_tx, initialize_simplicity_tx)
+FUZZ_TARGET(simplicity_tx, .init = initialize_simplicity_tx)
 {
     simplicity_err error;
 

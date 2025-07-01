@@ -31,7 +31,7 @@ void initialize_rbf(void) {
     SelectParams(ChainType::LIQUID1);
 }
 
-FUZZ_TARGET_INIT(rbf, initialize_rbf)
+FUZZ_TARGET(rbf, .init = initialize_rbf)
 {
     FuzzedDataProvider fuzzed_data_provider(buffer.data(), buffer.size());
     SetMockTime(ConsumeTime(fuzzed_data_provider));
