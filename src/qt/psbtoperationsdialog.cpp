@@ -183,6 +183,8 @@ std::string PSBTOperationsDialog::renderTransaction(const PartiallySignedTransac
         tx_description.append(tr(" * Sends %1 to %2")
             .arg(GUIUtil::formatAssetAmount(CAsset(out.m_asset), *out.amount, std::make_optional(unit), BitcoinUnits::SeparatorStyle::ALWAYS))
             .arg(QString::fromStdString(EncodeDestination(address))));
+        // Check if the address is one of ours
+        if (m_wallet_model != nullptr && m_wallet_model->wallet().txoutIsMine(out.GetTxOut())) tx_description.append(" (" + tr("own address") + ")");
         tx_description.append("<br>");
     }
 
