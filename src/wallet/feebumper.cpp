@@ -153,8 +153,14 @@ bool TransactionCanBeBumped(const CWallet& wallet, const uint256& txid)
 }
 
 Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCoinControl& coin_control, std::vector<bilingual_str>& errors,
-                                 CAmount& old_fee, CAmount& new_fee, CMutableTransaction& mtx, bool require_mine, const std::vector<CTxOut>& outputs)
+                                 CAmount& old_fee, CAmount& new_fee, CMutableTransaction& mtx, bool require_mine, const std::vector<CTxOut>& outputs, std::optional<uint32_t> reduce_output)
 {
+    // Cannot both specify new outputs and an output to reduce
+    if (!outputs.empty() && reduce_output.has_value()) {
+        errors.push_back(Untranslated("Cannot specify both new outputs to use and an output index to reduce"));
+        return Result::INVALID_PARAMETER;
+    }
+
     // We are going to modify coin control later, copy to re-use
     CCoinControl new_coin_control(coin_control);
 
@@ -166,6 +172,12 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
         return Result::INVALID_ADDRESS_OR_KEY;
     }
     const CWalletTx& wtx = it->second;
+
+    // Make sure that reduce_output is valid
+    if (reduce_output.has_value() && reduce_output.value() >= wtx.tx->vout.size()) {
+        errors.push_back(Untranslated("Change position is out of range"));
+        return Result::INVALID_PARAMETER;
+    }
 
     // Retrieve all of the UTXOs and add them to coin control
     // While we're here, calculate the input amount
@@ -226,7 +238,8 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
     std::vector<wallet::CRecipient> recipients;
     CAmount new_outputs_value = 0;
     const auto& txouts = outputs.empty() ? wtx.tx->vout : outputs;
-    for (const auto& output : txouts) {
+    for (size_t i = 0; i < txouts.size(); ++i) {
+        const CTxOut& output = txouts.at(i);
         // ELEMENTS:
         bool is_change = OutputIsChange(wallet, output);
         bool is_fee = output.IsFee();
@@ -235,13 +248,13 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
             return Result::WALLET_ERROR;
         }
 
-        if (!is_change && !is_fee) {
-            wallet::CRecipient recipient = {output.scriptPubKey, output.nValue.GetAmount(), output.nAsset.GetAsset(), CPubKey(output.nNonce.vchCommitment), false};
-            recipients.push_back(recipient);
-        } else if (is_change) {
+        if (reduce_output.has_value() ? reduce_output.value() == i : is_change) {
             CTxDestination change_dest;
             ExtractDestination(output.scriptPubKey, change_dest);
             destinations[output.nAsset.GetAsset()] = change_dest;
+        } else if (!is_change && !is_fee) {
+            wallet::CRecipient recipient = {output.scriptPubKey, output.nValue.GetAmount(), output.nAsset.GetAsset(), CPubKey(output.nNonce.vchCommitment), false};
+            recipients.push_back(recipient);
         }
         new_outputs_value += output.nValue.GetAmount();
     }
