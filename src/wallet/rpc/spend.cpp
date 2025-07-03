@@ -1027,14 +1027,15 @@ RPCHelpMan signrawtransactionwithwallet()
     const std::shared_ptr<const CWallet> pwallet = GetWalletForJSONRPCRequest(request);
     if (!pwallet) return UniValue::VNULL;
 
+    LOCK(pwallet->cs_wallet);
+    EnsureWalletIsUnlocked(*pwallet);
+
+    int nHashType = ParseSighashString(request.params[2]);
+
     CMutableTransaction mtx;
     if (!DecodeHexTx(mtx, request.params[0].get_str())) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed. Make sure the tx has at least one input.");
     }
-
-    // Sign the transaction
-    LOCK(pwallet->cs_wallet);
-    EnsureWalletIsUnlocked(*pwallet);
 
     // Fetch previous transactions (inputs):
     std::map<COutPoint, Coin> coins;
@@ -1046,14 +1047,13 @@ RPCHelpMan signrawtransactionwithwallet()
     // Parse the prevtxs array
     ParsePrevouts(request.params[1], nullptr, coins);
 
-    int nHashType = ParseSighashString(request.params[2]);
-
     // Script verification errors
     std::map<int, bilingual_str> input_errors;
 
     bool immature_pegin = ValidateTransactionPeginInputs(mtx, pwallet->chain().getTip(), input_errors);
     bool complete = pwallet->SignTransaction(mtx, coins, nHashType, input_errors);
     UniValue result(UniValue::VOBJ);
+    // Sign the transaction
     SignTransactionResultToJSON(mtx, complete, coins, input_errors, immature_pegin, result);
     return result;
 },
