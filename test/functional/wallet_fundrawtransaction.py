@@ -190,7 +190,6 @@ class RawTransactionsTest(BitcoinTestFramework):
         inputs  = [ ]
         outputs = [{ self.nodes[0].getnewaddress() : 1.0 }]
         rawtx   = self.nodes[2].createrawtransaction(inputs, outputs)
-        dec_tx  = self.nodes[2].decoderawtransaction(rawtx)
         rawtxfund = self.nodes[2].fundrawtransaction(rawtx)
         dec_tx  = self.nodes[2].decoderawtransaction(rawtxfund['hex'])
         assert len(dec_tx['vin']) > 0  #test that we have enough inputs
@@ -200,8 +199,6 @@ class RawTransactionsTest(BitcoinTestFramework):
         inputs  = [ ]
         outputs = [{ self.nodes[0].getnewaddress() : 2.2 }]
         rawtx   = self.nodes[2].createrawtransaction(inputs, outputs)
-        dec_tx  = self.nodes[2].decoderawtransaction(rawtx)
-
         rawtxfund = self.nodes[2].fundrawtransaction(rawtx)
         dec_tx  = self.nodes[2].decoderawtransaction(rawtxfund['hex'])
         assert len(dec_tx['vin']) > 0  #test if we have enough inputs
@@ -213,13 +210,9 @@ class RawTransactionsTest(BitcoinTestFramework):
         inputs  = [ ]
         outputs = [{ self.nodes[0].getnewaddress() : 2.6 }, { self.nodes[1].getnewaddress() : 2.5 }]
         rawtx   = self.nodes[2].createrawtransaction(inputs, outputs)
-        dec_tx  = self.nodes[2].decoderawtransaction(rawtx)
 
         rawtxfund = self.nodes[2].fundrawtransaction(rawtx)
         dec_tx  = self.nodes[2].decoderawtransaction(rawtxfund['hex'])
-        totalOut = 0
-        for out in dec_tx['vout']:
-            totalOut += out['value']
 
         assert len(dec_tx['vin']) > 0
         assert_equal(dec_tx['vin'][0]['scriptSig']['hex'], '')
@@ -351,12 +344,10 @@ class RawTransactionsTest(BitcoinTestFramework):
         rawtxfund = self.nodes[2].fundrawtransaction(rawtx)
 
         dec_tx  = self.nodes[2].decoderawtransaction(rawtxfund['hex'])
-        totalOut = 0
         matchingOuts = 0
         for i, out in enumerate(dec_tx['vout']):
             if out["scriptPubKey"]["type"] == "fee":
                 continue
-            totalOut += out['value']
             if out['scriptPubKey']['address'] in output_addrs:
                 matchingOuts+=1
             else:
@@ -386,14 +377,11 @@ class RawTransactionsTest(BitcoinTestFramework):
         # Should fail without add_inputs:
         assert_raises_rpc_error(-4, ERR_NOT_ENOUGH_PRESET_INPUTS, self.nodes[2].fundrawtransaction, rawtx, add_inputs=False)
         rawtxfund = self.nodes[2].fundrawtransaction(rawtx, add_inputs=True)
-
         dec_tx  = self.nodes[2].decoderawtransaction(rawtxfund['hex'])
-        totalOut = 0
         matchingOuts = 0
         for out in dec_tx['vout']:
             if out["scriptPubKey"]["type"] == "fee":
                 continue
-            totalOut += out['value']
             if out['scriptPubKey']['address'] in output_addrs:
                 matchingOuts+=1
 
@@ -428,12 +416,10 @@ class RawTransactionsTest(BitcoinTestFramework):
         rawtxfund = self.nodes[2].fundrawtransaction(rawtx, add_inputs=True)
 
         dec_tx  = self.nodes[2].decoderawtransaction(rawtxfund['hex'])
-        totalOut = 0
         matchingOuts = 0
         for out in dec_tx['vout']:
             if out["scriptPubKey"]["type"] == "fee":
                 continue
-            totalOut += out['value']
             if out['scriptPubKey']['address'] in output_addrs:
                 matchingOuts+=1
 
