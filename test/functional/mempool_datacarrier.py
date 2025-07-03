@@ -22,20 +22,21 @@ from test_framework.wallet import MiniWallet
 
 class DataCarrierTest(BitcoinTestFramework):
     def set_test_params(self):
-        self.num_nodes = 3
+        self.num_nodes = 4
         self.extra_args = [
             [],
             ["-datacarrier=0"],
-            ["-datacarrier=1", f"-datacarriersize={MAX_OP_RETURN_RELAY - 1}"]
+            ["-datacarrier=1", f"-datacarriersize={MAX_OP_RETURN_RELAY - 1}"],
+            ["-datacarrier=1", f"-datacarriersize=2"],
         ]
 
-    def test_null_data_transaction(self, node: TestNode, data: bytes, success: bool) -> None:
+    def test_null_data_transaction(self, node: TestNode, data, success: bool) -> None:
         tx = self.wallet.create_self_transfer(fee_rate=0)["tx"]
-        tx.vout.append(CTxOut(nValue=0, scriptPubKey=CScript([OP_RETURN, data])))
+        data = [] if data is None else [data]
+        tx.vout.append(CTxOut(nValue=0, scriptPubKey=CScript([OP_RETURN] + data)))
         # ELEMENTS: set the fee amount to the value subtracted from the first output
-        vsize = tx.get_vsize()
-        tx.vout[0].nValue.setToAmount(tx.vout[0].nValue.getAmount() - vsize)  # simply pay 1sat/vbyte fee
-        tx.vout[1].nValue.setToAmount(vsize)
+        tx.vout[0].nValue.setToAmount(tx.vout[0].nValue.getAmount() - tx.get_vsize())  # simply pay 1sat/vbyte fee
+        tx.vout[1].nValue.setToAmount(tx.get_vsize())
 
         tx_hex = tx.serialize().hex()
 
@@ -52,6 +53,8 @@ class DataCarrierTest(BitcoinTestFramework):
         default_size_data = random_bytes(MAX_OP_RETURN_RELAY - 3)
         too_long_data = random_bytes(MAX_OP_RETURN_RELAY - 2)
         small_data = random_bytes(MAX_OP_RETURN_RELAY - 4)
+        one_byte = random_bytes(1)
+        zero_bytes = random_bytes(0)
 
         self.log.info("Testing null data transaction with default -datacarrier and -datacarriersize values.")
         self.test_null_data_transaction(node=self.nodes[0], data=default_size_data, success=True)
@@ -67,6 +70,24 @@ class DataCarrierTest(BitcoinTestFramework):
 
         self.log.info("Testing a null data transaction with a size smaller than accepted by -datacarriersize.")
         self.test_null_data_transaction(node=self.nodes[2], data=small_data, success=True)
+
+        self.log.info("Testing a null data transaction with no data.")
+        self.test_null_data_transaction(node=self.nodes[0], data=None, success=True)
+        self.test_null_data_transaction(node=self.nodes[1], data=None, success=False)
+        self.test_null_data_transaction(node=self.nodes[2], data=None, success=True)
+        self.test_null_data_transaction(node=self.nodes[3], data=None, success=True)
+
+        self.log.info("Testing a null data transaction with zero bytes of data.")
+        self.test_null_data_transaction(node=self.nodes[0], data=zero_bytes, success=True)
+        self.test_null_data_transaction(node=self.nodes[1], data=zero_bytes, success=False)
+        self.test_null_data_transaction(node=self.nodes[2], data=zero_bytes, success=True)
+        self.test_null_data_transaction(node=self.nodes[3], data=zero_bytes, success=True)
+
+        self.log.info("Testing a null data transaction with one byte of data.")
+        self.test_null_data_transaction(node=self.nodes[0], data=one_byte, success=True)
+        self.test_null_data_transaction(node=self.nodes[1], data=one_byte, success=False)
+        self.test_null_data_transaction(node=self.nodes[2], data=one_byte, success=True)
+        self.test_null_data_transaction(node=self.nodes[3], data=one_byte, success=False)
 
 
 if __name__ == '__main__':
