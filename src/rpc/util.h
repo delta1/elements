@@ -105,6 +105,9 @@ bool IsBlindDestination(const CTxDestination& dest);
 
 UniValue AmountMapToUniv(const CAmountMap& balanceOrig, std::string strasset);
 
+/** Parse a sighash string representation and raise an RPC error if it is invalid. */
+int ParseSighashString(const UniValue& sighash);
+
 //! Parse a confirm target option and raise an RPC error if it is invalid.
 unsigned int ParseConfirmTarget(const UniValue& value, unsigned int max_target);
 
