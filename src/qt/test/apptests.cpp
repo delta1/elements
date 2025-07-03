@@ -7,6 +7,7 @@
 #include <assetsdir.h>
 #include <chainparams.h>
 #include <key.h>
+#include <logging.h>
 #include <qt/bitcoin.h>
 #include <qt/bitcoingui.h>
 #include <qt/networkstyle.h>

@@ -33,6 +33,7 @@
 #include <interfaces/chain.h>
 #include <interfaces/init.h>
 #include <interfaces/node.h>
+#include <logging.h>
 #include <mainchainrpc.h>
 #include <mapport.h>
 #include <net.h>
