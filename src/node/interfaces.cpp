@@ -679,7 +679,7 @@ public:
         if (!m_node.mempool) return true;
         LockPoints lp;
         std::set<std::pair<uint256, COutPoint>> setPeginsSpent;
-        CTxMemPoolEntry entry(tx, 0, 0, 0, false, 0, lp, setPeginsSpent);
+        CTxMemPoolEntry entry(tx, 0, 0, 0, 0, false, 0, lp, setPeginsSpent);
         const CTxMemPool::Limits& limits{m_node.mempool->m_limits};
         LOCK(m_node.mempool->cs);
         return m_node.mempool->CalculateMemPoolAncestors(entry, limits).has_value();
