@@ -8,6 +8,7 @@
 
 #include <asset.h>
 #include <blindpsbt.h>
+#include <addresstype.h>
 #include <consensus/amount.h>
 #include <interfaces/chain.h>
 #include <interfaces/handler.h>

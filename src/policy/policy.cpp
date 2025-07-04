@@ -17,7 +17,7 @@
 #include <script/interpreter.h>
 #include <script/pegins.h>
 #include <script/script.h>
-#include <script/standard.h>
+#include <script/solver.h>
 #include <serialize.h>
 #include <span.h>
 #include <chainparams.h> // Peg-out enforcement

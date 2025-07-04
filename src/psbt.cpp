@@ -9,6 +9,7 @@
 #include <pegins.h>
 #include <primitives/transaction.h>
 #include <policy/policy.h>
+#include <script/signingprovider.h>
 #include <util/check.h>
 #include <util/strencodings.h>
 

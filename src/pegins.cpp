@@ -4,6 +4,7 @@
 
 #include <pegins.h>
 
+#include <addresstype.h>
 #include <arith_uint256.h>
 #include <block_proof.h>
 #include <chainparams.h>
@@ -17,7 +18,6 @@
 #include <primitives/bitcoin/merkleblock.h>
 #include <secp256k1.h>
 #include <script/interpreter.h>
-#include <script/standard.h>
 #include <streams.h>
 #include <dynafed.h>
 
@@ -185,7 +185,6 @@ static bool CheckPeginTx(const std::vector<unsigned char>& tx_data, T& pegtx, co
             return true;
         }
         CScript tweaked_fedpegscript = calculate_contract(scripts.second, claim_script);
-        // TODO: Remove script/standard.h dep for GetScriptFor*
         CScript expected_script(GetScriptForDestination(WitnessV0ScriptHash(tweaked_fedpegscript)));
         if (scripts.first.IsPayToScriptHash()) {
             expected_script = GetScriptForDestination(ScriptHash(expected_script));

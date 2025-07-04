@@ -10,7 +10,6 @@
 #include <validation.h>
 #include <node/miner.h>
 #include <pubkey.h>
-#include <script/standard.h>
 #include <txmempool.h>
 #include <uint256.h>
 #include <util/strencodings.h>

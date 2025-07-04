@@ -14,7 +14,7 @@
 #include <script/descriptor.h>
 #include <script/script.h>
 #include <script/sign.h>
-#include <script/standard.h>
+#include <script/solver.h>
 #include <serialize.h>
 #include <streams.h>
 #include <undo.h>

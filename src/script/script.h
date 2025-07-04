@@ -10,6 +10,8 @@
 #include <crypto/common.h>
 #include <prevector.h>
 #include <serialize.h>
+#include <uint256.h>
+#include <util/hash_type.h>
 
 #include <assert.h>
 #include <climits>
@@ -659,6 +661,28 @@ struct CScriptWitness
     std::string ToString() const;
 
     uint32_t GetSerializedSize() const;
+};
+
+/** A reference to a CScript: the Hash160 of its serialization */
+class CScriptID : public BaseHash<uint160>
+{
+public:
+    CScriptID() : BaseHash() {}
+    explicit CScriptID(const CScript& in);
+    explicit CScriptID(const uint160& in) : BaseHash(in) {}
+
+    // ELEMENTS: we write these to the wallet to store blinding keys
+    template<typename Stream>
+    void Serialize(Stream& s) const
+    {
+        m_hash.Serialize(s);
+    }
+
+    template<typename Stream>
+    void Unserialize(Stream& s)
+    {
+        m_hash.Unserialize(s);
+    }
 };
 
 /** Test for OP_SUCCESSx opcodes as defined by BIP342. */

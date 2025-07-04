@@ -25,6 +25,7 @@
 #include <qt/transactionview.h>
 #include <qt/walletmodel.h>
 #include <policy/policy.h>
+#include <script/solver.h>
 #include <test/util/setup_common.h>
 #include <validation.h>
 #include <wallet/test/util.h>

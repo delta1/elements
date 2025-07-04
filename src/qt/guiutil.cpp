@@ -11,6 +11,7 @@
 #include <qt/sendcoinsrecipient.h>
 
 #include <asset.h>
+#include <addresstype.h>
 #include <base58.h>
 #include <assetsdir.h>
 #include <chainparams.h>
@@ -22,7 +23,6 @@
 #include <primitives/transaction.h>
 #include <protocol.h>
 #include <script/script.h>
-#include <script/standard.h>
 #include <util/chaintype.h>
 #include <util/exception.h>
 #include <util/fs.h>
