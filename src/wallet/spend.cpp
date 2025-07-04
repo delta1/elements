@@ -1769,7 +1769,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
                 blind_details->o_pubkeys[i].IsValid() ? "blinded" : "explicit"
             );
         }
-        wallet.WalletLogPrintf(summary+"\n");
+        wallet.WalletLogPrintf("%s\n", summary);
 
         // Wipe output blinding factors and start over
         blind_details->o_amount_blinds.clear();
