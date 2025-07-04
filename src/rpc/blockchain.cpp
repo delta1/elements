@@ -1426,7 +1426,7 @@ RPCHelpMan getblockchaininfo()
     obj.pushKV("time", tip.GetBlockTime());
     obj.pushKV("mediantime", tip.GetMedianTimePast());
     obj.pushKV("verificationprogress", GuessVerificationProgress(&tip, chainparams.GetConsensus().nPowTargetSpacing));
-    obj.pushKV("initialblockdownload", active_chainstate.IsInitialBlockDownload());
+    obj.pushKV("initialblockdownload", chainman.IsInitialBlockDownload());
     if (!g_signed_blocks) {
         obj.pushKV("chainwork", tip.nChainWork.GetHex());
     }
