@@ -8,8 +8,10 @@
 #include <asset.h>
 #include <blockfilter.h>
 #include <core_io.h>
+#include <primitives/block.h>
 #include <serialize.h>
 #include <streams.h>
+#include <undo.h>
 #include <univalue.h>
 #include <util/strencodings.h>
 

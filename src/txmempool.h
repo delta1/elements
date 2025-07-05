@@ -6,28 +6,18 @@
 #ifndef BITCOIN_TXMEMPOOL_H
 #define BITCOIN_TXMEMPOOL_H
 
-#include <atomic>
-#include <map>
-#include <optional>
-#include <set>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
-
-#include <kernel/mempool_limits.h>
-#include <kernel/mempool_options.h>
-
 #include <coins.h>
 #include <consensus/amount.h>
 #include <indirectmap.h>
 #include <kernel/cs_main.h>
-#include <kernel/mempool_entry.h>
+#include <kernel/mempool_entry.h>          // IWYU pragma: export
+#include <kernel/mempool_limits.h>         // IWYU pragma: export
+#include <kernel/mempool_options.h>        // IWYU pragma: export
+#include <kernel/mempool_removal_reason.h> // IWYU pragma: export
 #include <policy/feerate.h>
 #include <policy/packages.h>
 #include <primitives/transaction.h>
 #include <primitives/pak.h>
-#include <random.h>
 #include <sync.h>
 #include <util/epochguard.h>
 #include <util/hasher.h>
@@ -41,9 +31,16 @@
 #include <boost/multi_index/tag.hpp>
 #include <boost/multi_index_container.hpp>
 
-class CBlockIndex;
+#include <atomic>
+#include <map>
+#include <optional>
+#include <set>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
 class CChain;
-class Chainstate;
 
 /** Fake height value used in Coin to signify they are only in the memory pool (since 0.8) */
 static const uint32_t MEMPOOL_HEIGHT = 0x7FFFFFFF;
@@ -276,20 +273,6 @@ struct TxMempoolInfo
     /** ELEMENTS: Discounted CT size. */
     size_t discountvsize;
 };
-
-/** Reason why a transaction was removed from the mempool,
- * this is passed to the notification signal.
- */
-enum class MemPoolRemovalReason {
-    EXPIRY,      //!< Expired from mempool
-    SIZELIMIT,   //!< Removed in size limiting
-    REORG,       //!< Removed for reorganization
-    BLOCK,       //!< Removed for block
-    CONFLICT,    //!< Removed for conflict with in-block transaction
-    REPLACED,    //!< Removed for replacement
-};
-
-std::string RemovalReasonToString(const MemPoolRemovalReason& r) noexcept;
 
 /**
  * CTxMemPool stores valid-according-to-the-current-best-chain transactions
