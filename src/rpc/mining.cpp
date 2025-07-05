@@ -1595,8 +1595,7 @@ static RPCHelpMan testproposedblock()
         throw JSONRPCError(RPC_VERIFY_ERROR, strRejectReason);
     }
 
-    const CChainParams& chainparams = Params();
-    const bool acceptnonstd = !request.params[1].isNull() ? request.params[1].get_bool() : gArgs.GetBoolArg("-acceptnonstdtxn", !chainparams.RequireStandard());
+    const bool acceptnonstd = !request.params[1].isNull() ? request.params[1].get_bool() : gArgs.GetBoolArg("-acceptnonstdtxn", DEFAULT_ACCEPT_NON_STD_TXN);
     if (!acceptnonstd) {
         for (auto& transaction : block.vtx) {
             if (transaction->IsCoinBase()) continue;
