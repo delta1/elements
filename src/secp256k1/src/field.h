@@ -352,4 +352,7 @@ static void secp256k1_fe_verify(const secp256k1_fe *a);
 static void secp256k1_fe_verify_magnitude(const secp256k1_fe *a, int m);
 #define SECP256K1_FE_VERIFY_MAGNITUDE(a, m) secp256k1_fe_verify_magnitude(a, m)
 
+/** Check that magnitude of a is at most m (no-op unless VERIFY is enabled). */
+static void secp256k1_fe_verify_magnitude(const secp256k1_fe *a, int m);
+
 #endif /* SECP256K1_FIELD_H */
