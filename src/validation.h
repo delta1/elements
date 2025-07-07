@@ -50,7 +50,6 @@
 #include <primitives/pak.h> // CPAKList
 
 class Chainstate;
-class CBlockTreeDB;
 class CTxMemPool;
 class ChainstateManager;
 struct ChainTxData;

@@ -17,8 +17,12 @@
 
 #include <vector>
 
+// ELEMENTS: forward decls
 namespace node {
 struct NodeContext;
+}
+namespace kernel {
+class BlockTreeDB;
 }
 /**
  * Maximum amount of time that a block timestamp is allowed to exceed the
@@ -227,7 +231,7 @@ protected:
     bool m_trimmed_dynafed_block{false};
     bool m_stored_lvl{false};
 
-    friend class CBlockTreeDB;
+    friend class kernel::BlockTreeDB;
 
     static node::NodeContext *m_pcontext;
 

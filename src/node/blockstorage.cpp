@@ -8,6 +8,7 @@
 #include <chain.h>
 #include <clientversion.h>
 #include <consensus/validation.h>
+#include <dbwrapper.h>
 #include <flatfile.h>
 #include <hash.h>
 #include <kernel/chainparams.h>
@@ -16,14 +17,205 @@
 #include <reverse_iterator.h>
 #include <signet.h>
 #include <streams.h>
+#include <sync.h>
 #include <undo.h>
 #include <util/batchpriority.h>
 #include <util/fs.h>
 #include <util/signalinterrupt.h>
+#include <util/translation.h>
 #include <validation.h>
 
 #include <map>
 #include <unordered_map>
+
+namespace kernel {
+static constexpr uint8_t DB_BLOCK_FILES{'f'};
+static constexpr uint8_t DB_BLOCK_INDEX{'b'};
+static constexpr uint8_t DB_FLAG{'F'};
+static constexpr uint8_t DB_REINDEX_FLAG{'R'};
+static constexpr uint8_t DB_LAST_BLOCK{'l'};
+// Keys used in previous version that might still be found in the DB:
+// BlockTreeDB::DB_TXINDEX_BLOCK{'T'};
+// BlockTreeDB::DB_TXINDEX{'t'}
+// BlockTreeDB::ReadFlag("txindex")
+// ELEMENTS:
+// static constexpr uint8_t DB_INVALID_BLOCK_Q{'q'};  // No longer used, but avoid reuse.
+static constexpr uint8_t DB_PAK{'p'};
+
+bool BlockTreeDB::ReadBlockFileInfo(int nFile, CBlockFileInfo& info)
+{
+    return Read(std::make_pair(DB_BLOCK_FILES, nFile), info);
+}
+
+bool BlockTreeDB::WriteReindexing(bool fReindexing)
+{
+    if (fReindexing) {
+        return Write(DB_REINDEX_FLAG, uint8_t{'1'});
+    } else {
+        return Erase(DB_REINDEX_FLAG);
+    }
+}
+
+void BlockTreeDB::ReadReindexing(bool& fReindexing)
+{
+    fReindexing = Exists(DB_REINDEX_FLAG);
+}
+
+bool BlockTreeDB::ReadLastBlockFile(int& nFile)
+{
+    return Read(DB_LAST_BLOCK, nFile);
+}
+
+bool BlockTreeDB::WriteBatchSync(const std::vector<std::pair<int, const CBlockFileInfo*>>& fileInfo, int nLastFile, const std::vector<const CBlockIndex*>& blockinfo)
+{
+    CDBBatch batch(*this);
+    for (const auto& [file, info] : fileInfo) {
+        batch.Write(std::make_pair(DB_BLOCK_FILES, file), *info);
+    }
+    batch.Write(DB_LAST_BLOCK, nLastFile);
+    for (const CBlockIndex* bi : blockinfo) {
+        batch.Write(std::make_pair(DB_BLOCK_INDEX, bi->GetBlockHash()), CDiskBlockIndex{bi});
+    }
+    return WriteBatch(batch, true);
+}
+
+bool BlockTreeDB::WriteFlag(const std::string& name, bool fValue)
+{
+    return Write(std::make_pair(DB_FLAG, name), fValue ? uint8_t{'1'} : uint8_t{'0'});
+}
+
+bool BlockTreeDB::ReadFlag(const std::string& name, bool& fValue)
+{
+    uint8_t ch;
+    if (!Read(std::make_pair(DB_FLAG, name), ch)) {
+        return false;
+    }
+    fValue = ch == uint8_t{'1'};
+    return true;
+}
+
+bool BlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex, const util::SignalInterrupt& interrupt, int trimBelowHeight)
+{
+    AssertLockHeld(::cs_main);
+    std::unique_ptr<CDBIterator> pcursor(NewIterator());
+    pcursor->Seek(std::make_pair(DB_BLOCK_INDEX, uint256()));
+
+    int n_untrimmed = 0;
+    int n_total = 0;
+
+    // Load m_block_index
+    while (pcursor->Valid()) {
+        if (interrupt) return false;
+        std::pair<uint8_t, uint256> key;
+        if (pcursor->GetKey(key) && key.first == DB_BLOCK_INDEX) {
+            CDiskBlockIndex diskindex;
+            if (pcursor->GetValue(diskindex)) {
+                // Construct block index object
+                CBlockIndex* pindexNew = insertBlockIndex(diskindex.ConstructBlockHash());
+                pindexNew->pprev          = insertBlockIndex(diskindex.hashPrev);
+                pindexNew->nHeight        = diskindex.nHeight;
+                pindexNew->nFile          = diskindex.nFile;
+                pindexNew->nDataPos       = diskindex.nDataPos;
+                pindexNew->nUndoPos       = diskindex.nUndoPos;
+                pindexNew->nVersion       = diskindex.nVersion;
+                pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
+                pindexNew->nTime          = diskindex.nTime;
+                pindexNew->nBits          = diskindex.nBits;
+                pindexNew->nNonce         = diskindex.nNonce;
+                pindexNew->nStatus        = diskindex.nStatus;
+                pindexNew->nTx            = diskindex.nTx;
+
+                pindexNew->proof               = diskindex.proof;
+                pindexNew->m_dynafed_params    = diskindex.m_dynafed_params;
+                pindexNew->m_signblock_witness = diskindex.m_signblock_witness;
+
+                assert(!(g_signed_blocks && diskindex.m_dynafed_params.value().IsNull() && diskindex.proof.value().IsNull()));
+
+                pindexNew->set_stored();
+                n_total++;
+
+                const uint256 block_hash = pindexNew->GetBlockHash();
+                // Only validate one of every 1000 block header for sanity check
+                if (pindexNew->nHeight % 1000 == 0 &&
+                        block_hash != consensusParams.hashGenesisBlock &&
+                        !CheckProof(pindexNew->GetBlockHeader(), consensusParams)) {
+                    return error("%s: CheckProof: %s, %s", __func__, block_hash.ToString(), pindexNew->ToString());
+                }
+                if (diskindex.nHeight >= trimBelowHeight) {
+                    n_untrimmed++;
+                } else {
+                    pindexNew->trim();
+                }
+
+                pcursor->Next();
+            } else {
+                return error("%s: failed to read value", __func__);
+            }
+        } else {
+            break;
+        }
+    }
+
+    LogPrintf("LoadBlockIndexGuts: loaded %d total / %d untrimmed (fully in-memory) headers\n", n_total, n_untrimmed);
+    return true;
+}
+
+// ELEMENTS
+bool BlockTreeDB::ReadPAKList(std::vector<std::vector<unsigned char> >& offline_list, std::vector<std::vector<unsigned char> >& online_list, bool& reject)
+{
+        return Read(std::make_pair(DB_PAK, uint256S("1")), offline_list) && Read(std::make_pair(DB_PAK, uint256S("2")), online_list) && Read(std::make_pair(DB_PAK, uint256S("3")), reject);
+}
+
+bool BlockTreeDB::WritePAKList(const std::vector<std::vector<unsigned char> >& offline_list, const std::vector<std::vector<unsigned char> >& online_list, bool reject)
+{
+        return Write(std::make_pair(DB_PAK, uint256S("1")), offline_list) && Write(std::make_pair(DB_PAK, uint256S("2")), online_list) && Write(std::make_pair(DB_PAK, uint256S("3")), reject);
+}
+
+const CBlockIndex *BlockTreeDB::RegenerateFullIndex(const CBlockIndex *pindexTrimmed, CBlockIndex *pindexNew) const
+{
+    LOCK(cs_main);
+
+    if(!pindexTrimmed->trimmed()) {
+        return pindexTrimmed;
+    }
+    CBlockHeader tmp;
+    bool BlockRead = false;
+    {
+        // In unpruned nodes, same data could be read from blocks using ReadBlockFromDisk, but that turned out to
+        // be about 6x slower than reading from the index
+        std::pair<uint8_t, uint256> key(DB_BLOCK_INDEX, pindexTrimmed->GetBlockHash());
+        CDiskBlockIndex diskindex;
+        BlockRead = this->Read(key, diskindex);
+        tmp = diskindex.GetBlockHeader();
+    }
+    assert(BlockRead);
+    // Clone the needed data from the original trimmed block
+    pindexNew->pprev          = pindexTrimmed->pprev;
+    pindexNew->phashBlock     = pindexTrimmed->phashBlock;
+    // Construct block index object
+    pindexNew->nHeight        = pindexTrimmed->nHeight;
+    pindexNew->nFile          = pindexTrimmed->nFile;
+    pindexNew->nDataPos       = pindexTrimmed->nDataPos;
+    pindexNew->nUndoPos       = pindexTrimmed->nUndoPos;
+    pindexNew->nVersion       = pindexTrimmed->nVersion;
+    pindexNew->hashMerkleRoot = pindexTrimmed->hashMerkleRoot;
+    pindexNew->nTime          = pindexTrimmed->nTime;
+    pindexNew->nBits          = pindexTrimmed->nBits;
+    pindexNew->nNonce         = pindexTrimmed->nNonce;
+    pindexNew->nStatus        = pindexTrimmed->nStatus;
+    pindexNew->nTx            = pindexTrimmed->nTx;
+
+    pindexNew->proof               = tmp.proof;
+    pindexNew->m_dynafed_params    = tmp.m_dynafed_params;
+    pindexNew->m_signblock_witness = tmp.m_signblock_witness;
+
+    if (pindexTrimmed->nHeight && pindexTrimmed->nHeight % 1000 == 0) {
+        assert(CheckProof(pindexNew->GetBlockHeader(), Params().GetConsensus()));
+    }
+    return pindexNew;
+}
+// END ELEMENTS
+} // namespace kernel
 
 namespace node {
 std::atomic_bool fReindex(false);
