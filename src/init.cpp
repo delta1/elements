@@ -276,9 +276,9 @@ void Shutdown(NodeContext& node)
 
     // After everything has been shut down, but before things get flushed, stop the
     // CScheduler/checkqueue, scheduler and load block thread.
+    if (node.chainman && node.chainman->m_thread_load.joinable()) node.chainman->m_thread_load.join();
     if (node.scheduler) node.scheduler->stop();
     if (node.reverification_scheduler) node.reverification_scheduler->stop();
-    if (node.chainman && node.chainman->m_thread_load.joinable()) node.chainman->m_thread_load.join();
     StopScriptCheckWorkerThreads();
 
     // After the threads that potentially access these pointers have been stopped,
