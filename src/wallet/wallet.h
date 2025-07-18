@@ -743,7 +743,8 @@ public:
     bool SubmitTxMemoryPoolAndRelay(CWalletTx& wtx, std::string& err_string, bool relay) const
         EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
 
-    bool DummySignTx(CMutableTransaction &txNew, const std::vector<CTxOut> &txouts, const CCoinControl* coin_control = nullptr) const;
+    // ELEMENTS: FIXME keeping dummy signing fee estimation until updating to descriptor method
+    bool DummySignTx(CMutableTransaction &txNew, const std::vector<CTxOut> &txouts, const CCoinControl* coin_control) const;
 
     bool ImportScripts(const std::set<CScript> scripts, int64_t timestamp) EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
     bool ImportPrivKeys(const std::map<CKeyID, CKey>& privkey_map, const int64_t timestamp) EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
@@ -1182,9 +1183,12 @@ bool AddWalletSetting(interfaces::Chain& chain, const std::string& wallet_name);
 //! Remove wallet name from persistent configuration so it will not be loaded on startup.
 bool RemoveWalletSetting(interfaces::Chain& chain, const std::string& wallet_name);
 
+// ELEMENTS: FIXME keeping dummy signing fee estimation until updating to descriptor method
+bool DummySignTx(CMutableTransaction &txNew, const std::vector<CTxOut> &txouts, const CCoinControl* coin_control);
 bool DummySignInput(const SigningProvider& provider, CMutableTransaction& tx, const size_t nIn, const CTxOut& txout, bool can_grind_r, const CCoinControl* coin_control);
 
 bool FillInputToWeight(CMutableTransaction& mtx, size_t nIn, int64_t target_weight);
+// END ELEMENTS
 
 struct MigrationResult {
     std::string wallet_name;

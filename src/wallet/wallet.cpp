@@ -1715,6 +1715,8 @@ void CWallet::InitWalletFlags(uint64_t flags)
     if (!LoadWalletFlags(flags)) assert(false);
 }
 
+// ELEMENTS: FIXME keeping dummy sign for tx fee estimation until updating to descriptor method
+
 // Helper for producing a max-sized low-S low-R signature (eg 71 bytes)
 // or a max-sized low-S signature (e.g. 72 bytes) if use_max_sig is true
 bool DummySignInput(const SigningProvider& provider, CMutableTransaction& tx, const size_t nIn, const CTxOut& txout, bool can_grind_r, const CCoinControl* coin_control) {
@@ -1804,6 +1806,7 @@ bool CWallet::DummySignTx(CMutableTransaction &txNew, const std::vector<CTxOut> 
     }
     return true;
 }
+// END ELEMENTS
 
 bool CWallet::ImportScripts(const std::set<CScript> scripts, int64_t timestamp)
 {
