@@ -2576,8 +2576,8 @@ void PrecomputedTransactionData::Init(const T& txTo, std::vector<CTxOut>&& spent
         m_spent_output_spk_single_hashes = GetSpentScriptPubKeysSHA256(m_spent_outputs);
         m_output_spk_single_hashes = GetOutputScriptPubKeysSHA256(txTo);
 
-        std::vector<rawBuffer> simplicityRawAnnex(txTo.witness.vtxinwit.size());
-        std::vector<rawInput> simplicityRawInput(txTo.vin.size());
+        std::vector<rawElementsBuffer> simplicityRawAnnex(txTo.witness.vtxinwit.size());
+        std::vector<rawElementsInput> simplicityRawInput(txTo.vin.size());
         for (size_t i = 0; i < txTo.vin.size(); ++i) {
             simplicityRawInput[i].prevTxid = txTo.vin[i].prevout.hash.begin();
             simplicityRawInput[i].prevIx = txTo.vin[i].prevout.n;
@@ -2614,7 +2614,7 @@ void PrecomputedTransactionData::Init(const T& txTo, std::vector<CTxOut>&& spent
             }
         }
 
-        std::vector<rawOutput> simplicityRawOutput(txTo.vout.size());
+        std::vector<rawElementsOutput> simplicityRawOutput(txTo.vout.size());
         for (size_t i = 0; i < txTo.vout.size(); ++i) {
             simplicityRawOutput[i].asset = txTo.vout[i].nAsset.vchCommitment.empty() ? nullptr : txTo.vout[i].nAsset.vchCommitment.data();
             simplicityRawOutput[i].value = txTo.vout[i].nValue.vchCommitment.empty() ? nullptr : txTo.vout[i].nValue.vchCommitment.data();
@@ -2634,7 +2634,7 @@ void PrecomputedTransactionData::Init(const T& txTo, std::vector<CTxOut>&& spent
             }
         }
 
-        rawTransaction simplicityRawTx;
+        rawElementsTransaction simplicityRawTx;
         uint256 rawHash = txTo.GetHash();
         simplicityRawTx.txid = rawHash.begin();
         simplicityRawTx.input = simplicityRawInput.data();
@@ -3089,14 +3089,14 @@ uint32_t GenericTransactionSignatureChecker<T>::GetnIn() const
 }
 
 template <class T>
-bool GenericTransactionSignatureChecker<T>::CheckSimplicity(const valtype& program, const valtype& witness, const rawTapEnv& simplicityRawTap, int64_t budget, ScriptError* serror) const
+bool GenericTransactionSignatureChecker<T>::CheckSimplicity(const valtype& program, const valtype& witness, const rawElementsTapEnv& simplicityRawTap, int64_t budget, ScriptError* serror) const
 {
     simplicity_err error;
-    tapEnv* simplicityTapEnv = simplicity_elements_mallocTapEnv(&simplicityRawTap);
+    elementsTapEnv* simplicityTapEnv = simplicity_elements_mallocTapEnv(&simplicityRawTap);
 
     assert(txdata->m_simplicity_tx_data);
     assert(simplicityTapEnv);
-    if (!simplicity_elements_execSimplicity(&error, nullptr, txdata->m_simplicity_tx_data.get(), nIn, simplicityTapEnv, txdata->m_hash_genesis_block.data(), budget, nullptr, program.data(), program.size(), witness.data(), witness.size())) {
+    if (!simplicity_elements_execSimplicity(&error, nullptr, txdata->m_simplicity_tx_data.get(), nIn, simplicityTapEnv, txdata->m_hash_genesis_block.data(), 0, budget, nullptr, program.data(), program.size(), witness.data(), witness.size())) {
         assert(!"simplicity_elements_execSimplicity internal error");
     }
     simplicity_elements_freeTapEnv(simplicityTapEnv);
@@ -3129,6 +3129,7 @@ bool GenericTransactionSignatureChecker<T>::CheckSimplicity(const valtype& progr
     case SIMPLICITY_ERR_ANTIDOS: return set_error(serror, SCRIPT_ERR_SIMPLICITY_ANTIDOS);
     case SIMPLICITY_ERR_HIDDEN_ROOT: return set_error(serror, SCRIPT_ERR_SIMPLICITY_HIDDEN_ROOT);
     case SIMPLICITY_ERR_AMR: return set_error(serror, SCRIPT_ERR_SIMPLICITY_AMR);
+    case SIMPLICITY_ERR_OVERWEIGHT: return set_error(serror, SCRIPT_ERR_SIMPLICITY_OVERWEIGHT);
     default: return set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
     }
 }
@@ -3296,7 +3297,7 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
                 const valtype& simplicity_program = SpanPopBack(stack);
                 const valtype& simplicity_witness = SpanPopBack(stack);
                 const int64_t budget = ::GetSerializeSize(witness.stack, PROTOCOL_VERSION) + VALIDATION_WEIGHT_OFFSET;
-                rawTapEnv simplicityRawTap;
+                rawElementsTapEnv simplicityRawTap;
                 simplicityRawTap.controlBlock = control.data();
                 simplicityRawTap.pathLen = (control.size() - TAPROOT_CONTROL_BASE_SIZE) / TAPROOT_CONTROL_NODE_SIZE;
                 simplicityRawTap.scriptCMR = script.data();
