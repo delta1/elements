@@ -5,6 +5,7 @@
 #include <arith_uint256.h>
 #include <blind.h>
 #include <coins.h>
+#include <random.h>
 #include <uint256.h>
 #include <validation.h>
 

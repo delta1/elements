@@ -13,6 +13,7 @@
 #include <core_io.h>
 #include <index/txindex.h>
 #include <key_io.h>
+#include <logging.h>
 #include <net.h>
 #include <node/blockstorage.h>
 #include <node/coin.h>

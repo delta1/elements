@@ -10,6 +10,7 @@
 #include <consensus/merkle.h>
 #include <consensus/params.h>
 #include <hash.h>
+#include <kernel/messagestartchars.h>
 #include <logging.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
@@ -563,7 +564,7 @@ public:
         HashWriter h{};
         h << consensus.signet_challenge;
         uint256 hash = h.GetHash();
-        memcpy(pchMessageStart, hash.begin(), 4);
+        std::copy_n(hash.begin(), 4, pchMessageStart.begin());
 
         nDefaultPort = 38333;
         nPruneAfterHeight = 1000;
@@ -891,7 +892,7 @@ protected:
         const std::string magic_str = args.GetArg("-pchmessagestart", default_magic_str);
         assert(IsHex(magic_str) && magic_str.size() == 8 && "-pchmessagestart must be hex string of length 8");
         const std::vector<unsigned char> magic_byte = ParseHex(magic_str);
-        std::copy(begin(magic_byte), end(magic_byte), pchMessageStart);
+        std::copy(begin(magic_byte), end(magic_byte), pchMessageStart.begin());
 
         vSeeds.clear();
         if (use_invalid_seeds) {
@@ -1413,7 +1414,7 @@ public:
         const std::string magic_str = args.GetArg("-pchmessagestart", "FABFB5DA");
         assert(IsHex(magic_str) && magic_str.size() == 8 && "-pchmessagestart must be hex string of length 8");
         const std::vector<unsigned char> magic_byte = ParseHex(magic_str);
-        std::copy(begin(magic_byte), end(magic_byte), pchMessageStart);
+        std::copy(begin(magic_byte), end(magic_byte), pchMessageStart.begin());
         // END magic numbers
 
         UpdateFromArgs(args);
@@ -1500,7 +1501,7 @@ public:
         const std::string magic_str = args.GetArg("-pchmessagestart", "143EFCB1");
         assert(IsHex(magic_str) && magic_str.size() == 8 && "-pchmessagestart must be hex string of length 8");
         const std::vector<unsigned char> magic_byte = ParseHex(magic_str);
-        std::copy(begin(magic_byte), end(magic_byte), pchMessageStart);
+        std::copy(begin(magic_byte), end(magic_byte), pchMessageStart.begin());
 
         vSeeds.clear();
         if (args.IsArgSet("-seednode")) {

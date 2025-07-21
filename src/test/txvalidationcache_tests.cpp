@@ -5,6 +5,7 @@
 #include <chainparams.h>
 #include <consensus/validation.h>
 #include <key.h>
+#include <random.h>
 #include <script/sign.h>
 #include <script/signingprovider.h>
 #include <test/util/setup_common.h>
