@@ -334,6 +334,9 @@ public:
     {
         util::Xor(MakeWritableByteSpan(*this), MakeByteSpan(key));
     }
+
+    // ELEMENTS: Required for CProof size computation to deal with SER_GETHASH
+    int GetType() const { return 0; }
 };
 
 class CDataStream : public DataStream
