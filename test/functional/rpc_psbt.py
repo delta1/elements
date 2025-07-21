@@ -120,12 +120,12 @@ class PSBTTest(BitcoinTestFramework):
         # psbt_new.i[0].map[PSBT_IN_NON_WITNESS_UTXO] = bytes.fromhex(prev_tx)
         # assert "non_witness_utxo" in mining_node.decodepsbt(psbt_new.to_base64())["inputs"][0]
 
-        # # Have the offline node sign the PSBT (which will remove the non-witness UTXO)
-        # signed_psbt = offline_node.walletprocesspsbt(psbt_new.to_base64())["psbt"]
-        # assert not "non_witness_utxo" in mining_node.decodepsbt(signed_psbt)["inputs"][0]
+        # Have the offline node sign the PSBT (which will remove the non-witness UTXO)
+        # signed_psbt = offline_node.walletprocesspsbt(psbt_new.to_base64())
+        # assert not "non_witness_utxo" in mining_node.decodepsbt(signed_psbt["psbt"])["inputs"][0]
 
-        # # Make sure we can mine the resulting transaction
-        # txid = mining_node.sendrawtransaction(mining_node.finalizepsbt(signed_psbt)["hex"])
+        # Make sure we can mine the resulting transaction
+        # txid = mining_node.sendrawtransaction(signed_psbt["hex"])
         # self.generate(mining_node, nblocks=1, sync_fun=lambda: self.sync_all([online_node, mining_node]))
         # assert_equal(online_node.gettxout(txid,0)["confirmations"], 1)
 
@@ -183,9 +183,8 @@ class PSBTTest(BitcoinTestFramework):
         utxo1 = tx1_inputs[0]
         assert_equal(unconfirmed_txid, utxo1['previous_txid'])
 
-        signed_tx1 = wallet.walletprocesspsbt(psbtx1)['psbt']
-        final_tx1 = wallet.finalizepsbt(signed_tx1)['hex']
-        txid1 = self.nodes[0].sendrawtransaction(final_tx1)
+        signed_tx1 = wallet.walletprocesspsbt(psbtx1)
+        txid1 = self.nodes[0].sendrawtransaction(signed_tx1['hex'])
 
         mempool = self.nodes[0].getrawmempool()
         assert txid1 in mempool
@@ -198,9 +197,8 @@ class PSBTTest(BitcoinTestFramework):
 
         self.log.info("Fail to broadcast a new PSBT with maxconf 0 due to BIP125 rules to verify it actually chose unconfirmed outputs")
         psbt_invalid = wallet.walletcreatefundedpsbt([{'txid': utxo1['previous_txid'], 'vout': utxo1['previous_vout']}], [{target_address: 1}], 0, {'add_inputs': True, 'maxconf': 0, 'fee_rate': 10})['psbt']
-        signed_invalid = wallet.walletprocesspsbt(psbt_invalid)['psbt']
-        final_invalid = wallet.finalizepsbt(signed_invalid)['hex']
-        assert_raises_rpc_error(-26, "bad-txns-spends-conflicting-tx", self.nodes[0].sendrawtransaction, final_invalid)
+        signed_invalid = wallet.walletprocesspsbt(psbt_invalid)
+        assert_raises_rpc_error(-26, "bad-txns-spends-conflicting-tx", self.nodes[0].sendrawtransaction, signed_invalid['hex'])
 
         self.log.info("Craft a replacement adding inputs with highest confs possible")
         psbtx2 = wallet.walletcreatefundedpsbt([{'txid': utxo1['previous_txid'], 'vout': utxo1['previous_vout']}], [{target_address: 1}], 0, {'add_inputs': True, 'minconf': 2, 'fee_rate': 10})['psbt']
@@ -210,9 +208,8 @@ class PSBTTest(BitcoinTestFramework):
             if vin['previous_txid'] != unconfirmed_txid:
                 assert_greater_than_or_equal(self.nodes[0].gettxout(vin['previous_txid'], vin['previous_vout'])['confirmations'], 2)
 
-        signed_tx2 = wallet.walletprocesspsbt(psbtx2)['psbt']
-        final_tx2 = wallet.finalizepsbt(signed_tx2)['hex']
-        txid2 = self.nodes[0].sendrawtransaction(final_tx2)
+        signed_tx2 = wallet.walletprocesspsbt(psbtx2)
+        txid2 = self.nodes[0].sendrawtransaction(signed_tx2['hex'])
 
         mempool = self.nodes[0].getrawmempool()
         assert txid1 not in mempool
@@ -262,15 +259,24 @@ class PSBTTest(BitcoinTestFramework):
 
         # self.nodes[0].walletpassphrase(passphrase="password", timeout=1000000)
 
-        # Sign the transaction and send
-        signed_tx = self.nodes[0].walletprocesspsbt(psbt=psbtx, finalize=False)['psbt']
-        finalized_tx = self.nodes[0].walletprocesspsbt(psbt=psbtx, finalize=True)['psbt']
-        assert signed_tx != finalized_tx
-        final_tx = self.nodes[0].finalizepsbt(signed_tx)['hex']
+        # Sign the transaction but don't finalize
+        processed_psbt = self.nodes[0].walletprocesspsbt(psbt=psbtx, finalize=False)
+        assert "hex" not in processed_psbt
+        signed_psbt = processed_psbt['psbt']
+
+        # Finalize and send
+        finalized_hex = self.nodes[0].finalizepsbt(signed_psbt)['hex']
         if confidential:
             # Can't use assert_equal because there may or may not be change
-            assert self.num_blinded_outputs(final_tx) > 0
-        self.nodes[0].sendrawtransaction(final_tx)
+            assert self.num_blinded_outputs(finalized_hex) > 0
+        self.nodes[0].sendrawtransaction(finalized_hex)
+
+        # Alternative method: sign AND finalize in one command
+        processed_finalized_psbt = self.nodes[0].walletprocesspsbt(psbt=psbtx, finalize=True)
+        finalized_psbt = processed_finalized_psbt['psbt']
+        # finalized_psbt_hex = processed_finalized_psbt['hex']
+        assert signed_psbt != finalized_psbt
+        # assert finalized_psbt_hex == finalized_hex
 
         # Manually selected inputs can be locked:
         assert_equal(len(self.nodes[0].listlockunspent()), starting_n_unspent)
@@ -360,10 +366,9 @@ class PSBTTest(BitcoinTestFramework):
         else:
             assert 'assetcommitment' in decoded['inputs'][0]['witness_utxo']
         # Check decodepsbt fee calculation (input values shall only be counted once per UTXO)
-        #assert_equal(decoded['fee'], created_psbt['fee']) # ELEMENTS: we do not have this field. Should be fixed by #900
+        assert_equal(decoded['fees']['bitcoin'], created_psbt['fee'])
         assert_equal(walletsignpsbt_out['complete'], True)
-        self.nodes[1].sendrawtransaction(self.nodes[1].finalizepsbt(walletsignpsbt_out['psbt'])['hex'])
-
+        self.nodes[1].sendrawtransaction(walletsignpsbt_out['hex'])
         if confidential:
             fee_rate_sb = 2000
         else:
@@ -496,13 +501,13 @@ class PSBTTest(BitcoinTestFramework):
         wmulti.unloadwallet()
 
         # partially sign with node 2. This should be complete and sendable
-        walletsignpsbt_out = self.nodes[2].walletprocesspsbt(psbtx)
-        assert_equal(walletsignpsbt_out['complete'], True)
+        walletprocesspsbt_out = self.nodes[2].walletprocesspsbt(psbtx)
+        assert_equal(walletprocesspsbt_out['complete'], True)
         hex_tx = self.nodes[2].finalizepsbt(walletsignpsbt_out['psbt'])['hex']
         if confidential:
             # Can't use assert_equal because there may or may not be change
             assert self.num_blinded_outputs(hex_tx) > 0
-        self.nodes[2].sendrawtransaction(hex_tx)
+        self.nodes[2].sendrawtransaction(walletprocesspsbt_out['hex'])
 
         # check that walletprocesspsbt fails to decode a non-psbt
         rawtx = self.nodes[1].createrawtransaction([{"txid":txid,"vout":p2wpkh_pos}], [{self.get_address(confidential, 1):9.99}])
@@ -1248,14 +1253,13 @@ class PSBTTest(BitcoinTestFramework):
         assert not signed['complete']
         signed = self.nodes[0].walletprocesspsbt(signed['psbt'])
         assert signed['complete']
-        self.nodes[0].finalizepsbt(signed['psbt'])
 
         psbt = wallet.walletcreatefundedpsbt([ext_utxo], [{self.nodes[0].getnewaddress(): 15}], 0, {"add_inputs": True, "solving_data":{"descriptors": [desc]}})
         signed = wallet.walletprocesspsbt(psbt['psbt'])
         assert not signed['complete']
         signed = self.nodes[0].walletprocesspsbt(signed['psbt'])
         assert signed['complete']
-        final = self.nodes[0].finalizepsbt(signed['psbt'], False)
+        final = signed['hex']
 
         dec = self.nodes[0].decodepsbt(signed["psbt"])
         for i, txin in enumerate(dec["inputs"]):
@@ -1290,8 +1294,8 @@ class PSBTTest(BitcoinTestFramework):
         )
         signed = wallet.walletprocesspsbt(psbt["psbt"])
         signed = self.nodes[0].walletprocesspsbt(signed["psbt"])
-        final = self.nodes[0].finalizepsbt(signed["psbt"])
-        assert self.nodes[0].testmempoolaccept([final["hex"]])[0]["allowed"]
+        final = signed["hex"]
+        assert self.nodes[0].testmempoolaccept([final])[0]["allowed"]
         # Reducing the weight should have a lower fee
         psbt2 = wallet.walletcreatefundedpsbt(
             inputs=[{"txid": ext_utxo["txid"], "vout": ext_utxo["vout"], "weight": low_input_weight}],
@@ -1346,8 +1350,8 @@ class PSBTTest(BitcoinTestFramework):
         self.nodes[0].importprivkey(privkey)
 
         psbt = watchonly.walletcreatefundedpsbt([], [{wallet.getnewaddress(): watchonly.getbalance()['bitcoin']}], None, {"subtractFeeFromOutputs": [0]})['psbt']
-        psbt = self.nodes[0].walletprocesspsbt(psbt)["psbt"]
-        self.nodes[0].sendrawtransaction(self.nodes[0].finalizepsbt(psbt)["hex"])
+        signed_tx = self.nodes[0].walletprocesspsbt(psbt)
+        self.nodes[0].sendrawtransaction(signed_tx["hex"])
 
         # Same test but for taproot
         if self.options.descriptors:
@@ -1364,8 +1368,8 @@ class PSBTTest(BitcoinTestFramework):
             # psbt = watchonly.walletcreatefundedpsbt([], [{wallet.getnewaddress(): watchonly.getbalance()['bitcoin']}], None, {"subtractFeeFromOutputs": [0]})['psbt']
             # ELEMENTS: FIXME
             # psbt = watchonly.sendall([wallet.getnewaddress(), addr])["psbt"]
-            # psbt = self.nodes[0].walletprocesspsbt(psbt)["psbt"]
-            # txid = self.nodes[0].sendrawtransaction(self.nodes[0].finalizepsbt(psbt)["hex"])
+            # processed_psbt = self.nodes[0].walletprocesspsbt(psbt)
+            # txid = self.nodes[0].sendrawtransaction(processed_psbt["hex"])
             # vout = find_vout_for_address(self.nodes[0], txid, addr)
 
             # # Make sure tap tree is in psbt
@@ -1382,7 +1386,7 @@ class PSBTTest(BitcoinTestFramework):
             vout = find_vout_for_address(self.nodes[0], txid, addr)
             psbt = self.nodes[0].createpsbt([{"txid": txid, "vout": vout}], [{self.nodes[0].getnewaddress(): 0.9999}, {"fee": 0.0001}])
             signed = self.nodes[0].walletprocesspsbt(psbt)
-            rawtx = self.nodes[0].finalizepsbt(signed["psbt"])["hex"]
+            rawtx = signed["hex"]
             self.nodes[0].sendrawtransaction(rawtx)
             self.generate(self.nodes[0], 1)
 

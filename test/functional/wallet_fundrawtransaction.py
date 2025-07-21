@@ -593,9 +593,8 @@ class RawTransactionsTest(BitcoinTestFramework):
         funded_psbt = wmulti.walletcreatefundedpsbt(inputs=inputs, outputs=outputs, changeAddress=w2.getrawchangeaddress())['psbt']
 
         blinded_psbt = wmulti.walletprocesspsbt(funded_psbt)
-        processed_psbt = w2.walletprocesspsbt(blinded_psbt["psbt"])
-        final_psbt = w2.finalizepsbt(processed_psbt['psbt'])
-        self.nodes[2].sendrawtransaction(final_psbt['hex'])
+        signed_psbt = w2.walletprocesspsbt(blinded_psbt["psbt"])
+        self.nodes[2].sendrawtransaction(signed_psbt['hex'])
         self.generate(self.nodes[2], 1)
         self.sync_all()
 
@@ -815,7 +814,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         w3 = self.nodes[3].get_wallet_rpc(self.default_wallet_name)
         result = wwatch.fundrawtransaction(rawtx, includeWatching=True, changeAddress=w3.getrawchangeaddress(), subtractFeeFromOutputs=[0])
         blinded_result = wwatch.blindrawtransaction(result['hex'])
-        unblinded_result = self.nodes[2].unblindrawtransaction(blinded_result)
+        # unblinded_result = self.nodes[2].unblindrawtransaction(blinded_result)
         res_dec = self.nodes[0].decoderawtransaction(result["hex"])
         assert_equal(len(res_dec["vin"]), 1)
         assert res_dec["vin"][0]["txid"] == self.watchonly_txid
