@@ -113,7 +113,7 @@ public:
         assert(fee);
         *fee += bump_fee;
         // Note: assert(effective_value - bump_fee == nValue - fee.value());
-        effective_value = txout.nValue - fee.value();
+        effective_value = value - fee.value(); // ELEMENTS FIXME
     }
 
     CAmount GetFee() const

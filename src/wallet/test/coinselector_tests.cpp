@@ -845,8 +845,8 @@ BOOST_AUTO_TEST_CASE(waste_test)
     const CAmount change_cost{125};
     const CAmount fee_diff{40};
     const CAmount in_amt{3 * COIN};
-    const CAmount target{2 * COIN};
-    const CAmount excess{in_amt - fee * 2 - target};
+    const CAmountMap target{{CAsset(), 2 * COIN}};
+    const CAmount excess{in_amt - fee * 2 - target.at(CAsset())};
 
     // The following tests that the waste is calculated correctly in various scenarios.
     // ComputeAndSetWaste will first determine the size of the change output. We don't really
@@ -915,7 +915,7 @@ BOOST_AUTO_TEST_CASE(waste_test)
 
     {
         // No Waste when fee == long_term_fee, no change, and no excess
-        const CAmount exact_target{in_amt - fee * 2};
+        const CAmountMap exact_target{{CAsset(), in_amt - fee * 2}};
         SelectionResult selection{exact_target, SelectionAlgorithm::MANUAL};
         add_coin(1 * COIN, 1, selection, fee, fee);
         add_coin(2 * COIN, 2, selection, fee, fee);
@@ -935,7 +935,7 @@ BOOST_AUTO_TEST_CASE(waste_test)
 
     {
         // No Waste when (fee - long_term_fee) == (-excess), no change cost
-        const CAmount new_target{in_amt - fee * 2 - fee_diff * 2};
+        const CAmountMap new_target{{CAsset(), in_amt - fee * 2 - fee_diff * 2}};
         SelectionResult selection{new_target, SelectionAlgorithm::MANUAL};
         add_coin(1 * COIN, 1, selection, fee, fee + fee_diff);
         add_coin(2 * COIN, 2, selection, fee, fee + fee_diff);
@@ -945,7 +945,7 @@ BOOST_AUTO_TEST_CASE(waste_test)
 
     {
         // Negative waste when the long term fee is greater than the current fee and the selected value == target
-        const CAmount exact_target{3 * COIN - 2 * fee};
+        const CAmountMap exact_target{{CAsset(), 3 * COIN - 2 * fee}};
         SelectionResult selection{exact_target, SelectionAlgorithm::MANUAL};
         const CAmount target_waste1{-2 * fee_diff}; // = (2 * fee) - (2 * (fee + fee_diff))
         add_coin(1 * COIN, 1, selection, fee, fee + fee_diff);
@@ -974,7 +974,7 @@ BOOST_AUTO_TEST_CASE(bump_fee_test)
     const CAmount change_cost{125};
     const CAmount change_fee{35};
     const CAmount fee_diff{40};
-    const CAmount target{2 * COIN};
+    const CAmountMap target{{CAsset(), 2 * COIN}};
 
     {
         SelectionResult selection{target, SelectionAlgorithm::MANUAL};
@@ -1002,7 +1002,7 @@ BOOST_AUTO_TEST_CASE(bump_fee_test)
         // Bump fees and excess both contribute fully to the waste score,
         // therefore, a bump fee group discount will not change the waste
         // score as long as we do not create change in both instances.
-        CAmount changeless_target = 3 * COIN - 2 * fee - 100;
+        CAmountMap changeless_target{{CAsset(), 3 * COIN - 2 * fee - 100}};
         SelectionResult selection{changeless_target, SelectionAlgorithm::MANUAL};
         add_coin(1 * COIN, 1, selection, /*fee=*/fee, /*long_term_fee=*/fee + fee_diff);
         add_coin(2 * COIN, 2, selection, fee, fee + fee_diff);
