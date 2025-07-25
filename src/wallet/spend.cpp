@@ -293,6 +293,7 @@ util::Result<PreSelectedInputs> FetchSelectedInputs(const CWallet& wallet, const
 {
     PreSelectedInputs result;
     const bool can_grind_r = wallet.CanGrindR();
+    std::map<COutPoint, CAmount> map_of_bump_fees = wallet.chain().CalculateIndividualBumpFees(coin_control.ListSelected(), coin_selection_params.m_effective_feerate);
     for (const COutPoint& outpoint : coin_control.ListSelected()) {
         int input_bytes = -1;
         CTxOut txout;
@@ -344,6 +345,7 @@ util::Result<PreSelectedInputs> FetchSelectedInputs(const CWallet& wallet, const
         if (auto wtx = wallet.GetWalletTx(outpoint.hash)) {
             output = COutput(wallet, *wtx, outpoint, txout, /*depth=*/0, input_bytes, /*spendable=*/true, /*solvable=*/true, /*safe=*/true, /*time=*/0, /*from_me=*/false, coin_selection_params.m_effective_feerate);
         }
+        output.ApplyBumpFee(map_of_bump_fees.at(output.outpoint));
         result.Insert(output, coin_selection_params.m_subtract_fee_outputs);
     }
     return result;
@@ -364,6 +366,7 @@ CoinsResult AvailableCoins(const CWallet& wallet,
     const int max_depth = {coinControl ? coinControl->m_max_depth : DEFAULT_MAX_DEPTH};
     const bool only_safe = {coinControl ? !coinControl->m_include_unsafe_inputs : true};
     const bool can_grind_r = wallet.CanGrindR();
+    std::vector<COutPoint> outpoints;
 
     std::set<uint256> trusted_parents;
     for (const auto& entry : wallet.mapWallet)
@@ -489,6 +492,8 @@ CoinsResult AvailableCoins(const CWallet& wallet,
             result.Add(GetOutputType(type, is_from_p2sh),
                        COutput(wallet, wtx, outpoint, output, nDepth, input_bytes, spendable, solvable, safeTx, wtx.GetTxTime(), tx_from_me, feerate));
 
+            outpoints.push_back(outpoint);
+
             // Checks the sum amount of all UTXO's.
             if (params.min_sum_amount != MAX_MONEY) {
                 if (result.GetTotalAmount()[::policyAsset] >= params.min_sum_amount) { // ELEMENTS: only use minimum sum for policy asset
@@ -499,6 +504,16 @@ CoinsResult AvailableCoins(const CWallet& wallet,
             // Checks the maximum number of UTXO's.
             if (params.max_count > 0 && result.Size() >= params.max_count) {
                 return result;
+            }
+        }
+    }
+
+    if (feerate.has_value()) {
+        std::map<COutPoint, CAmount> map_of_bump_fees = wallet.chain().CalculateIndividualBumpFees(outpoints, feerate.value());
+
+        for (auto& [_, outputs] : result.coins) {
+            for (auto& output : outputs) {
+                output.ApplyBumpFee(map_of_bump_fees.at(output.outpoint));
             }
         }
     }
@@ -692,13 +707,13 @@ FilteredOutputGroups GroupOutputs(const CWallet& wallet,
 // Returns true if the result contains an error and the message is not empty
 static bool HasErrorMsg(const util::Result<SelectionResult>& res) { return !util::ErrorString(res).empty(); }
 
-util::Result<SelectionResult> AttemptSelection(const CAmountMap& mapTargetValue, OutputGroupTypeMap& groups,
+util::Result<SelectionResult> AttemptSelection(interfaces::Chain& chain, const CAmountMap& mapTargetValue, OutputGroupTypeMap& groups,
                                const CoinSelectionParams& coin_selection_params, bool allow_mixed_output_types)
 {
     // Run coin selection on each OutputType and compute the Waste Metric
     std::vector<SelectionResult> results;
     for (auto& [type, group] : groups.groups_by_type) {
-        auto result{ChooseSelectionResult(mapTargetValue, group, coin_selection_params)};
+        auto result{ChooseSelectionResult(chain, mapTargetValue, group, coin_selection_params)};
         // If any specific error message appears here, then something particularly wrong happened.
         if (HasErrorMsg(result)) return result; // So let's return the specific error.
         // Append the favorable result.
@@ -713,14 +728,14 @@ util::Result<SelectionResult> AttemptSelection(const CAmountMap& mapTargetValue,
     // over all available coins, which would allow mixing
     // If TypesCount() <= 1, there is nothing to mix.
     if (allow_mixed_output_types && groups.TypesCount() > 1) {
-        return ChooseSelectionResult(mapTargetValue, groups.all_groups, coin_selection_params);
+        return ChooseSelectionResult(chain, mapTargetValue, groups.all_groups, coin_selection_params);
     }
     // Either mixing is not allowed and we couldn't find a solution from any single OutputType, or mixing was allowed and we still couldn't
     // find a solution using all available coins
     return util::Error();
 };
 
-util::Result<SelectionResult> ChooseSelectionResult(const CAmountMap& mapTargetValue, Groups& groups, const CoinSelectionParams& coin_selection_params)
+util::Result<SelectionResult> ChooseSelectionResult(interfaces::Chain& chain, const CAmountMap& mapTargetValue, Groups& groups, const CoinSelectionParams& coin_selection_params)
 {
     // Vector of results. We will choose the best one based on waste.
     // std::vector<std::tuple<CAmount, std::set<CInputCoin>, CAmountMap>> results;
@@ -779,7 +794,6 @@ util::Result<SelectionResult> ChooseSelectionResult(const CAmountMap& mapTargetV
         // target needlessly large.
         const CAmount srd_target = target_with_change + CHANGE_LOWER;
         if (auto srd_result{SelectCoinsSRD(groups.positive_group, srd_target, coin_selection_params.m_change_fee, coin_selection_params.rng_fast, max_inputs_weight)}) {
-            srd_result->ComputeAndSetWaste(coin_selection_params.min_viable_change, coin_selection_params.m_cost_of_change, coin_selection_params.m_change_fee);
             results.push_back(*srd_result);
         } else append_error(srd_result);
     }
@@ -794,7 +808,6 @@ util::Result<SelectionResult> ChooseSelectionResult(const CAmountMap& mapTargetV
         map_target_with_change[::policyAsset] += coin_selection_params.m_change_fee;
     }
     if (auto knapsack_result{KnapsackSolver(groups.mixed_group, map_target_with_change, coin_selection_params.m_min_change_target, coin_selection_params.rng_fast, max_inputs_weight)}) {
-        knapsack_result->ComputeAndSetWaste(coin_selection_params.min_viable_change, coin_selection_params.m_cost_of_change, coin_selection_params.m_change_fee);
         results.push_back(*knapsack_result);
     } else append_error(knapsack_result);
 
@@ -802,6 +815,27 @@ util::Result<SelectionResult> ChooseSelectionResult(const CAmountMap& mapTargetV
         // No solution found, retrieve the first explicit error (if any).
         // future: add 'severity level' to errors so the worst one can be retrieved instead of the first one.
         return errors.empty() ? util::Error() : errors.front();
+    }
+
+    // If the chosen input set has unconfirmed inputs, check for synergies from overlapping ancestry
+    for (auto& result : results) {
+        std::vector<COutPoint> outpoints;
+        std::set<std::shared_ptr<COutput>> coins = result.GetInputSet();
+        CAmount summed_bump_fees = 0;
+        for (auto& coin : coins) {
+            if (coin->depth > 0) continue; // Bump fees only exist for unconfirmed inputs
+            outpoints.push_back(coin->outpoint);
+            summed_bump_fees += coin->ancestor_bump_fees;
+        }
+        std::optional<CAmount> combined_bump_fee = chain.CalculateCombinedBumpFee(outpoints, coin_selection_params.m_effective_feerate);
+        if (!combined_bump_fee.has_value()) {
+            return util::Error{_("Failed to calculate bump fees, because unconfirmed UTXOs depend on enormous cluster of unconfirmed transactions.")};
+        }
+        CAmount bump_fee_overestimate = summed_bump_fees - combined_bump_fee.value();
+        if (bump_fee_overestimate) {
+            result.SetBumpFeeDiscount(bump_fee_overestimate);
+        }
+        result.ComputeAndSetWaste(coin_selection_params.min_viable_change, coin_selection_params.m_cost_of_change, coin_selection_params.m_change_fee);
     }
 
     // Choose the result with the least waste
@@ -942,7 +976,7 @@ util::Result<SelectionResult> AutomaticCoinSelection(const CWallet& wallet, Coin
         for (const auto& select_filter : ordered_filters) {
             auto it = filtered_groups.find(select_filter.filter);
             if (it == filtered_groups.end()) continue;
-            if (auto res{AttemptSelection(value_to_select, it->second,
+            if (auto res{AttemptSelection(wallet.chain(), value_to_select, it->second,
                                           coin_selection_params, select_filter.allow_mixed_output_types)}) {
                 return res; // result found
             } else {
@@ -1708,7 +1742,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
     }
 
     // Subtract fee from the change output if not subtracting it from recipient outputs
-    CAmount fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+    CAmount fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes) + result.GetTotalBumpFees();
     CAmount current_fee = fee_needed;
 
     if (!coin_selection_params.m_subtract_fee_outputs) {
@@ -1771,7 +1805,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
         // Because we have dropped this change, the tx size and required fee will be different, so let's recalculate those
         tx_sizes = CalculateMaximumSignedTxSize(CTransaction(tx_blinded), &wallet, &coin_control);
         nBytes = tx_sizes.vsize;
-        fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes);
+        fee_needed = coin_selection_params.m_effective_feerate.GetFee(nBytes) + result.GetTotalBumpFees();
     }
 
     // The only time that fee_needed should be less than the amount available for fees (in change_and_fee - change_amount) is when
