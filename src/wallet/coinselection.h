@@ -356,7 +356,7 @@ private:
      * @param[in] use_effective_value Whether to use the input's effective value (when true) or the real value (when false).
      * @return The waste
      */
-    [[nodiscard]] CAmount GetSelectionWaste(CAmount change_cost, CAmount target, bool use_effective_value = true);
+    [[nodiscard]] CAmount GetSelectionWaste(CAmount change_cost, CAmountMap target, bool use_effective_value = true);
 
 public:
     explicit SelectionResult(const CAmountMap target, SelectionAlgorithm algo)
@@ -450,8 +450,6 @@ util::Result<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, c
 util::Result<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, const CAmountMap& mapTargetValue,
                                               CAmount change_target, FastRandomContext& rng, int max_weight);
 
-// Get coin selection waste for a map of asset->amount.
-[[nodiscard]] CAmount GetSelectionWaste(const std::set<COutput>& inputs, CAmount change_cost, const CAmountMap& target_map, bool use_effective_value);
 } // namespace wallet
 
 #endif // BITCOIN_WALLET_COINSELECTION_H

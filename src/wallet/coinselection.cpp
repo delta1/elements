@@ -678,45 +678,14 @@ void OutputGroupTypeMap::Push(const OutputGroup& group, OutputType type, bool in
     }
 }
 
-CAmount SelectionResult::GetSelectionWaste(CAmount change_cost, CAmount target, bool use_effective_value)
+CAmount SelectionResult::GetSelectionWaste(CAmount change_cost, CAmountMap target_map, bool use_effective_value)
 {
     // This function should not be called with empty inputs as that would mean the selection failed
     assert(!m_selected_inputs.empty());
 
-    // Always consider the cost of spending an input now vs in the future.
-    CAmount waste = 0;
-    for (const auto& coin_ptr : m_selected_inputs) {
-        const COutput& coin = *coin_ptr;
-        waste += coin.GetFee() - coin.long_term_fee;
-        // selected_effective_value += use_effective_value ? coin.GetEffectiveValue() : coin.value;
-    }
-    // Bump fee of whole selection may diverge from sum of individual bump fees
-    waste -= bump_fee_group_discount;
-
-    if (change_cost) {
-        // Consider the cost of making change and spending it in the future
-        // If we aren't making change, the caller should've set change_cost to 0
-        assert(change_cost > 0);
-        waste += change_cost;
-    } else {
-        // When we are not making change (change_cost == 0), consider the excess we are throwing away to fees
-        CAmount selected_effective_value = use_effective_value ? GetSelectedEffectiveValue() : GetSelectedValue();
-        assert(selected_effective_value >= target);
-        waste += selected_effective_value - target;
-    }
-
-    return waste;
-}
-
-// ELEMENTS:
-CAmount GetSelectionWaste(const std::set<std::shared_ptr<COutput>>& inputs, CAmount change_cost, const CAmountMap& target_map, bool use_effective_value)
-{
-    // This function should not be called with empty inputs as that would mean the selection failed
-    assert(!inputs.empty());
-
     // create a map of asset -> coins from the inputs set
     std::map<CAsset, std::set<COutput>> coinset_map;
-    for(const auto& coin_ptr : inputs) {
+    for(const auto& coin_ptr : m_selected_inputs) {
         auto asset = coin_ptr->asset;
         auto search = coinset_map.find(asset);
         if (search != coinset_map.end()) {
@@ -727,8 +696,6 @@ CAmount GetSelectionWaste(const std::set<std::shared_ptr<COutput>>& inputs, CAmo
             coinset_map.insert({asset, coinset});
         }
     }
-
-    // Calculate and sum the waste for each asset in the map
 
     // Always consider the cost of spending an input now vs in the future.
     CAmount waste = 0;
