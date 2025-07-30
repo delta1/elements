@@ -33,12 +33,12 @@ class UnconfirmedInputTest(BitcoinTestFramework):
         self.skip_if_no_wallet()
 
     def calc_fee_rate(self, tx):
-        fee = Decimal(-1e8) * tx["fee"]
+        fee = Decimal(-1e8) * tx["fee"]["bitcoin"]
         vsize = tx["decoded"]["vsize"]
         return fee / vsize
 
     def calc_set_fee_rate(self, txs):
-        fees = Decimal(-1e8) * sum([tx["fee"] for tx in txs]) # fee is negative!
+        fees = Decimal(-1e8) * sum([tx["fee"]["bitcoin"] for tx in txs]) # fee is negative!
         vsizes = sum([tx["decoded"]["vsize"] for tx in txs])
         return fees / vsizes
 
@@ -290,7 +290,7 @@ class UnconfirmedInputTest(BitcoinTestFramework):
         self.assert_undershoots_target(parent_tx)
 
         number_outputs = len(parent_tx["decoded"]["vout"])
-        assert_equal(number_outputs, 2)
+        assert_equal(number_outputs, 3)
 
         # we don't care which of the two outputs we spent, they're both ours
         ancestor_aware_txid = wallet.send(outputs=[{self.def_wallet.getnewaddress(): 0.5}], fee_rate=self.target_fee_rate, options={"add_inputs": True, "inputs": [{"txid": parent_txid, "vout": 0}]})["txid"]
