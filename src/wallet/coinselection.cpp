@@ -8,6 +8,7 @@
 #include <common/system.h>
 #include <consensus/amount.h>
 #include <consensus/consensus.h>
+#include <interfaces/chain.h>
 #include <logging.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
@@ -677,43 +678,14 @@ void OutputGroupTypeMap::Push(const OutputGroup& group, OutputType type, bool in
     }
 }
 
-CAmount GetSelectionWaste(const std::set<std::shared_ptr<COutput>>& inputs, CAmount change_cost, CAmount target, bool use_effective_value)
+CAmount SelectionResult::GetSelectionWaste(CAmount change_cost, CAmountMap target_map, bool use_effective_value)
 {
     // This function should not be called with empty inputs as that would mean the selection failed
-    assert(!inputs.empty());
-
-    // Always consider the cost of spending an input now vs in the future.
-    CAmount waste = 0;
-    CAmount selected_effective_value = 0;
-    for (const auto& coin_ptr : inputs) {
-        const COutput& coin = *coin_ptr;
-        waste += coin.GetFee() - coin.long_term_fee;
-        selected_effective_value += use_effective_value ? coin.GetEffectiveValue() : coin.value;
-    }
-
-    if (change_cost) {
-        // Consider the cost of making change and spending it in the future
-        // If we aren't making change, the caller should've set change_cost to 0
-        assert(change_cost > 0);
-        waste += change_cost;
-    } else {
-        // When we are not making change (change_cost == 0), consider the excess we are throwing away to fees
-        assert(selected_effective_value >= target);
-        waste += selected_effective_value - target;
-    }
-
-    return waste;
-}
-
-// ELEMENTS:
-CAmount GetSelectionWaste(const std::set<std::shared_ptr<COutput>>& inputs, CAmount change_cost, const CAmountMap& target_map, bool use_effective_value)
-{
-    // This function should not be called with empty inputs as that would mean the selection failed
-    assert(!inputs.empty());
+    assert(!m_selected_inputs.empty());
 
     // create a map of asset -> coins from the inputs set
     std::map<CAsset, std::set<COutput>> coinset_map;
-    for(const auto& coin_ptr : inputs) {
+    for(const auto& coin_ptr : m_selected_inputs) {
         auto asset = coin_ptr->asset;
         auto search = coinset_map.find(asset);
         if (search != coinset_map.end()) {
@@ -756,6 +728,8 @@ CAmount GetSelectionWaste(const std::set<std::shared_ptr<COutput>>& inputs, CAmo
         }
     }
 
+    waste -= bump_fee_group_discount;
+
     return waste;
 }
 
@@ -770,14 +744,22 @@ CAmount GenerateChangeTarget(const CAmount payment_value, const CAmount change_f
     }
 }
 
+void SelectionResult::SetBumpFeeDiscount(const CAmount discount)
+{
+    // Overlapping ancestry can only lower the fees, not increase them
+    assert (discount >= 0);
+    bump_fee_group_discount = discount;
+}
+
+
 void SelectionResult::ComputeAndSetWaste(const CAmount min_viable_change, const CAmount change_cost, const CAmount change_fee)
 {
     const CAmountMap change = GetChange(min_viable_change, change_fee);
 
     if (change > CAmountMap{}) {
-        m_waste = GetSelectionWaste(m_selected_inputs, change_cost, m_target, m_use_effective);
+        m_waste = GetSelectionWaste(change_cost, m_target, m_use_effective);
     } else {
-        m_waste = GetSelectionWaste(m_selected_inputs, 0, m_target, m_use_effective);
+        m_waste = GetSelectionWaste(0, m_target, m_use_effective);
     }
 }
 
@@ -793,7 +775,12 @@ CAmountMap SelectionResult::GetSelectedValue() const
 
 CAmountMap SelectionResult::GetSelectedEffectiveValue() const
 {
-    return std::accumulate(m_selected_inputs.cbegin(), m_selected_inputs.cend(), CAmountMap{}, [](CAmountMap sum, const auto& coin) { return sum + CAmountMap{{coin->asset, coin->GetEffectiveValue()}}; });
+    return std::accumulate(m_selected_inputs.cbegin(), m_selected_inputs.cend(), CAmountMap{}, [](CAmountMap sum, const auto& coin) { return sum + CAmountMap{{coin->asset, coin->GetEffectiveValue()}}; }) + CAmountMap{{::policyAsset, bump_fee_group_discount}}; // ELEMENTS FIXME
+}
+
+CAmount SelectionResult::GetTotalBumpFees() const
+{
+    return std::accumulate(m_selected_inputs.cbegin(), m_selected_inputs.cend(), CAmount{0}, [](CAmount sum, const auto& coin) { return sum + coin->ancestor_bump_fees; }) - bump_fee_group_discount;
 }
 
 void SelectionResult::Clear()

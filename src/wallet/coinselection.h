@@ -20,11 +20,6 @@
 
 #include <optional>
 
-
-// class CWallet;
-// class CWalletTx;
-// class uint256;
-
 namespace wallet {
 //! lower bound for randomly-chosen target change amount
 static constexpr CAmount CHANGE_LOWER{50000};
@@ -37,10 +32,10 @@ class CWalletTx;
 /** A UTXO under consideration for use in funding a new transaction. */
 struct COutput {
 private:
-    /** The output's value minus fees required to spend it.*/
+    /** The output's value minus fees required to spend it and bump its unconfirmed ancestors to the target feerate. */
     std::optional<CAmount> effective_value;
 
-    /** The fee required to spend this output at the transaction's target feerate. */
+    /** The fee required to spend this output at the transaction's target feerate and to bump its unconfirmed ancestors to the target feerate. */
     std::optional<CAmount> fee;
 
 public:
@@ -82,8 +77,10 @@ public:
     /** The fee required to spend this output at the consolidation feerate. */
     CAmount long_term_fee{0};
 
-    // ELEMENTS: input-specific details which are not needed in bitcoin
+    /** The fee necessary to bump this UTXO's ancestor transactions to the target feerate */
+    CAmount ancestor_bump_fees{0};
 
+    // ELEMENTS: input-specific details which are not needed in bitcoin
     /** ELEMENTS: the value of the output */
     CAmount value;
     /** ELEMENTS: the asset of the output */
@@ -106,6 +103,16 @@ public:
     bool operator<(const COutput& rhs) const
     {
         return outpoint < rhs.outpoint;
+    }
+
+    void ApplyBumpFee(CAmount bump_fee)
+    {
+        assert(bump_fee >= 0);
+        ancestor_bump_fees = bump_fee;
+        assert(fee);
+        *fee += bump_fee;
+        // Note: assert(effective_value - bump_fee == nValue - fee.value());
+        effective_value = value - fee.value(); // ELEMENTS FIXME
     }
 
     CAmount GetFee() const
@@ -279,26 +286,6 @@ struct OutputGroupTypeMap
 
 typedef std::map<CoinEligibilityFilter, OutputGroupTypeMap> FilteredOutputGroups;
 
-/** Compute the waste for this result given the cost of change
- * and the opportunity cost of spending these inputs now vs in the future.
- * If change exists, waste = change_cost + inputs * (effective_feerate - long_term_feerate)
- * If no change, waste = excess + inputs * (effective_feerate - long_term_feerate)
- * where excess = selected_effective_value - target
- * change_cost = effective_feerate * change_output_size + long_term_feerate * change_spend_size
- *
- * Note this function is separate from SelectionResult for the tests.
- *
- * @param[in] inputs The selected inputs
- * @param[in] change_cost The cost of creating change and spending it in the future.
- *                        Only used if there is change, in which case it must be positive.
- *                        Must be 0 if there is no change.
- * @param[in] target The amount targeted by the coin selection algorithm.
- * @param[in] use_effective_value Whether to use the input's effective value (when true) or the real value (when false).
- * @return The waste
- */
-[[nodiscard]] CAmount GetSelectionWaste(const std::set<std::shared_ptr<COutput>>& inputs, CAmount change_cost, CAmount target, bool use_effective_value = true);
-
-
 /** Choose a random change target for each transaction to make it harder to fingerprint the Core
  * wallet based on the change output values of transactions it creates.
  * Change target covers at least change fees and adds a random value on top of it.
@@ -340,6 +327,8 @@ private:
     std::optional<CAmount> m_waste;
     /** Total weight of the selected inputs */
     int m_weight{0};
+    /** How much individual inputs overestimated the bump fees for the shared ancestry */
+    CAmount bump_fee_group_discount{0};
 
     template<typename T>
     void InsertInputs(const T& inputs)
@@ -352,6 +341,22 @@ private:
         }
     }
 
+    /** Compute the waste for this result given the cost of change
+     * and the opportunity cost of spending these inputs now vs in the future.
+     * If change exists, waste = change_cost + inputs * (effective_feerate - long_term_feerate)
+     * If no change, waste = excess + inputs * (effective_feerate - long_term_feerate)
+     * where excess = selected_effective_value - target
+     * change_cost = effective_feerate * change_output_size + long_term_feerate * change_spend_size
+     *
+     * @param[in] change_cost The cost of creating change and spending it in the future.
+     *                        Only used if there is change, in which case it must be positive.
+     *                        Must be 0 if there is no change.
+     * @param[in] target The amount targeted by the coin selection algorithm.
+     * @param[in] use_effective_value Whether to use the input's effective value (when true) or the real value (when false).
+     * @return The waste
+     */
+    [[nodiscard]] CAmount GetSelectionWaste(CAmount change_cost, CAmountMap target, bool use_effective_value = true);
+
 public:
     explicit SelectionResult(const CAmountMap target, SelectionAlgorithm algo)
         : m_target(target), m_algo(algo) {}
@@ -363,12 +368,17 @@ public:
 
     [[nodiscard]] CAmountMap GetSelectedEffectiveValue() const;
 
+    [[nodiscard]] CAmount GetTotalBumpFees() const;
+
     void Clear();
 
     void AddInput(const OutputGroup& group);
     void AddInputs(const std::set<std::shared_ptr<COutput>>& inputs, bool subtract_fee_outputs);
     // ELEMENTS
     void AddInput(const SelectionResult& result);
+
+    /** How much individual inputs overestimated the bump fees for shared ancestries */
+    void SetBumpFeeDiscount(const CAmount discount);
 
     /** Calculates and stores the waste for this selection via GetSelectionWaste */
     void ComputeAndSetWaste(const CAmount min_viable_change, const CAmount change_cost, const CAmount change_fee);
@@ -440,7 +450,7 @@ util::Result<SelectionResult> KnapsackSolver(std::vector<OutputGroup>& groups, c
                                               CAmount change_target, FastRandomContext& rng, int max_weight);
 
 // Get coin selection waste for a map of asset->amount.
-[[nodiscard]] CAmount GetSelectionWaste(const std::set<COutput>& inputs, CAmount change_cost, const CAmountMap& target_map, bool use_effective_value);
+// [[nodiscard]] CAmount GetSelectionWaste(const std::set<COutput>& inputs, CAmount change_cost, const CAmountMap& target_map, bool use_effective_value);
 } // namespace wallet
 
 #endif // BITCOIN_WALLET_COINSELECTION_H

@@ -83,7 +83,7 @@ static void CoinSelection(benchmark::Bench& bench)
     bench.run([&] {
         CAmountMap mapValue;
         mapValue[::policyAsset] = 1003 * COIN;
-        auto result = AttemptSelection(mapValue, group, coin_selection_params, /*allow_mixed_output_types=*/true);
+        auto result = AttemptSelection(wallet.chain(), mapValue, group, coin_selection_params, /*allow_mixed_output_types=*/true);
         assert(result);
         assert(result->GetSelectedValue() == mapValue);
         assert(result->GetInputSet().size() == 2);
