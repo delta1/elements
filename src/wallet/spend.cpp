@@ -575,8 +575,15 @@ std::map<CTxDestination, std::vector<COutput>> ListCoins(const CWallet& wallet) 
             continue;
         }
 
-        if ((coin.spendable || (wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) && coin.solvable)) &&
-            ExtractDestination(FindNonChangeParentOutput(wallet, coin.outpoint).scriptPubKey, address)) {
+        if ((coin.spendable || (wallet.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) && coin.solvable))) {
+            if (!ExtractDestination(FindNonChangeParentOutput(wallet, coin.outpoint).scriptPubKey, address)) {
+                // For backwards compatibility, we convert P2PK output scripts into PKHash destinations
+                if (auto pk_dest = std::get_if<PubKeyDestination>(&address)) {
+                    address = PKHash(pk_dest->GetPubKey());
+                } else {
+                    continue;
+                }
+            }
             result[address].emplace_back(coin);
         }
     }
@@ -1402,7 +1409,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
     bool may_need_blinded_dummy = !!blind_details;
     for (const auto& recipient : vecSend)
     {
-        CTxOut txout(recipient.asset, recipient.nAmount, recipient.scriptPubKey);
+        CTxOut txout(recipient.asset, recipient.nAmount, GetScriptForDestination(recipient.dest));
         txout.nNonce.vchCommitment = std::vector<unsigned char>(recipient.confidentiality_key.begin(), recipient.confidentiality_key.end());
 
         // Include the fee cost for outputs.
@@ -2098,7 +2105,9 @@ bool FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& nFeeRet,
             continue;
         }
 
-        CRecipient recipient = {txOut.scriptPubKey, txOut.nValue.GetAmount(), txOut.nAsset.GetAsset(), CPubKey(txOut.nNonce.vchCommitment), setSubtractFeeFromOutputs.count(idx) == 1};
+        CTxDestination dest;
+        ExtractDestination(txOut.scriptPubKey, dest);
+        CRecipient recipient = {dest, txOut.nValue.GetAmount(), txOut.nAsset.GetAsset(), CPubKey(txOut.nNonce.vchCommitment), setSubtractFeeFromOutputs.count(idx) == 1};
         vecSend.push_back(recipient);
     }
 

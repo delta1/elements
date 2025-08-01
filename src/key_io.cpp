@@ -123,26 +123,28 @@ public:
 
     std::string operator()(const WitnessUnknown& id) const
     {
-        if (id.version < 1 || id.version > 16 || id.length < 2 || id.length > 40) {
+        const std::vector<unsigned char>& program = id.GetWitnessProgram();
+        if (id.GetWitnessVersion() < 1 || id.GetWitnessVersion() > 16 || program.size() < 2 || program.size() > 40) {
             return {};
         }
-        std::vector<unsigned char> data = {(unsigned char)id.version};
-        data.reserve(1 + (id.length * 8 + 4) / 5);
+        std::vector<unsigned char> data = {(unsigned char)id.GetWitnessVersion()};
+        data.reserve(1 + (program.size() * 8 + 4) / 5);
         if (id.blinding_pubkey.IsFullyValid()) {
             std::vector<unsigned char> bytes(id.blinding_pubkey.begin(), id.blinding_pubkey.end());
-            bytes.insert(bytes.end(), id.program, id.program + id.length);
+            bytes.insert(bytes.end(), program.begin(), program.end());
             ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, bytes.begin(), bytes.end());
             const std::string& hrp = for_parent ? m_params.ParentBlech32HRP() : m_params.Blech32HRP();
             return blech32::Encode(blech32::Encoding::BLECH32M, hrp, data);
         }
 
-        ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, id.program, id.program + id.length);
+        ConvertBits<8, 5, true>([&](unsigned char c) { data.push_back(c); }, program.begin(), program.end());
         const std::string& hrp = for_parent ? m_params.ParentBech32HRP() : m_params.Bech32HRP();
         return bech32::Encode(bech32::Encoding::BECH32M, hrp, data);
     }
 
     std::string operator()(const CNoDestination& no) const { return {}; }
-    std::string operator()(const NullData& null) const { return "null"; }
+    std::string operator()(const PubKeyDestination& pk) const { return {}; }
+    std::string operator()(const NullData& null) const { return "null"; } // ELEMENTS
 };
 
 CTxDestination DecodeDestination(const std::string& str, const CChainParams& params, const bool for_parent, std::string& error_str, std::vector<int>* error_locations)
@@ -287,11 +289,7 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
                 return CNoDestination();
             }
 
-            WitnessUnknown unk;
-            unk.version = version;
-            std::copy(data.begin(), data.end(), unk.program);
-            unk.length = data.size();
-            return unk;
+            return WitnessUnknown{version, data};
         } else {
             error_str = strprintf("Invalid padding in Bech32 data section");
             return CNoDestination();
@@ -371,11 +369,8 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
                 return CNoDestination();
             }
 
-            WitnessUnknown unk;
-            unk.version = version;
-            std::copy(data.begin(), data.end(), unk.program);
+            WitnessUnknown unk{version, {data.begin(), data.end()}};
             unk.blinding_pubkey = blinding_pubkey;
-            unk.length = data.size();
             return unk;
         }
     }

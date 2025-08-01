@@ -53,7 +53,6 @@ static void ParseRecipients(const UniValue& address_amounts, const UniValue& add
         }
         destinations.insert(dest);
 
-        CScript script_pub_key = GetScriptForDestination(dest);
         CAmount amount = AmountFromValue(address_amounts[i++], asset == Params().GetConsensus().pegged_asset);
 
         bool subtract_fee = false;
@@ -64,7 +63,7 @@ static void ParseRecipients(const UniValue& address_amounts, const UniValue& add
             }
         }
 
-        CRecipient recipient = {script_pub_key, amount, asset, GetDestinationBlindingKey(dest), subtract_fee};
+        CRecipient recipient = {dest, amount, asset, GetDestinationBlindingKey(dest), subtract_fee};
         recipients.push_back(recipient);
     }
 }

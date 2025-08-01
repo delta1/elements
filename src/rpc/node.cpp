@@ -601,6 +601,7 @@ public:
     }
 
     void operator()(const NullData& id) const {}
+    void operator()(const PubKeyDestination& id) const {}
 };
 
 

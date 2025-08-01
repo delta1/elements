@@ -93,6 +93,7 @@ public:
     void operator()(WitnessV1Taproot &dest) const { dest.blinding_pubkey = blinding_pubkey; }
     void operator()(WitnessUnknown &dest) const { dest.blinding_pubkey = blinding_pubkey; }
     void operator()(NullData &dest) const { }
+    void operator()(PubKeyDestination &dest) const { }
 };
 
 #endif // BITCOIN_BLIND_H

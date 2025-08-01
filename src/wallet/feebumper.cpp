@@ -258,12 +258,12 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
             return Result::WALLET_ERROR;
         }
 
+        CTxDestination dest;
+        ExtractDestination(output.scriptPubKey, dest);
         if (reduce_output.has_value() ? reduce_output.value() == i : is_change) {
-            CTxDestination change_dest;
-            ExtractDestination(output.scriptPubKey, change_dest);
-            destinations[output.nAsset.GetAsset()] = change_dest;
+            destinations[output.nAsset.GetAsset()] = dest;
         } else if (!is_change && !is_fee) {
-            wallet::CRecipient recipient = {output.scriptPubKey, output.nValue.GetAmount(), output.nAsset.GetAsset(), CPubKey(output.nNonce.vchCommitment), false};
+            wallet::CRecipient recipient = {dest, output.nValue.GetAmount(), output.nAsset.GetAsset(), CPubKey(output.nNonce.vchCommitment), false};
             recipients.push_back(recipient);
         }
         new_outputs_value += output.nValue.GetAmount();
@@ -293,7 +293,7 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
         // If the output differs from the original tx output (because the user customized it) a new change output will be created.
         const auto script = GetScriptForDestination(destination);
         const CPubKey blinding_pubkey = wallet.GetBlindingKey(&script).GetPubKey();
-        recipients.emplace_back(CRecipient{script, new_outputs_value, asset, blinding_pubkey, /*fSubtractFeeFromAmount=*/true});
+        recipients.emplace_back(CRecipient{destination, new_outputs_value, asset, blinding_pubkey, /*fSubtractFeeFromAmount=*/true});
         new_coin_control.destChange.clear();
     }
 

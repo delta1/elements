@@ -445,6 +445,7 @@ public:
     explicit DescribeWalletAddressVisitor(const SigningProvider* _provider) : provider(_provider) {}
 
     UniValue operator()(const CNoDestination& dest) const { return UniValue(UniValue::VOBJ); }
+    UniValue operator()(const PubKeyDestination& dest) const { return UniValue(UniValue::VOBJ); }
 
     UniValue operator()(const PKHash& pkhash) const
     {
@@ -517,6 +518,7 @@ public:
     explicit DescribeWalletBlindAddressVisitor(const CWallet& _wallet, isminetype mine_in) : wallet(_wallet), mine(mine_in) {}
 
     UniValue operator()(const CNoDestination& dest) const { return UniValue(UniValue::VOBJ); }
+    UniValue operator()(const PubKeyDestination& dest) const { return UniValue(UniValue::VOBJ); }
 
     UniValue operator()(const PKHash& pkhash) const
     {
