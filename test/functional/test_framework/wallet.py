@@ -117,11 +117,12 @@ class MiniWallet:
         """
         tx.vout.append(CTxOut(nValue=0, scriptPubKey=CScript([OP_RETURN, b'a'])))
         dummy_vbytes = (target_weight - tx.get_weight() + 3) // 4
+        dummy_vbytes += 2 # ELEMENTS
         tx.vout[-1].scriptPubKey = CScript([OP_RETURN, b'a' * dummy_vbytes])
         # Lower bound should always be off by at most 3
         assert_greater_than_or_equal(tx.get_weight(), target_weight)
         # Higher bound should always be off by at most 3 + 12 weight (for encoding the length)
-        assert_greater_than_or_equal(target_weight + 15, tx.get_weight())
+        assert_greater_than_or_equal(target_weight + 15 + 7, tx.get_weight()) # ELEMENTS
 
     def get_balance(self):
         return sum(u['value'] for u in self._utxos)
