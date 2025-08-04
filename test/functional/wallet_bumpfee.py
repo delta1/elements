@@ -182,12 +182,12 @@ class BumpFeeTest(BitcoinTestFramework):
         assert_raises_rpc_error(-8, "Invalid parameter, duplicate key: data",
                 rbf_node.bumpfee, rbfid, {"outputs": [{"data": "deadbeef"}, {"data": "deadbeef"}]})
 
-        self.log.info("Test reduce_output option")
-        assert_raises_rpc_error(-1, "JSON integer out of range", rbf_node.bumpfee, rbfid, {"reduce_output": -1})
-        assert_raises_rpc_error(-8, "Change position is out of range", rbf_node.bumpfee, rbfid, {"reduce_output": 3}) # ELEMENTS
+        self.log.info("Test original_change_index option")
+        assert_raises_rpc_error(-1, "JSON integer out of range", rbf_node.bumpfee, rbfid, {"original_change_index": -1})
+        assert_raises_rpc_error(-8, "Change position is out of range", rbf_node.bumpfee, rbfid, {"original_change_index": 3}) # ELEMENTS
 
-        self.log.info("Test outputs and reduce_output cannot both be provided")
-        assert_raises_rpc_error(-8, "Cannot specify both new outputs to use and an output index to reduce", rbf_node.bumpfee, rbfid, {"reduce_output": 2, "outputs": [{dest_address: 0.1}]})
+        self.log.info("Test outputs and original_change_index cannot both be provided")
+        assert_raises_rpc_error(-8, "The options 'outputs' and 'original_change_index' are incompatible. You can only either specify a new set of outputs, or designate a change output to be recycled.", rbf_node.bumpfee, rbfid, {"original_change_index": 2, "outputs": [{dest_address: 0.1}]})
 
         self.clear_mempool()
 
@@ -241,7 +241,7 @@ class BumpFeeTest(BitcoinTestFramework):
         node.unloadwallet("back_to_yourself")
 
     def test_provided_change_pos(self, rbf_node):
-        self.log.info("Test the reduce_output option")
+        self.log.info("Test the original_change_index option")
 
         change_addr = rbf_node.getnewaddress()
         dest_addr = rbf_node.getnewaddress()
@@ -258,7 +258,7 @@ class BumpFeeTest(BitcoinTestFramework):
         change_pos = find_vout_for_address(rbf_node, txid, change_addr)
         change_value = tx["decoded"]["vout"][change_pos]["value"]
 
-        bumped = rbf_node.bumpfee(txid, {"reduce_output": change_pos})
+        bumped = rbf_node.bumpfee(txid, {"original_change_index": change_pos})
         new_txid = bumped["txid"]
 
         new_tx = rbf_node.gettransaction(txid=new_txid, verbose=True)
@@ -293,19 +293,19 @@ class BumpFeeTest(BitcoinTestFramework):
         txid = wallet.sendrawtransaction(signed["hex"])
         tx = {"txid": txid}
 
-        # Reduce the only output with a crazy high feerate, should fail as the output would be dust
+        # Set the only output with a crazy high feerate as change, should fail as the output would be dust
         # ELEMENTS FIXME
-        # assert_raises_rpc_error(-4, "The transaction amount is too small to pay the fee", wallet.bumpfee, txid=tx["txid"], options={"fee_rate": 1100, "reduce_output": 0})
+        # assert_raises_rpc_error(-4, "The transaction amount is too small to pay the fee", wallet.bumpfee, txid=tx["txid"], options={"fee_rate": 1100, "original_change_index": 0})
 
-        # Reduce the only output successfully
-        bumped = wallet.bumpfee(txid=tx["txid"], options={"fee_rate": 11, "reduce_output": 0}) # ELEMENTS
+        # Specify single output as change successfully
+        bumped = wallet.bumpfee(txid=tx["txid"], options={"fee_rate": 11, "original_change_index": 0}) # ELEMENTS
         bumped_tx = wallet.gettransaction(txid=bumped["txid"], verbose=True)
         assert_equal(len(bumped_tx["decoded"]["vout"]), 2) # ELEMENTS
         assert_equal(len(bumped_tx["decoded"]["vin"]), 1)
         assert_equal(bumped_tx["decoded"]["vout"][0]["value"] + bumped["fee"], amount)
         assert_fee_amount(bumped["fee"], bumped_tx["decoded"]["vsize"], Decimal(11) / Decimal(1e8) * 1000) # ELEMENTS
 
-        # Bumping without reducing adds a new input and output
+        # Bumping without specifying change adds a new input and output
         bumped = wallet.bumpfee(txid=bumped["txid"], options={"fee_rate": 20})
         bumped_tx = wallet.gettransaction(txid=bumped["txid"], verbose=True)
         assert_equal(len(bumped_tx["decoded"]["vout"]), 3) # ELEMENTS
