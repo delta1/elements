@@ -53,7 +53,7 @@ class Chainstate;
 class CTxMemPool;
 class ChainstateManager;
 struct ChainTxData;
-struct DisconnectedBlockTransactions;
+class DisconnectedBlockTransactions;
 struct PrecomputedTransactionData;
 struct LockPoints;
 struct AssumeutxoData;
