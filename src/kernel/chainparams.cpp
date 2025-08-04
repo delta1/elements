@@ -300,7 +300,6 @@ public:
         vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_main), std::end(chainparams_seed_main));
 
         fDefaultConsistencyChecks = false;
-        m_is_test_chain = false;
         m_is_mockable_chain = false;
 
         checkpointData = {
@@ -436,7 +435,6 @@ public:
         vFixedSeeds = std::vector<uint8_t>(std::begin(chainparams_seed_test), std::end(chainparams_seed_test));
 
         fDefaultConsistencyChecks = false;
-        m_is_test_chain = true;
         m_is_mockable_chain = false;
 
         checkpointData = {
@@ -586,7 +584,6 @@ public:
         blech32_hrp = bech32_hrp;
 
         fDefaultConsistencyChecks = false;
-        m_is_test_chain = true;
         m_is_mockable_chain = false;
     }
 };
@@ -708,7 +705,6 @@ public:
         vSeeds.emplace_back("dummySeed.invalid.");
 
         fDefaultConsistencyChecks = true;
-        m_is_test_chain = true;
         m_is_mockable_chain = true;
 
         checkpointData = {
@@ -863,7 +859,6 @@ protected:
 
         nPruneAfterHeight = (uint64_t)args.GetIntArg("-npruneafterheight", nPruneAfterHeight);
         fDefaultConsistencyChecks = args.GetBoolArg("-fdefaultconsistencychecks", fDefaultConsistencyChecks);
-        m_is_test_chain = args.GetBoolArg("-fmineblocksondemand", m_is_test_chain);
 
         bech32_hrp = args.GetArg("-bech32_hrp", bech32_hrp);
         blech32_hrp = args.GetArg("-blech32_hrp", blech32_hrp);
@@ -1128,7 +1123,6 @@ public:
 
         nPruneAfterHeight = 1000;
         fDefaultConsistencyChecks = false;
-        m_is_test_chain = false;
 
         m_assumed_blockchain_size = 3;
         m_assumed_chain_state_size = 1;
@@ -1357,7 +1351,6 @@ public:
 
         m_chain_type = ChainTypeMetaFrom(ChainType::LIQUID1TEST);
 
-        m_is_test_chain = true;
         m_is_mockable_chain = false;
 
         vSeeds.clear();  // No network seeds
@@ -1464,7 +1457,6 @@ public:
 
         nPruneAfterHeight = (uint64_t)args.GetIntArg("-npruneafterheight", nPruneAfterHeight);
         fDefaultConsistencyChecks = args.GetBoolArg("-fdefaultconsistencychecks", fDefaultConsistencyChecks);
-        m_is_test_chain = args.GetBoolArg("-fmineblocksondemand", m_is_test_chain);
 
         bech32_hrp = args.GetArg("-bech32_hrp", bech32_hrp);
         blech32_hrp = args.GetArg("-blech32_hrp", blech32_hrp);

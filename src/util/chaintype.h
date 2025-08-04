@@ -33,4 +33,8 @@ struct ChainTypeMeta {
 ChainTypeMeta ChainTypeMetaFrom(std::string chain_name);
 ChainTypeMeta ChainTypeMetaFrom(ChainType chain_type);
 
+inline bool IsRegTest(ChainTypeMeta chain_type) {
+    return chain_type.chain_name.find("regtest") != std::string::npos;
+};
+
 #endif // BITCOIN_UTIL_CHAINTYPE_H

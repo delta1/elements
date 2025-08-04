@@ -353,7 +353,7 @@ static RPCHelpMan addconnection()
         },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
-    if (Params().GetChainTypeMeta().chain_name.find("regtest") == std::string::npos) {
+    if (!IsRegTest(Params().GetChainTypeMeta())) {
         throw std::runtime_error("addconnection is for regression testing (chain should have \"regtest\" in the name) only.");
     }
 
