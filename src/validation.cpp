@@ -2832,7 +2832,11 @@ bool Chainstate::FlushStateToDisk(
                 LOG_TIME_MILLIS_WITH_CATEGORY("write block and undo data to disk", BCLog::BENCH);
 
                 // First make sure all block and undo data is flushed to disk.
-                m_blockman.FlushBlockFile();
+                // TODO: Handle return error, or add detailed comment why it is
+                // safe to not return an error upon failure.
+                if (!m_blockman.FlushBlockFile()) {
+                    LogPrintLevel(BCLog::VALIDATION, BCLog::Level::Warning, "%s: Failed to flush block file.\n", __func__);
+                }
             }
 
             std::set<CBlockIndex*> setTrimmableBlockIndex(m_blockman.m_dirty_blockindex);
