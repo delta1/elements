@@ -131,7 +131,6 @@ enum
     // primary actions
     SER_NETWORK         = (1 << 0),
     SER_DISK            = (1 << 1),
-    SER_GETHASH         = (1 << 2),
 };
 
 /**
@@ -1124,9 +1123,6 @@ public:
     }
 
     int GetVersion() const { return nVersion; }
-
-    // ELEMENTS: Required for CProof size computation to deal with SER_GETHASH
-    int GetType() const { return 0; }
 };
 
 template<typename I>

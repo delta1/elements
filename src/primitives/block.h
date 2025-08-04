@@ -29,15 +29,13 @@ public:
     template <typename Stream>
     inline void Serialize(Stream& s) const {
         s << *(CScriptBase*)(&challenge);
-        if (!(s.GetType() & SER_GETHASH))
-            s << *(CScriptBase*)(&solution);
+        s << *(CScriptBase*)(&solution);
     }
 
     template <typename Stream>
     inline void Unserialize(Stream& s) const {
         s >> *(CScriptBase*)(&challenge);
-        if (!(s.GetType() & SER_GETHASH))
-            s >> *(CScriptBase*)(&solution);
+        s >> *(CScriptBase*)(&solution);
     }
 
     void SetNull()
@@ -258,7 +256,7 @@ public:
             s << block_height;
             s << m_dynafed_params;
             // We do not serialize witness for hashes, or weight calculation
-            if (!(s.GetType() & SER_GETHASH) && fAllowWitness) {
+            if (fAllowWitness) {
                 s << m_signblock_witness.stack;
             }
         } else {
@@ -296,7 +294,7 @@ public:
             s >> block_height;
             s >> m_dynafed_params;
             // We do not serialize witness for hashes, or weight calculation
-            if (!(s.GetType() & SER_GETHASH) && fAllowWitness) {
+            if (fAllowWitness) {
                 s >> m_signblock_witness.stack;
             }
         } else {

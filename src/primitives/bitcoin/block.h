@@ -124,8 +124,7 @@ struct CBlockLocator
     SERIALIZE_METHODS(CBlockLocator, obj)
     {
         int nVersion = s.GetVersion();
-        if (!(s.GetType() & SER_GETHASH))
-            READWRITE(nVersion);
+        READWRITE(nVersion);
         READWRITE(obj.vHave);
     }
 

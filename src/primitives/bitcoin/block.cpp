@@ -15,7 +15,7 @@ namespace Bitcoin {
 
 uint256 CBlockHeader::GetHash() const
 {
-    return SerializeHash(*this);
+    return (CHashWriter{PROTOCOL_VERSION} << *this).GetHash();
 }
 
 std::string CBlock::ToString() const
