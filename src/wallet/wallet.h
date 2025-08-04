@@ -1192,6 +1192,7 @@ bool FillInputToWeight(CMutableTransaction& mtx, size_t nIn, int64_t target_weig
 
 struct MigrationResult {
     std::string wallet_name;
+    std::shared_ptr<CWallet> wallet;
     std::shared_ptr<CWallet> watchonly_wallet;
     std::shared_ptr<CWallet> solvables_wallet;
     fs::path backup_path;
