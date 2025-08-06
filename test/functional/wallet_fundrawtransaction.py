@@ -620,7 +620,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         wallet.encryptwallet("test")
 
         if self.options.descriptors:
-            wallet.walletpassphrase('test', 10)
+            wallet.walletpassphrase("test", 999000)
             wallet.importdescriptors([{
                 'desc': descsum_create('wpkh(tprv8ZgxMBicQKsPdYeeZbPSKd2KYLmeVKtcFA7kqCxDvDR13MQ6us8HopUR2wLcS2ZKPhLyKsqpDL2FtL73LMHcgoCL7DXsciA8eX8nbjCR2eG/0h/*h)'),
                 'timestamp': 'now',
@@ -658,7 +658,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         assert_raises_rpc_error(-4, "Transaction needs a change address, but we can't generate it.", wallet.fundrawtransaction, rawtx)
 
         # Refill the keypool.
-        wallet.walletpassphrase("test", 100)
+        wallet.walletpassphrase("test", 999000)
         wallet.keypoolrefill(8) #need to refill the keypool to get an internal change address
         wallet.walletlock()
 
@@ -674,7 +674,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         assert fundedTx["changepos"] != -1
 
         # Now we need to unlock.
-        wallet.walletpassphrase("test", 600)
+        wallet.walletpassphrase("test", 999000)
         signedTx = wallet.signrawtransactionwithwallet(blindedTx['hex'])
         wallet.sendrawtransaction(signedTx['hex'])
         self.generate(self.nodes[1], 1)
