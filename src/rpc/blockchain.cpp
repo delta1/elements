@@ -1656,7 +1656,7 @@ static RPCHelpMan getchaintips()
         } else if (block->nStatus & BLOCK_FAILED_MASK) {
             // This block or one of its ancestors is invalid.
             status = "invalid";
-        } else if (!block->HaveTxsDownloaded()) {
+        } else if (!block->HaveNumChainTxs()) {
             // This block cannot be connected because full block data for it or one of its parents is missing.
             status = "headers-only";
         } else if (block->IsValid(BLOCK_VALID_SCRIPTS)) {
@@ -2974,7 +2974,7 @@ static RPCHelpMan loadtxoutset()
         "Load the serialized UTXO set from disk.\n"
         "Once this snapshot is loaded, its contents will be "
         "deserialized into a second chainstate data structure, which is then used to sync to "
-        "the network's tip under a security model very much like `assumevalid`. "
+        "the network's tip. "
         "Meanwhile, the original chainstate will complete the initial block download process in "
         "the background, eventually validating up to the block that the snapshot is based upon.\n\n"
 
@@ -3026,7 +3026,7 @@ static RPCHelpMan loadtxoutset()
     LogPrintf("[snapshot] waiting to see blockheader %s in headers chain before snapshot activation\n",
         base_blockhash.ToString());
 
-    ChainstateManager& chainman = *node.chainman;
+    ChainstateManager& chainman = EnsureChainman(node);
 
     while (max_secs_to_wait_for_headers > 0) {
         snapshot_start_block = WITH_LOCK(::cs_main,
@@ -3098,8 +3098,7 @@ return RPCHelpMan{
     LOCK(cs_main);
     UniValue obj(UniValue::VOBJ);
 
-    NodeContext& node = EnsureAnyNodeContext(request.context);
-    ChainstateManager& chainman = *node.chainman;
+    ChainstateManager& chainman = EnsureAnyChainman(request.context);
 
     auto make_chain_data = [&](const Chainstate& cs, bool validated) EXCLUSIVE_LOCKS_REQUIRED(::cs_main) {
         AssertLockHeld(::cs_main);

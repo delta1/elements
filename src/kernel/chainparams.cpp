@@ -731,7 +731,7 @@ public:
             {
                 .height = 110,
                 .hash_serialized = AssumeutxoHash{uint256S("0x09a3e443dbf48f3b95207c9ce529062d9764395232c482aa7d3a0bf274d282d9")}, // ELEMENTS FIXME
-                .nChainTx = 110,
+                .nChainTx = 111,
                 .blockhash = uint256S("0x696e92821f65549c7ee134edceeeeaaa4105647a3c4fd9f298c0aec0ab50425c")
             },
             {
