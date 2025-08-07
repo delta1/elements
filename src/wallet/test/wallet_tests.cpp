@@ -50,12 +50,8 @@ BOOST_FIXTURE_TEST_SUITE(wallet_tests, WalletTestingSetup)
 static CMutableTransaction TestSimpleSpend(const CTransaction& from, uint32_t index, const CKey& key, const CScript& pubkey)
 {
     CMutableTransaction mtx;
-    CTxOut txOutNew = CTxOut();
-    txOutNew.nValue = from.vout[index].nValue.GetAmount() - DEFAULT_TRANSACTION_MAXFEE;
-    txOutNew.nAsset = from.vout[index].nAsset;
-    txOutNew.scriptPubKey = pubkey;
-    mtx.vout.push_back(txOutNew);
-    mtx.vin.push_back({CTxIn{from.GetHash(), index}});
+    mtx.vout.emplace_back(from.vout[index].nAsset, from.vout[index].nValue.GetAmount() - DEFAULT_TRANSACTION_MAXFEE, pubkey);
+    mtx.vin.emplace_back(from.GetHash(), index);
     FillableSigningProvider keystore;
     keystore.AddKey(key);
     std::map<COutPoint, Coin> coins;
@@ -953,8 +949,8 @@ BOOST_FIXTURE_TEST_CASE(wallet_sync_tx_invalid_state_test, TestingSetup)
     const auto op_dest{*Assert(wallet.GetNewDestination(OutputType::BECH32M, ""))};
 
     CMutableTransaction mtx;
-    mtx.vout.push_back({CAsset(), COIN, GetScriptForDestination(op_dest)});
-    mtx.vin.push_back(CTxIn(g_insecure_rand_ctx.rand256(), 0));
+    mtx.vout.emplace_back(CAsset(), COIN, GetScriptForDestination(op_dest));
+    mtx.vin.emplace_back(g_insecure_rand_ctx.rand256(), 0);
     const auto& tx_id_to_spend = wallet.AddToWallet(MakeTransactionRef(mtx), TxStateInMempool{})->GetHash();
 
     {
@@ -969,7 +965,7 @@ BOOST_FIXTURE_TEST_CASE(wallet_sync_tx_invalid_state_test, TestingSetup)
     // 2) Verify that the available balance of this new tx and the old one is updated (prev tx is marked dirty)
 
     mtx.vin.clear();
-    mtx.vin.push_back(CTxIn(tx_id_to_spend, 0));
+    mtx.vin.emplace_back(tx_id_to_spend, 0);
     wallet.transactionAddedToMempool(MakeTransactionRef(mtx));
     const uint256& good_tx_id = mtx.GetHash();
 
@@ -990,7 +986,7 @@ BOOST_FIXTURE_TEST_CASE(wallet_sync_tx_invalid_state_test, TestingSetup)
     //    verify that we are not moving forward if the wallet cannot store it
     GetMockableDatabase(wallet).m_pass = false;
     mtx.vin.clear();
-    mtx.vin.push_back(CTxIn(good_tx_id, 0));
+    mtx.vin.emplace_back(good_tx_id, 0);
     BOOST_CHECK_EXCEPTION(wallet.transactionAddedToMempool(MakeTransactionRef(mtx)),
                           std::runtime_error,
                           HasReason("DB error adding transaction to wallet, write failed"));

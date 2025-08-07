@@ -28,7 +28,7 @@ static void AssembleBlock(benchmark::Bench& bench)
     std::array<CTransactionRef, NUM_BLOCKS - COINBASE_MATURITY + 1> txs;
     for (size_t b{0}; b < NUM_BLOCKS; ++b) {
         CMutableTransaction tx;
-        tx.vin.push_back(CTxIn{MineBlock(test_setup->m_node, P2WSH_OP_TRUE)});
+        tx.vin.emplace_back(MineBlock(test_setup->m_node, P2WSH_OP_TRUE));
         tx.witness.vtxinwit.resize(1);
         tx.witness.vtxinwit.back().scriptWitness = witness;
         tx.vout.emplace_back(CAsset(), 1337, P2WSH_OP_TRUE);
