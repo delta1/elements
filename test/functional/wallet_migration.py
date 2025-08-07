@@ -5,7 +5,6 @@
 """Test Migrating a wallet from legacy to descriptor."""
 
 from decimal import Decimal
-import os
 import random
 import shutil
 from test_framework.address import (
@@ -502,7 +501,7 @@ class WalletMigrationTest(BitcoinTestFramework):
         self.log.info("Test migration of the wallet named as the empty string")
         # ELEMENTS: unload and remove the default wallet first
         self.nodes[0].unloadwallet("")
-        os.unlink(os.path.join(self.nodes[0].datadir, "elementsregtest", "wallets", "wallet.dat"))
+        (self.nodes[0].wallets_path / "wallet.dat").unlink()
         wallet = self.create_legacy_wallet("")
 
         wallet.migratewallet()
