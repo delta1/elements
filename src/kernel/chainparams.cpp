@@ -440,7 +440,7 @@ public:
         m_assumeutxo_data = {
             {
                 .height = 2'500'000,
-                .hash_serialized = AssumeutxoHash{uint256S("0x2a8fdefef3bf75fa00540ccaaaba4b5281bea94229327bdb0f7416ef1e7a645c")},
+                .hash_serialized = AssumeutxoHash{uint256S("0xf841584909f68e47897952345234e37fcd9128cd818f41ee6c3ca68db8071be7")},
                 .nChainTx = 66484552,
                 .blockhash = uint256S("0x0000000000000093bcb68c03a9a168ae252572d348a2eaeba2cdf9231d73206f")
             }
@@ -576,7 +576,7 @@ public:
         m_assumeutxo_data = {
             {
                 .height = 160'000,
-                .hash_serialized = AssumeutxoHash{uint256S("0x5225141cb62dee63ab3be95f9b03d60801f264010b1816d4bd00618b2736e7be")},
+                .hash_serialized = AssumeutxoHash{uint256S("0xfe0a44309b74d6b5883d246cb419c6221bcccf0b308c9b59b7d70783dbdf928a")},
                 .nChainTx = 2289496,
                 .blockhash = uint256S("0x0000003ca3c99aff040f2563c2ad8f8ec88bd0fd6b8f0895cfaf1ef90353a62c")
             }
@@ -724,14 +724,14 @@ public:
         m_assumeutxo_data = {
             {
                 .height = 110,
-                .hash_serialized = AssumeutxoHash{uint256S("0x09a3e443dbf48f3b95207c9ce529062d9764395232c482aa7d3a0bf274d282d9")}, // ELEMENTS FIXME
+                .hash_serialized = AssumeutxoHash{uint256S("0x6657b736d4fe4db0cbc796789e812d5dba7f5c143764b1b6905612f1830609d1")},
                 .nChainTx = 111,
                 .blockhash = uint256S("0x696e92821f65549c7ee134edceeeeaaa4105647a3c4fd9f298c0aec0ab50425c")
             },
             {
                 // For use by test/functional/feature_assumeutxo.py
                 .height = 299,
-                .hash_serialized = AssumeutxoHash{uint256S("0x9ac9abb55c7781e9551c5b9f0e20f611011174334258196e892bd1d522547436")}, // ELEMENTS FIXME
+                .hash_serialized = AssumeutxoHash{uint256S("0xa27626bcf55269c98b4210ba1f2f87c80dcc817d03bb5fd147c065e0ea1be772")},
                 .nChainTx = 300,
                 .blockhash = uint256S("0x510bcf6d70a2310368f50965276ba69bcafd54294dd8ddfd3337cb1dd63e4b16")
             },

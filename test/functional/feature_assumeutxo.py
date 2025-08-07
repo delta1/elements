@@ -94,8 +94,10 @@ class AssumeutxoTest(BitcoinTestFramework):
 
         self.log.info("  - snapshot file with alternated UTXO data")
         cases = [
-            [b"\xff" * 32, 0, "25b5b2c0d941a2b28d047661730b1f35b8b78184f9fa388508978cb453dd713f"], # wrong outpoint hash
-            [(1).to_bytes(4, "little"), 32, "430d49a568158e9b33870da803d722dda6e950f0c1604439fb8be44daad6bf7f"], # wrong outpoint index
+            [b"\xff" * 32, 0, "23b0cbf584abbccc376b4f3af3e7012fcb2abb8d7a8d31bd0b41ff52597acbd5"], # wrong outpoint hash
+            [(1).to_bytes(4, "little"), 32, "0f778bbe6a1bb23cf4dcb71c4f03597cde1a9226dcfd46b92d76c83c3b68f28f"], # wrong outpoint index
+            [b"\x81", 36, "024c9a955e32485c59edc99f1a6b0ec76f3d0211c3fcfec8e48420d952c69eaf"], # wrong coin code VARINT((coinbase ? 1 : 0) | (height << 1))
+            [b"\x83", 36, "d5dedd16822fd5498d8c5bf62a1c1d29a180d7810ce59601e96f723bc34270ad"], # another wrong coin code
         ]
 
         for content, offset, wrong_hash in cases:
@@ -103,7 +105,7 @@ class AssumeutxoTest(BitcoinTestFramework):
                 f.write(valid_snapshot_contents[:(32 + 8 + offset)])
                 f.write(content)
                 f.write(valid_snapshot_contents[(32 + 8 + offset + len(content)):])
-            expected_error(log_msg=f"[snapshot] bad snapshot content hash: expected 9ac9abb55c7781e9551c5b9f0e20f611011174334258196e892bd1d522547436, got {wrong_hash}")
+            expected_error(log_msg=f"[snapshot] bad snapshot content hash: expected a27626bcf55269c98b4210ba1f2f87c80dcc817d03bb5fd147c065e0ea1be772, got {wrong_hash}")
 
     def run_test(self):
         """
@@ -147,10 +149,11 @@ class AssumeutxoTest(BitcoinTestFramework):
 
         self.log.info(f"Creating a UTXO snapshot at height {SNAPSHOT_BASE_HEIGHT}")
         dump_output = n0.dumptxoutset('utxos.dat')
+        print(dump_output)
 
         assert_equal(
             dump_output['txoutset_hash'],
-            '9ac9abb55c7781e9551c5b9f0e20f611011174334258196e892bd1d522547436') # ELEMENTS
+            'a27626bcf55269c98b4210ba1f2f87c80dcc817d03bb5fd147c065e0ea1be772')
         assert_equal(dump_output['nchaintx'], 300)
         assert_equal(n0.getblockchaininfo()["blocks"], SNAPSHOT_BASE_HEIGHT)
 
