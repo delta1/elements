@@ -339,6 +339,16 @@ public:
     const uint256& GetWitnessHash() const { return tx->GetWitnessHash(); }
     bool IsCoinBase() const { return tx->IsCoinBase(); }
 
+private:
+    // Disable copying of CWalletTx objects to prevent bugs where instances get
+    // copied in and out of the mapWallet map, and fields are updated in the
+    // wrong copy.
+    CWalletTx(const CWalletTx&) = default;
+    CWalletTx& operator=(const CWalletTx&) = default;
+public:
+    // Instead have an explicit copy function
+    void CopyFrom(const CWalletTx&);
+
     // ELEMENTS
 private:
     /* Computes, stores and returns the unblinded info, or retrieves if already computed previously.
@@ -389,12 +399,6 @@ public:
     CAsset GetOutputAsset(const CWallet& wallet, unsigned int output_index) const;
 
     // END ELEMENTS
-
-    // Disable copying of CWalletTx objects to prevent bugs where instances get
-    // copied in and out of the mapWallet map, and fields are updated in the
-    // wrong copy.
-    CWalletTx(CWalletTx const &) = delete;
-    void operator=(CWalletTx const &x) = delete;
 };
 
 struct WalletTxOrderComparator {
