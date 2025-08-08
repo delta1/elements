@@ -23,7 +23,6 @@
 #include <util/translation.h>
 #include <policy/policy.h>
 #include <assetsdir.h>
-#include <core_io.h>
 
 #include <tuple>
 

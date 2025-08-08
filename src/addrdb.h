@@ -12,7 +12,6 @@
 
 #include <memory>
 #include <vector>
-#include <memory>
 
 class ArgsManager;
 class AddrMan;

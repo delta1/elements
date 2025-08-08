@@ -10,7 +10,6 @@
 #include <consensus/validation.h>
 #include <interfaces/chain.h>
 #include <issuance.h> // ELEMENTS: for GenerateAssetEntropy and others
-#include <algorithm>
 #include <numeric>
 #include <policy/policy.h>
 #include <rpc/util.h>  // for GetDestinationBlindingKey and IsBlindDestination

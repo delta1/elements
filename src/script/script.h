@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <string>
-#include <uint256.h>
 #include <vector>
 
 // ELEMENTS: global elements mode declaration, initialized in script.cpp
