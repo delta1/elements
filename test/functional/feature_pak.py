@@ -250,6 +250,8 @@ class PAKTest (BitcoinTestFramework):
         for tx_id in [wpkh_txid, sh_wpkh_txid]:
             assert_greater_than(self.nodes[1].gettransaction(tx_id)["confirmations"], 0)
 
+        self.sync_blocks()
+
         self.log.info("Test that pak-less pegouts are rejected")
 
         # Last test of a pak-less peg-out failing to get into mempool/block
@@ -258,7 +260,10 @@ class PAKTest (BitcoinTestFramework):
 
         # node 0 will now create a pegout, will fail to enter mempool of node 1 or 2
         # since it's pak-less
-        nopak_pegout_txid = self.nodes[0].sendtomainchain("n3NkSZqoPMCQN5FENxUBw4qVATbytH6FDK", 1)
+        pegout_address = "n3NkSZqoPMCQN5FENxUBw4qVATbytH6FDK"
+        nopak_pegout_txid = self.nodes[0].sendtomainchain(pegout_address, 1)
+        pegout_tx = self.nodes[0].gettransaction(nopak_pegout_txid,True,True)
+        assert_equal(pegout_tx["decoded"]["vout"][[d["value"] for d in pegout_tx["decoded"]["vout"]].index(1)]["scriptPubKey"]["pegout_address"],pegout_address)
         raw_pakless_pegout = self.nodes[0].gettransaction(nopak_pegout_txid)["hex"]
         sleep(1) # hacky fix for flaky timing where getrawmempool doesn't have nopak_pegout_txid yet
         assert nopak_pegout_txid in self.nodes[0].getrawmempool()
