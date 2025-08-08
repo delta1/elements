@@ -82,7 +82,7 @@ BOOST_FIXTURE_TEST_CASE(BasicOutputTypesTestBech32m, AvailableCoinsTestingSetup)
 
     // Bech32m
     dest = wallet->GetNewDestination(OutputType::BECH32M, "");
-    BOOST_ASSERT(dest);
+    BOOST_CHECK(dest);
     AddTx(CRecipient{{GetScriptForDestination(*dest)}, 1 * COIN, CAsset(), CPubKey(), /*fSubtractFeeFromAmount=*/true});
     available_coins = AvailableCoins(*wallet);
     BOOST_CHECK_EQUAL(available_coins.coins[OutputType::BECH32M].size(), 2U);
@@ -99,7 +99,7 @@ BOOST_FIXTURE_TEST_CASE(BasicOutputTypesTestBech32, AvailableCoinsTestingSetup)
 
     // Bech32
     dest = wallet->GetNewDestination(OutputType::BECH32, "");
-    BOOST_ASSERT(dest);
+    BOOST_CHECK(dest);
     AddTx(CRecipient{{GetScriptForDestination(*dest)}, 2 * COIN, CAsset(), CPubKey(), /*fSubtractFeeFromAmount=*/true});
     available_coins = AvailableCoins(*wallet);
     BOOST_CHECK_EQUAL(available_coins.coins[OutputType::BECH32].size(), 2U);
@@ -133,7 +133,7 @@ BOOST_FIXTURE_TEST_CASE(BasicOutputTypesTestLegacy, AvailableCoinsTestingSetup)
 
     // Legacy (P2PKH)
     dest = wallet->GetNewDestination(OutputType::LEGACY, "");
-    BOOST_ASSERT(dest);
+    BOOST_CHECK(dest);
     AddTx(CRecipient{{GetScriptForDestination(*dest)}, 4 * COIN, CAsset(), CPubKey(), /*fSubtractFeeFromAmount=*/true});
     available_coins = AvailableCoins(*wallet);
     BOOST_CHECK_EQUAL(available_coins.coins[OutputType::LEGACY].size(), 2U);
