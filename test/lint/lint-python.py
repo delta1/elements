@@ -22,7 +22,7 @@ os.environ["MYPY_CACHE_DIR"] = str(cache_dir)
 DEPS = ['flake8', 'lief', 'mypy', 'pyzmq']
 
 # All .py files, except those in src/ (to exclude subtrees there)
-FLAKE_FILES_ARGS = ['git', 'ls-files', '*.py', ':!:src/*.py', ':!:test/bitcoin_functional/*.py'] # ELEMENTS: exclude this dir
+FLAKE_FILES_ARGS = ['git', 'ls-files', '*.py', ':!:src/*.py', ':!:test/bitcoin_functional/*.py', ':!:test/bitcoin_functional/functional/*.py'] # ELEMENTS: exclude this dir
 
 # Only .py files in test/functional and contrib/devtools have type annotations
 # enforced.

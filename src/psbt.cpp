@@ -614,7 +614,7 @@ bool PSBTOutput::Merge(const PSBTOutput& output)
         if (!m_asset_surjection_proof.empty() && !output.m_asset_surjection_proof.empty() && (m_asset_surjection_proof != output.m_asset_surjection_proof)) return false;
     }
 
-    // If output IsFullyBlinded and this is not, copy the blinding data and remove the explicits
+    // If output IsFullyBlinded and this is not, copy the blinding data
     if (IsBlinded() && !IsFullyBlinded() && output.IsFullyBlinded()) {
         m_value_commitment = output.m_value_commitment;
         m_asset_commitment = output.m_asset_commitment;
