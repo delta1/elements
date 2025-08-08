@@ -5,7 +5,6 @@
 """Test the importprunedfunds and removeprunedfunds RPCs."""
 from decimal import Decimal
 
-from test_framework.address import key_to_p2wpkh
 from test_framework.blocktools import COINBASE_MATURITY
 from test_framework import liquid_addr
 from test_framework.key import ECKey

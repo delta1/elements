@@ -605,7 +605,7 @@ class CTxOutValue:
         return r
 
     def setToAmount(self, amount):
-        if type(amount) == int:
+        if isinstance(amount, int):
             commit = [1]*9
             for i in range(8): #8 bytes
                 commit[8-i] = ((amount >> (i*8)) & 0xff)
@@ -663,7 +663,7 @@ class CTxOut():
 
     def __init__(self, nValue=CTxOutValue(), scriptPubKey=b'', nAsset=CTxOutAsset(BITCOIN_ASSET_OUT), nNonce=CTxOutNonce()):
         self.nAsset = nAsset
-        if type(nValue) is int:
+        if isinstance(nValue, int):
             self.nValue = CTxOutValue(nValue)
         else:
             self.nValue = nValue
