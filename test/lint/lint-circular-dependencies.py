@@ -36,7 +36,6 @@ EXPECTED_CIRCULAR_DEPENDENCIES = (
     "chain -> validation -> deploymentstatus -> chain",
     "chain -> validation -> pow -> chain",
     "chain -> validation -> primitives/pak -> chain",
-    "chain -> validation -> txdb -> chain",
     "chain -> validation -> validationinterface -> chain",
     "chain -> validation -> versionbits -> chain",
     "confidential_validation -> pegins -> validation -> confidential_validation",
@@ -51,6 +50,10 @@ EXPECTED_CIRCULAR_DEPENDENCIES = (
     "core_io -> script/sign -> pegins -> validation -> signet -> core_io",
     # ELEMENTS: will be fixed by blinding cleanup
     "blindpsbt -> psbt -> blindpsbt",
+    # ELEMENTS FIXME: introduced during 25-26 merges
+    "chain -> validation -> kernel/chain -> chain",
+    "chain -> node/context -> node/kernel_notifications -> chain",
+    "interfaces/chain.h -> validation -> kernel/chain -> interfaces/chain.h",
 )
 
 CODE_DIR = "src"
