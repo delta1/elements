@@ -155,7 +155,7 @@ class SendallTest(BitcoinTestFramework):
 
         assert_raises_rpc_error(
                 -8,
-                "Invalid parameter, duplicated address: {}".format(self.remainder_target),
+                "Invalid parameter, duplicated address and asset: {}".format(self.remainder_target),
                 self.wallet.sendall,
                 [self.remainder_target, self.remainder_target]
             )

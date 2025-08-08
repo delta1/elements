@@ -177,7 +177,7 @@ class BumpFeeTest(BitcoinTestFramework):
         self.log.info("Test invalid outputs values")
         assert_raises_rpc_error(-8, "Invalid parameter, output argument cannot be an empty array",
                 rbf_node.bumpfee, rbfid, {"outputs": []})
-        assert_raises_rpc_error(-8, "Invalid parameter, duplicated address: " + dest_address,
+        assert_raises_rpc_error(-8, "Invalid parameter, duplicated address and asset: " + dest_address,
                 rbf_node.bumpfee, rbfid, {"outputs": [{dest_address: 0.1}, {dest_address: 0.2}]})
         assert_raises_rpc_error(-8, "Invalid parameter, duplicate key: data",
                 rbf_node.bumpfee, rbfid, {"outputs": [{"data": "deadbeef"}, {"data": "deadbeef"}]})
