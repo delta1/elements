@@ -18,13 +18,6 @@ class WalletTest(BitcoinTestFramework):
     def add_options(self, parser):
         self.add_wallet_options(parser)
 
-    def setup_network(self, split=False):
-        self.setup_nodes()
-        self.connect_nodes(0, 1)
-        self.connect_nodes(1, 2)
-        self.connect_nodes(0, 2)
-        self.sync_all()
-
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
 

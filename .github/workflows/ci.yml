@@ -92,6 +92,12 @@ jobs:
       - name: Install Homebrew packages
         run: brew install automake libtool pkg-config gnu-getopt ccache boost libevent miniupnpc libnatpmp zeromq qt@5 qrencode
 
+      # ELEMENTS
+      - name: Override boost@1.85
+        run: |
+          brew install boost@1.85
+          brew link --force --overwrite boost@1.85
+
       - name: Set Ccache directory
         run: echo "CCACHE_DIR=${RUNNER_TEMP}/ccache_dir" >> "$GITHUB_ENV"
 

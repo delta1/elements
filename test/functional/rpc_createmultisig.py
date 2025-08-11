@@ -54,8 +54,8 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
             self.check_addmultisigaddress_errors()
 
         self.log.info('Generating blocks ...')
-        # ELEMENTS: send directly to node0, rather than to self.wallet
-        self.generate(node0, 149)
+        # ELEMENTS: generate some funds to self.wallet descriptor
+        self.generatetodescriptor(node0, 149, self.wallet.get_descriptor())
         self.wallet.rescan_utxos()
 
         self.moved = 0
@@ -192,11 +192,10 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
             assert maddw == madd
             assert mredeemw == mredeem
 
-        # ELEMENTS: since we sent directly to node0 at the start of test, use node0 to send the funds,
-        #           instead of self.wallet
+        # ELEMENTS: get the spk from validateaddress instead
         # spk = address_to_scriptpubkey(madd)
-        # txid = self.wallet.send_to(from_node=self.nodes[0], scriptPubKey=spk, amount=1300)["txid"]
-        txid = node0.sendtoaddress(madd, 40)
+        spk = bytes.fromhex(self.nodes[0].validateaddress(madd)['scriptPubKey'])
+        txid = self.wallet.send_to(from_node=self.nodes[0], scriptPubKey=spk, amount=1300)["txid"]
         tx = node0.getrawtransaction(txid, True)
         vout = [v["n"] for v in tx["vout"] if madd == v["scriptPubKey"].get("address")]
         assert len(vout) == 1
@@ -247,8 +246,8 @@ class RpcCreateMultiSigTest(BitcoinTestFramework):
         txinfo = node0.getrawtransaction(tx, True, blk)
         self.log.info("n/m=%d/%d %s size=%d vsize=%d weight=%d" % (self.nsigs, self.nkeys, self.output_type, txinfo["size"], txinfo["vsize"], txinfo["weight"]))
 
-        wmulti.unloadwallet()
-
+        if 'wmulti' in node1.listwallets():
+            wmulti.unloadwallet()
 
 if __name__ == '__main__':
     RpcCreateMultiSigTest().main()
