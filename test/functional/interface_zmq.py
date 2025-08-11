@@ -338,7 +338,8 @@ class ZMQTest (BitcoinTestFramework):
 
         self.log.info("Testing RBF notification")
         # Replace it to test eviction/addition notification
-        payment_tx['tx'].vout[0].nValue -= 1000
+        payment_tx['tx'].vout[0].nValue.setToAmount(payment_tx['tx'].vout[0].nValue.getAmount() - 1000)
+        payment_tx['tx'].vout[1].nValue.setToAmount(payment_tx['tx'].vout[1].nValue.getAmount() + 1000)
         rbf_txid = self.nodes[1].sendrawtransaction(payment_tx['tx'].serialize().hex())
         self.sync_all()
         assert_equal((payment_txid, "R", seq_num), seq.receive_sequence())
@@ -400,7 +401,8 @@ class ZMQTest (BitcoinTestFramework):
         for _ in range(5):
             more_tx.append(self.wallet.send_self_transfer(from_node=self.nodes[0]))
 
-        orig_tx['tx'].vout[0].nValue -= 1000
+        orig_tx['tx'].vout[0].nValue.setToAmount(orig_tx['tx'].vout[0].nValue.getAmount() - 1000)
+        orig_tx['tx'].vout[1].nValue.setToAmount(orig_tx['tx'].vout[1].nValue.getAmount() + 1000)
         bump_txid = self.nodes[0].sendrawtransaction(orig_tx['tx'].serialize().hex())
         # Mine the pre-bump tx
         txs_to_add = [orig_tx['hex']] + [tx['hex'] for tx in more_tx]
@@ -484,7 +486,8 @@ class ZMQTest (BitcoinTestFramework):
         # We have node 0 do all these to avoid p2p races with RBF announcements
         for _ in range(num_txs):
             txs.append(self.wallet.send_self_transfer(from_node=self.nodes[0]))
-        txs[-1]['tx'].vout[0].nValue -= 1000
+        txs[-1]['tx'].vout[0].nValue.setToAmount(txs[-1]['tx'].vout[0].nValue.getAmount() - 1000)
+        txs[-1]['tx'].vout[1].nValue.setToAmount(txs[-1]['tx'].vout[1].nValue.getAmount() + 1000)
         self.nodes[0].sendrawtransaction(txs[-1]['tx'].serialize().hex())
         self.sync_all()
         self.generatetoaddress(self.nodes[0], 1, ADDRESS_BCRT1_UNSPENDABLE)
