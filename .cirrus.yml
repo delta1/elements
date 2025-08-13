@@ -9,6 +9,9 @@ env:  # Global defaults
   CCACHE_DIR: "/tmp/ccache_dir"
   CCACHE_NOHASHDIR: "1"  # Debug info might contain a stale path if the build dir changes, but this is fine
 
+cirrus_ephemeral_worker_template_env: &CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
+  DANGER_RUN_CI_ON_HOST: "1"  # Containers will be discarded after the run, so there is no risk that the ci scripts modify the system
+
 # https://cirrus-ci.org/guide/persistent-workers/
 #
 # It is possible to select a specific persistent worker by label. Refer to the
@@ -96,65 +99,65 @@ task:
 task:
   name: 'tidy'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: medium
+  container:
+    image: ubuntu:24.04
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_native_tidy.sh"
 
 task:
   name: 'ARM, unit tests, no functional tests'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: arm64  # Use arm64 worker to sidestep qemu and avoid a slow CI: https://github.com/bitcoin/bitcoin/pull/28087#issuecomment-1649399453
+  container:
+    image: docker.io/debian:bookworm
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_arm.sh"
 
 task:
   name: 'Win64, unit tests, no gui tests, no boost::process, no functional tests'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: small
+  container:
+    image: docker.io/amd64/ubuntu:22.04
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_win64.sh"
 
 task:
   name: '32-bit Rocky8, dash, gui'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: small
+  container:
+    image: quay.io/rockylinux/rockylinux:8
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_i686_centos.sh"
 
 task:
   name: 'previous releases, qt5 dev package and depends packages, DEBUG'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: small
+  container:
+    image: docker.io/debian:bullseye
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_native_qt5.sh"
 
 task:
   name: 'TSan, depends, gui'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: medium
+  container:
+    image: docker.io/ubuntu:24.04
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_native_tsan.sh"
 
 task:
   name: 'MSan, depends'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: small
+  container:
+    image: ubuntu:24.04
   timeout_in: 300m  # Use longer timeout for the *rare* case where a full build (llvm + msan + depends + ...) needs to be done.
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_native_msan.sh"
 
 task:
@@ -164,44 +167,44 @@ task:
     # so any settings will need to be written to the settings env file:
     - sed -i "s|\${CIRRUS_CI}|true|g" ./ci/test/00_setup_env_native_asan.sh
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: mantic  # Must use this specific worker (needed for USDT functional tests)
+  container:
+    image: docker.io/ubuntu:24.04
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_native_asan.sh"
 
 task:
   name: 'fuzzer,address,undefined,integer, no depends'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: medium
+  container:
+    image: ubuntu:24.04
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_native_fuzz.sh"
 
 task:
   name: 'multiprocess, i686, DEBUG'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: medium
+  container:
+    image: docker.io/amd64/ubuntu:22.04
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_i686_multiprocess.sh"
 
 task:
   name: 'no wallet, libbitcoinkernel'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: small
+  container:
+    image: docker.io/debian:bullseye
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_native_nowallet_libbitcoinkernel.sh"
 
 task:
   name: 'macOS-cross 11.0, gui, no tests'
   << : *GLOBAL_TASK_TEMPLATE
-  persistent_worker:
-    labels:
-      type: small
+  container:
+    image: docker.io/ubuntu:22.04
   env:
+    << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_mac.sh"
