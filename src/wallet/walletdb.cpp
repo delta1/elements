@@ -779,7 +779,7 @@ static DBErrors LoadLegacyWalletRecords(CWallet* pwallet, DatabaseBatch& batch, 
         uint256 blinding_key;
         value >> blinding_key;
         if (!pwallet->LoadSpecificBlindingKey(CScriptID(scriptid), blinding_key)) {
-            pwallet->WalletLogPrintf("Error reading wallet database: LoadSpecificBlindingKey failed");
+            pwallet->WalletLogPrintf("Error reading wallet database: LoadSpecificBlindingKey failed\n");
             return DBErrors::LOAD_FAIL;
         }
         return DBErrors::LOAD_OK;

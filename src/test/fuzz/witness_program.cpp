@@ -74,11 +74,11 @@ FUZZ_TARGET(witness_program)
                     return;
                 }
                 if (i == nIn) {
-                    spent_outs.push_back(CTxOut{asset, value, scriptPubKey});
+                    spent_outs.emplace_back(asset, value, scriptPubKey);
                 } else {
                     CScript script;
                     ds >> script;
-                    spent_outs.push_back(CTxOut{asset, value, script});
+                    spent_outs.emplace_back(asset, value, script);
                 }
                 tx.witness.vtxinwit[i].scriptWitness.stack.push_back(program);
             }
@@ -119,11 +119,11 @@ FUZZ_TARGET(witness_program)
                     return;
                 }
                 if (i == nIn) {
-                    spent_outs.push_back(CTxOut{asset, value, scriptPubKey});
+                    spent_outs.emplace_back(asset, value, scriptPubKey);
                 } else {
                     CScript script;
                     ds >> script;
-                    spent_outs.push_back(CTxOut{asset, value, script});
+                    spent_outs.emplace_back(asset, value, script);
                 }
                 tx.witness.vtxinwit[i].scriptWitness.stack.push_back(program);
                 tx.witness.vtxinwit[i].scriptWitness.stack.push_back(control);

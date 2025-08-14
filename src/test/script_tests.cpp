@@ -1898,7 +1898,7 @@ BOOST_AUTO_TEST_CASE(bip341_keypath_test_vectors)
         txdata.Init(tx, std::vector<CTxOut>{utxos}, true);
         // ELEMENTS: add a txout witness for each output
         for (u_int i = 0; i < (u_int)utxos.size(); i++) {
-            tx.witness.vtxoutwit.emplace_back(CTxOutWitness());
+            tx.witness.vtxoutwit.emplace_back();
         }
 
         BOOST_CHECK(txdata.m_bip341_taproot_ready);

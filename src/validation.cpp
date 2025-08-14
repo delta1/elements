@@ -2541,7 +2541,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     CCheckQueueControl<CCheck> control(fScriptChecks && parallel_script_checks ? &scriptcheckqueue : nullptr);
     std::vector<PrecomputedTransactionData> txsdata;
     for (unsigned int i = 0; i < block.vtx.size(); i++){
-        txsdata.push_back(PrecomputedTransactionData(m_chainman.GetParams().HashGenesisBlock()));
+        txsdata.emplace_back(m_chainman.GetParams().HashGenesisBlock());
     }
 
     std::vector<int> prevheights;
@@ -4056,7 +4056,7 @@ std::vector<unsigned char> ChainstateManager::GenerateCoinbaseCommitment(CBlock&
         //
         // Is No-op in Bitcoin
         CMutableTransaction tx0(*block.vtx[0]);
-        tx0.vout.push_back(CTxOut());
+        tx0.vout.emplace_back();
         block.vtx[0] = MakeTransactionRef(std::move(tx0));
         // END
         uint256 witnessroot = BlockWitnessMerkleRoot(block, nullptr);

@@ -2607,8 +2607,8 @@ static RPCHelpMan rawblindrawtransaction()
                 throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Transaction contains invalid peg-in input: %s", err));
             }
             CTxOut pegin_output = GetPeginOutputFromWitness(tx.witness.vtxinwit[nIn].m_pegin_witness);
-            input_blinds.push_back(uint256());
-            input_asset_blinds.push_back(uint256());
+            input_blinds.emplace_back();
+            input_asset_blinds.emplace_back();
             input_assets.push_back(pegin_output.nAsset.GetAsset());
             input_amounts.push_back(pegin_output.nValue.GetAmount());
             continue;
@@ -2633,7 +2633,7 @@ static RPCHelpMan rawblindrawtransaction()
 
         input_blinds.push_back(uint256S(blind));
         input_asset_blinds.push_back(uint256S(assetblind));
-        input_assets.push_back(CAsset(uint256S(asset)));
+        input_assets.emplace_back(uint256S(asset));
         input_amounts.push_back(AmountFromValue(inputAmounts[nIn]));
 
         if (!input_blinds.back().IsNull()) {

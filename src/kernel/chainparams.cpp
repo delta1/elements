@@ -60,7 +60,7 @@ static CBlock CreateGenesisBlock(const Consensus::Params& params, const CScript&
     txNew.nVersion = 1;
     txNew.vin.resize(1);
     txNew.vin[0].scriptSig = genesisScriptSig;
-    txNew.vout.push_back(CTxOut(CAsset(), genesisReward, genesisOutputScript));
+    txNew.vout.emplace_back(CAsset(), genesisReward, genesisOutputScript);
 
     CBlock genesis;
     genesis.nTime    = nTime;

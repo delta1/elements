@@ -852,8 +852,8 @@ static UniValue createrawpegin(const JSONRPCRequest& request, T_tx_ref& txBTCRef
     }
 
     // one wallet output and one fee output
-    mtx.vout.push_back(CTxOut(Params().GetConsensus().pegged_asset, value, GetScriptForDestination(*wpkhash)));
-    mtx.vout.push_back(CTxOut(Params().GetConsensus().pegged_asset, 0, CScript()));
+    mtx.vout.emplace_back(Params().GetConsensus().pegged_asset, value, GetScriptForDestination(*wpkhash));
+    mtx.vout.emplace_back(Params().GetConsensus().pegged_asset, 0, CScript());
 
     // Estimate fee for transaction, decrement fee output(including witness data)
     unsigned int nBytes = GetVirtualTransactionSize(CTransaction(mtx)) +
@@ -1031,12 +1031,12 @@ void FillBlinds(CWallet* pwallet, CMutableTransaction& tx, std::vector<uint256>&
         if (out.nValue.IsExplicit()) {
             CPubKey pubkey(out.nNonce.vchCommitment);
             if (!pubkey.IsFullyValid()) {
-                output_pubkeys.push_back(CPubKey());
+                output_pubkeys.emplace_back();
             } else {
                 output_pubkeys.push_back(pubkey);
             }
-            output_value_blinds.push_back(uint256());
-            output_asset_blinds.push_back(uint256());
+            output_value_blinds.emplace_back();
+            output_asset_blinds.emplace_back();
         } else if (out.nValue.IsCommitment()) {
             CTxOutWitness* ptxoutwit = &tx.witness.vtxoutwit[nOut];
             uint256 blinding_factor;
@@ -1054,18 +1054,18 @@ void FillBlinds(CWallet* pwallet, CMutableTransaction& tx, std::vector<uint256>&
                 // Mark for re-blinding with same key that deblinded it
                 CPubKey pubkey(pwallet->GetBlindingKey(&out.scriptPubKey).GetPubKey());
                 output_pubkeys.push_back(pubkey);
-                output_value_blinds.push_back(uint256());
-                output_asset_blinds.push_back(uint256());
+                output_value_blinds.emplace_back();
+                output_asset_blinds.emplace_back();
             } else {
-                output_pubkeys.push_back(CPubKey());
-                output_value_blinds.push_back(uint256());
-                output_asset_blinds.push_back(uint256());
+                output_pubkeys.emplace_back();
+                output_value_blinds.emplace_back();
+                output_asset_blinds.emplace_back();
             }
         } else {
             // Null or invalid, do nothing for that output
-            output_pubkeys.push_back(CPubKey());
-            output_value_blinds.push_back(uint256());
-            output_asset_blinds.push_back(uint256());
+            output_pubkeys.emplace_back();
+            output_value_blinds.emplace_back();
+            output_asset_blinds.emplace_back();
         }
     }
 
@@ -1073,8 +1073,8 @@ void FillBlinds(CWallet* pwallet, CMutableTransaction& tx, std::vector<uint256>&
     for (size_t nIn = 0; nIn < tx.vin.size(); ++nIn) {
         CAssetIssuance& issuance = tx.vin[nIn].assetIssuance;
         if (issuance.IsNull()) {
-            asset_keys.push_back(CKey());
-            token_keys.push_back(CKey());
+            asset_keys.emplace_back();
+            token_keys.emplace_back();
             continue;
         }
 
@@ -1118,7 +1118,7 @@ void FillBlinds(CWallet* pwallet, CMutableTransaction& tx, std::vector<uint256>&
                     issuance_blinding_keys.push_back(pwallet->GetBlindingKey(&blindingScript));
                 } else {
                     // If  unable to unblind, leave it alone in next blinding step
-                    issuance_blinding_keys.push_back(CKey());
+                    issuance_blinding_keys.emplace_back();
                 }
             } else if (conf_value.IsExplicit()) {
                 // Use wallet to generate blindingkey used directly as nonce
@@ -1128,7 +1128,7 @@ void FillBlinds(CWallet* pwallet, CMutableTransaction& tx, std::vector<uint256>&
                 issuance_blinding_keys.push_back(pwallet->GetBlindingKey(&blindingScript));
             } else  {
                 // Null or invalid, don't try anything but append an empty key
-                issuance_blinding_keys.push_back(CKey());
+                issuance_blinding_keys.emplace_back();
             }
         }
     }
@@ -1216,8 +1216,8 @@ RPCHelpMan blindrawtransaction()
                 throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Transaction contains invalid peg-in input: %s", err));
             }
             CTxOut pegin_output = GetPeginOutputFromWitness(tx.witness.vtxinwit[nIn].m_pegin_witness);
-            input_blinds.push_back(uint256());
-            input_asset_blinds.push_back(uint256());
+            input_blinds.emplace_back();
+            input_asset_blinds.emplace_back();
             input_assets.push_back(pegin_output.nAsset.GetAsset());
             input_amounts.push_back(pegin_output.nValue.GetAmount());
             continue;
@@ -1227,9 +1227,9 @@ RPCHelpMan blindrawtransaction()
         if (it == pwallet->mapWallet.end() || InputIsMine(*pwallet, tx.vin[nIn]) == wallet::ISMINE_NO) {
             // For inputs we don't own, input assetcommitments for the surjection must be supplied.
             if (auxiliary_generators.size() > 0) {
-                input_blinds.push_back(uint256());
-                input_asset_blinds.push_back(uint256());
-                input_assets.push_back(CAsset());
+                input_blinds.emplace_back();
+                input_asset_blinds.emplace_back();
+                input_assets.emplace_back();
                 input_amounts.push_back(-1);
                 continue;
             }

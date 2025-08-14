@@ -470,7 +470,7 @@ std::vector<std::pair<CScript, CScript>> GetValidFedpegScripts(const CBlockIndex
     // to see if we're on a boundary. If so, put that epoch's fedpegscript in place
     if (nextblock_validation && epoch_age == epoch_length - 1) {
         DynaFedParamEntry next_param = ComputeNextBlockFullCurrentParameters(pblockindex, params);
-        fedpegscripts.push_back(std::make_pair(next_param.m_fedpeg_program, next_param.m_fedpegscript));
+        fedpegscripts.emplace_back(next_param.m_fedpeg_program, next_param.m_fedpegscript);
     }
 
     // Next we walk backwards up to M epoch starts
@@ -492,9 +492,9 @@ std::vector<std::pair<CScript, CScript>> GetValidFedpegScripts(const CBlockIndex
             ForceUntrimHeader(p_epoch_start);
         }
         if (!p_epoch_start->dynafed_params().IsNull()) {
-            fedpegscripts.push_back(std::make_pair(p_epoch_start->dynafed_params().m_current.m_fedpeg_program, p_epoch_start->dynafed_params().m_current.m_fedpegscript));
+            fedpegscripts.emplace_back(p_epoch_start->dynafed_params().m_current.m_fedpeg_program, p_epoch_start->dynafed_params().m_current.m_fedpegscript);
         } else {
-            fedpegscripts.push_back(std::make_pair(GetScriptForDestination(ScriptHash(GetScriptForDestination(WitnessV0ScriptHash(params.fedpegScript)))), params.fedpegScript));
+            fedpegscripts.emplace_back(GetScriptForDestination(ScriptHash(GetScriptForDestination(WitnessV0ScriptHash(params.fedpegScript)))), params.fedpegScript);
         }
     }
     // Only return up to the latest total_valid_epochs fedpegscripts, which are enforced
@@ -529,9 +529,9 @@ CScriptWitness CreatePeginWitnessInner(const CAmount& value, const CAsset& asset
     CScriptWitness pegin_witness;
     std::vector<std::vector<unsigned char>>& stack = pegin_witness.stack;
     stack.push_back(value_bytes);
-    stack.push_back(std::vector<unsigned char>(asset.begin(), asset.end()));
-    stack.push_back(std::vector<unsigned char>(genesis_hash.begin(), genesis_hash.end()));
-    stack.push_back(std::vector<unsigned char>(claim_script.begin(), claim_script.end()));
+    stack.emplace_back(asset.begin(), asset.end());
+    stack.emplace_back(genesis_hash.begin(), genesis_hash.end());
+    stack.emplace_back(claim_script.begin(), claim_script.end());
     stack.push_back(tx_data_stripped);
     stack.push_back(txout_proof_bytes);
     return pegin_witness;

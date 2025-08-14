@@ -41,7 +41,7 @@ static constexpr size_t OUTPUT_GROUP_MAX_ENTRIES{100};
 // ELEMENTS
 int CalculateMaximumSignedInputSizeWithDummy(const CTxOut& txout, const COutPoint outpoint, const SigningProvider* provider, bool can_grind_r, const CCoinControl* coin_control) {
     CMutableTransaction txn;
-    txn.vin.push_back(CTxIn(outpoint));
+    txn.vin.emplace_back(outpoint);
     if (!provider || !DummySignInput(*provider, txn, 0, txout, can_grind_r, coin_control)) {
         return -1;
     }
@@ -1123,8 +1123,8 @@ static bool fillBlindDetails(BlindDetails* det, CWallet* wallet, CMutableTransac
     // Fill in output blinding details
     for (size_t nOut = 0; nOut < txNew.vout.size(); nOut++) {
         //TODO(CA) consider removing all blind setting before BlindTransaction as they get cleared anyway
-        det->o_amount_blinds.push_back(uint256());
-        det->o_asset_blinds.push_back(uint256());
+        det->o_amount_blinds.emplace_back();
+        det->o_asset_blinds.emplace_back();
         det->o_assets.push_back(txNew.vout[nOut].nAsset.GetAsset());
         det->o_amounts.push_back(txNew.vout[nOut].nValue.GetAmount());
     }
@@ -1141,8 +1141,8 @@ static bool fillBlindDetails(BlindDetails* det, CWallet* wallet, CMutableTransac
         newTxOut.nNonce.vchCommitment = std::vector<unsigned char>(blind_pub.begin(), blind_pub.end());
         txNew.vout.push_back(newTxOut);
         det->o_pubkeys.push_back(wallet->GetBlindingPubKey(newTxOut.scriptPubKey));
-        det->o_amount_blinds.push_back(uint256());
-        det->o_asset_blinds.push_back(uint256());
+        det->o_amount_blinds.emplace_back();
+        det->o_asset_blinds.emplace_back();
         det->o_amounts.push_back(0);
         det->o_assets.push_back(det->o_assets.back());
         det->num_to_blind++;
@@ -1613,7 +1613,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
             assert(fee.IsFee());
             txNew.vout.push_back(fee);
             if (blind_details) {
-                blind_details->o_pubkeys.push_back(CPubKey());
+                blind_details->o_pubkeys.emplace_back();
             }
         }
     }

@@ -206,7 +206,7 @@ FUZZ_TARGET(simplicity_tx, .init = initialize_simplicity_tx)
             }
         }
 
-        spent_outs.push_back(CTxOut{asset, value, scriptPubKey});
+        spent_outs.emplace_back(asset, value, scriptPubKey);
     }
     assert(spent_outs.size() == mtx.vin.size());
 

@@ -87,10 +87,10 @@ void AppendInitialIssuance(CBlock& genesis_block, const COutPoint& prevout, cons
     txNew.vin[0].assetIssuance.nInflationKeys = CConfidentialValue(reissuance_values * reissuance_outputs);
 
     for (unsigned int i = 0; i < asset_outputs; i++) {
-        txNew.vout.push_back(CTxOut(asset, CConfidentialValue(asset_values), issuance_destination));
+        txNew.vout.emplace_back(asset, CConfidentialValue(asset_values), issuance_destination);
     }
     for (unsigned int i = 0; i < reissuance_outputs; i++) {
-        txNew.vout.push_back(CTxOut(reissuance, CConfidentialValue(reissuance_values), issuance_destination));
+        txNew.vout.emplace_back(reissuance, CConfidentialValue(reissuance_values), issuance_destination);
     }
 
     genesis_block.vtx.push_back(MakeTransactionRef(std::move(txNew)));

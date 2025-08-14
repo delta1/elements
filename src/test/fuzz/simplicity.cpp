@@ -184,7 +184,7 @@ FUZZ_TARGET(simplicity, .init = initialize_simplicity)
             scriptPubKey = TAPROOT_SCRIPT_PUB_KEY;
         }
 
-        spent_outs.push_back(CTxOut{asset, value, scriptPubKey});
+        spent_outs.emplace_back(asset, value, scriptPubKey);
     }
     assert(spent_outs.size() == mtx.vin.size());
 

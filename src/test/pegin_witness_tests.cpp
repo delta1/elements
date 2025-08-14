@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(witness_valid)
     CScript fedpeg_program(GetScriptForDestination(ScriptHash(GetScriptForDestination(WitnessV0ScriptHash(fedpegscript)))));
     std::vector<std::pair<CScript, CScript>> fedpegscripts;
     // TODO test with additional scripts
-    fedpegscripts.push_back(std::make_pair(fedpeg_program, fedpegscript));
+    fedpegscripts.emplace_back(fedpeg_program, fedpegscript);
 
     bool valid = IsValidPeginWitness(witness, fedpegscripts, prevout, err, false);
     BOOST_CHECK(err == "");

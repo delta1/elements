@@ -381,7 +381,7 @@ int BlindTransaction(std::vector<uint256 >& input_value_blinding_factors, const 
                 ret = secp256k1_generator_generate(secp256k1_blind_context, &target_asset_generators[totalTargets], asset.begin());
                 assert(ret != 0);
                 // Issuance asset cannot be blinded by definition
-                target_asset_blinders.push_back(uint256());
+                target_asset_blinders.emplace_back();
                 totalTargets++;
             }
             if (!issuance.nInflationKeys.IsNull()) {
@@ -390,7 +390,7 @@ int BlindTransaction(std::vector<uint256 >& input_value_blinding_factors, const 
                 ret = secp256k1_generator_generate(secp256k1_blind_context, &target_asset_generators[totalTargets], token.begin());
                 assert(ret != 0);
                 // Issuance asset cannot be blinded by definition
-                target_asset_blinders.push_back(uint256());
+                target_asset_blinders.emplace_back();
                 totalTargets++;
             }
         }
@@ -405,7 +405,7 @@ int BlindTransaction(std::vector<uint256 >& input_value_blinding_factors, const 
                 return -1;
             }
             memset(&surjection_targets[totalTargets], 0, 32);
-            target_asset_blinders.push_back(uint256());
+            target_asset_blinders.emplace_back();
             totalTargets++;
         }
     }
@@ -643,14 +643,14 @@ void RawFillBlinds(CMutableTransaction& tx, std::vector<uint256>& output_value_b
             if (pubkey.IsFullyValid()) {
                 output_pubkeys.push_back(pubkey);
             } else {
-                output_pubkeys.push_back(CPubKey());
+                output_pubkeys.emplace_back();
             }
         } else {
-            output_pubkeys.push_back(CPubKey());
+            output_pubkeys.emplace_back();
         }
         // No way to unblind anything, just fill out
-        output_value_blinds.push_back(uint256());
-        output_asset_blinds.push_back(uint256());
+        output_value_blinds.emplace_back();
+        output_asset_blinds.emplace_back();
     }
     assert(output_pubkeys.size() == tx.vout.size());
     // We cannot unwind issuance inputs because there is no nonce placeholder for pubkeys

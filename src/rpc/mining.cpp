@@ -146,7 +146,7 @@ static bool GenerateBlock(ChainstateManager& chainman, CBlock& block, uint64_t& 
     CScript op_true(OP_TRUE);
     if (block.m_dynafed_params.m_current.m_signblockscript ==
             GetScriptForDestination(WitnessV0ScriptHash(op_true))) {
-        block.m_signblock_witness.stack.push_back(std::vector<unsigned char>(op_true.begin(), op_true.end()));
+        block.m_signblock_witness.stack.emplace_back(op_true.begin(), op_true.end());
     } else if (!block.m_dynafed_params.IsNull()) {
         throw JSONRPCError(RPC_MISC_ERROR, "Unable to fill out dynamic federation signblockscript witness, are you sure it's WSH(OP_TRUE)?");
     }
@@ -1232,7 +1232,7 @@ static RPCHelpMan getnewblockhex()
     CScript op_true(OP_TRUE);
     if (pblocktemplate->block.m_dynafed_params.m_current.m_signblockscript ==
             GetScriptForDestination(WitnessV0ScriptHash(op_true))) {
-        pblocktemplate->block.m_signblock_witness.stack.push_back(std::vector<unsigned char>(op_true.begin(), op_true.end()));
+        pblocktemplate->block.m_signblock_witness.stack.emplace_back(op_true.begin(), op_true.end());
     }
 
     CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
