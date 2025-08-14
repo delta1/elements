@@ -155,6 +155,8 @@ task:
   << : *GLOBAL_TASK_TEMPLATE
   container:
     image: ubuntu:24.04
+    cpu: 4
+    memory: 16G
   timeout_in: 300m  # Use longer timeout for the *rare* case where a full build (llvm + msan + depends + ...) needs to be done.
   env:
     << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
