@@ -108,8 +108,8 @@ task:
 task:
   name: 'ARM, unit tests, no functional tests'
   << : *GLOBAL_TASK_TEMPLATE
-  container:
-    image: docker.io/debian:bookworm
+  arm_container:
+    image: docker.io/arm64v8/debian:bookworm
   env:
     << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_arm.sh"
