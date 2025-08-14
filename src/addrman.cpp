@@ -750,7 +750,7 @@ std::pair<CAddress, NodeSeconds> AddrManImpl::Select_(bool new_only, std::option
 
         // Iterate over the positions of that bucket, starting at the initial one,
         // and looping around.
-        int i, position, node_id;
+        int i, position, node_id = 0;
         for (i = 0; i < ADDRMAN_BUCKET_SIZE; ++i) {
             position = (initial_position + i) % ADDRMAN_BUCKET_SIZE;
             node_id = GetEntry(search_tried, bucket, position);
