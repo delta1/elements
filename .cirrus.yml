@@ -59,7 +59,7 @@ base_template: &BASE_TEMPLATE
   << : *FILTER_TEMPLATE
   merge_base_script:
     # Unconditionally install git (used in fingerprint_script).
-    - bash -c "$PACKAGE_MANAGER_INSTALL git"
+    - bash -c "$PACKAGE_MANAGER_INSTALL git rsync"
     - if [ "$CIRRUS_PR" = "" ]; then exit 0; fi
     - git fetch --depth=1 $CIRRUS_REPO_CLONE_URL "pull/${CIRRUS_PR}/merge"
     - git checkout FETCH_HEAD  # Use merged changes to detect silent merge conflicts
@@ -130,6 +130,7 @@ task:
     image: quay.io/rockylinux/rockylinux:8
   env:
     << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
+    PACKAGE_MANAGER_INSTALL: "dnf update -y && dnf install -y"
     FILE_ENV: "./ci/test/00_setup_env_i686_centos.sh"
 
 task:
