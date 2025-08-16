@@ -146,6 +146,8 @@ task:
   << : *GLOBAL_TASK_TEMPLATE
   container:
     image: docker.io/ubuntu:24.04
+    cpu: 6
+    memory: 24G
   env:
     << : *CIRRUS_EPHEMERAL_WORKER_TEMPLATE_ENV
     FILE_ENV: "./ci/test/00_setup_env_native_tsan.sh"
