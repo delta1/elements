@@ -52,9 +52,8 @@ class MempoolPackageLimitsTest(BitcoinTestFramework):
         self.test_desc_count_limits()
         self.test_desc_count_limits_2()
         self.test_anc_count_limits()
-        # ELEMENTS: FIXME failing tests
-        # self.test_anc_count_limits_2()
-        # self.test_anc_count_limits_bushy()
+        self.test_anc_count_limits_2()
+        self.test_anc_count_limits_bushy()
 
         # The node will accept (nonstandard) extra large OP_RETURN outputs
         self.restart_node(0, extra_args=["-datacarriersize=100000"])
