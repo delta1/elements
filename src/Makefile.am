@@ -952,6 +952,7 @@ bitcoin_chainstate_SOURCES += \
   blind.cpp \
   blindpsbt.cpp \
   block_proof.cpp \
+  chainparams.cpp \
   common/bloom.cpp \
   confidential_validation.cpp \
   dynafed.cpp \
