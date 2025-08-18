@@ -21,7 +21,8 @@ class PAKTest (BitcoinTestFramework):
         self.setup_clean_chain = True
         self.extra_args = [["-enforce_pak=1", "-evbparams=dynafed:-1:::", "-initialfreecoins=210000000000000", "-anyonecanspendaremine=1", "-parent_bech32_hrp=lol", "-pubkeyprefix=112", "-scriptprefix=197", "-con_connect_genesis_outputs=1"] for i in range(self.num_nodes)]
         # First node doesn't enforce PAK, a "HF" of the other two nodes
-        self.extra_args[0] = ["-acceptnonstdtxn=1"] + self.extra_args[0][1:]   ## FIXME -acceptnonstdtxn=1 should not be needed
+        # -acceptnonstdtxn=1 is required for first node as IsStandard will block larger pegout scripts if -enforce_pak=0
+        self.extra_args[0] = ["-acceptnonstdtxn=1"] + self.extra_args[0][1:]
 
     def add_options(self, parser):
         self.add_wallet_options(parser)
