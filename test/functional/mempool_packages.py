@@ -104,10 +104,10 @@ class MempoolPackagesTest(BitcoinTestFramework):
 
             # Check that ancestor calculations are correct
             assert_equal(entry['ancestorcount'], ancestor_count)
-            # assert_equal(entry['fees']['ancestor'], ancestor_fees) # ELEMENTS: FIXME
+            assert_equal(entry['fees']['ancestor'] * COIN, ancestor_fees) # ELEMENTS
             assert_equal(entry['ancestorsize'], ancestor_vsize)
             ancestor_vsize -= entry['vsize']
-            ancestor_fees -= entry['fees']['base']
+            ancestor_fees -= entry['fees']['base'] * COIN
             ancestor_count -= 1
 
             # Check that parent/child list is correct
