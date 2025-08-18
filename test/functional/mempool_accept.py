@@ -358,38 +358,9 @@ class MempoolAcceptanceTest(BitcoinTestFramework):
             maxfeerate=0,
         )
 
-        # Prep for tiny-tx tests with wsh(OP_TRUE) output
-        seed_tx = self.wallet.send_to(from_node=node, scriptPubKey=script_to_p2wsh_script(CScript([OP_TRUE])), amount=COIN)
-        self.generate(node, 1)
-
-        self.log.info('A tiny transaction(in non-witness bytes) that is disallowed')
-        tx = CTransaction()
-        tx.vin.append(CTxIn(COutPoint(int(seed_tx["txid"], 16), seed_tx["sent_vout"]), b"", SEQUENCE_FINAL))
-        tx.wit.vtxinwit = [CTxInWitness()]
-        tx.wit.vtxinwit[0].scriptWitness.stack = [CScript([OP_TRUE])]
-        tx.vout.append(CTxOut(0, CScript([OP_RETURN] + ([OP_0] * (MIN_PADDING - 2)))))
-        # Note it's only non-witness size that matters!
-        assert_equal(len(tx.serialize_without_witness()), 64 + 36) # ELEMENTS
+        # ELEMENTS: not possibe to create a valid transaction of 64 bytes to test "tx-size-small" policy
+        # CVE-2017-12842 does not affect elements transactions
         assert_equal(MIN_STANDARD_TX_NONWITNESS_SIZE - 1, 64)
-        print(len(tx.serialize()))
-        assert_greater_than(len(tx.serialize()), 64)
-
-        # ELEMENTS FIXME: bad-txns-in-ne-out
-        # self.check_mempool_result(
-        #     result_expected=[{'txid': tx.rehash(), 'allowed': False, 'reject-reason': 'tx-size-small'}],
-        #     rawtxs=[tx.serialize().hex()],
-        #     maxfeerate=0,
-        # )
-
-        self.log.info('Minimally-small transaction(in non-witness bytes) that is allowed')
-        tx.vout[0] = CTxOut(COIN - 1000, DUMMY_MIN_OP_RETURN_SCRIPT)
-        assert_equal(len(tx.serialize_without_witness()), MIN_STANDARD_TX_NONWITNESS_SIZE + 36) # ELEMENTS
-        # ELEMENTS FIXME: bad-txns-in-ne-out
-        # self.check_mempool_result(
-        #     result_expected=[{'txid': tx.rehash(), 'allowed': True, 'vsize': tx.get_vsize(), 'fees': { 'base': Decimal('0.00001000')}}],
-        #     rawtxs=[tx.serialize().hex()],
-        #     maxfeerate=0,
-        # )
 
 if __name__ == '__main__':
     MempoolAcceptanceTest().main()
