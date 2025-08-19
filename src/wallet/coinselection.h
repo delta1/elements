@@ -84,7 +84,7 @@ public:
     /** ELEMENTS: the value of the output */
     CAmount value;
     /** ELEMENTS: the asset of the output */
-    CAsset asset{Params().GetConsensus().pegged_asset};
+    CAsset asset{::policyAsset};
     /** ELEMENTS: the blinding factor for the value */
     uint256 bf_value;
     /** ELEMENTS: the blinding factor for the asset */
