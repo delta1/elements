@@ -90,7 +90,7 @@ else
 fi
 
 if [ -z "$NO_DEPENDS" ]; then
-  if [[ $CI_IMAGE_NAME_TAG == *centos* ]]; then
+  if [[ $CI_IMAGE_NAME_TAG == *centos* ]] || [[ $CI_IMAGE_NAME_TAG == *rocky* ]]; then
     SHELL_OPTS="CONFIG_SHELL=/bin/dash"
   else
     SHELL_OPTS="CONFIG_SHELL="
@@ -121,7 +121,7 @@ if [ -n "$ANDROID_TOOLS_URL" ]; then
   exit 0
 fi
 
-BITCOIN_CONFIG_ALL="${BITCOIN_CONFIG_ALL} --enable-external-signer --prefix=$BASE_OUTDIR"
+BITCOIN_CONFIG_ALL="${BITCOIN_CONFIG_ALL} --prefix=$BASE_OUTDIR"
 
 if [ -n "$CONFIG_SHELL" ]; then
   "$CONFIG_SHELL" -c "./autogen.sh"
