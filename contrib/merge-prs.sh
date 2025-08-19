@@ -10,10 +10,10 @@ ELEMENTS_UPSTREAM_REMOTE=upstream
 ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Set these to whether you want to merge from Bitcoin or Elements
-TARGET_UPSTREAM=$BITCOIN_UPSTREAM
-TARGET_NAME="Bitcoin"
-#TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
-#TARGET_NAME="Elements"
+#TARGET_UPSTREAM=$BITCOIN_UPSTREAM
+#TARGET_NAME="Bitcoin"
+TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
+TARGET_NAME="Elements"
 
 # Replace this with the location where we should put the fuzz test corpus
 BITCOIN_QA_ASSETS="${HOME}/code/bitcoin/qa-assets"
@@ -26,21 +26,19 @@ FUZZ_CORPUS="${BITCOIN_QA_ASSETS}/fuzz_seed_corpus/"
 WORKTREE="/home/byron/code/elements-worktree"
 #mkdir -p "${HOME}/.tmp"
 
-# These should be tuned to your machine; below values are for an 8-core
-#   16-thread macbook pro
-PARALLEL_BUILD=15  # passed to make -j
-PARALLEL_TEST=15  # passed to test_runner.py --jobs
+PARALLEL_BUILD=23  # passed to make -j
+PARALLEL_TEST=23  # passed to test_runner.py --jobs
 PARALLEL_FUZZ=12  # passed to test_runner.py -j when fuzzing
 
 # ccache opts
-export CCACHE_DIR="/tmp/ccache"
-export CCACHE_MAXSIZE="20G"
+#export CCACHE_DIR="/tmp/ccache"
+#export CCACHE_MAXSIZE="20G"
 
 # bdb location
 # installed with ./contrib/install_db4.sh .
-export BDB_PREFIX="/home/byron/code/elements-worktree/db4"
-export BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8"
-export BDB_CFLAGS="-I${BDB_PREFIX}/include"
+#export BDB_PREFIX="/home/byron/code/elements-worktree/db4"
+#export BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8"
+#export BDB_CFLAGS="-I${BDB_PREFIX}/include"
 
 SKIP_MERGE=0
 DO_BUILD=1
@@ -50,7 +48,7 @@ DO_FUZZ=0
 DO_CHERRY=0
 UNDO_CHERRY=0
 ANALYZE=0
-NUM=20
+NUM=15
 COUNT=0
 
 if [[ "$1" == "setup" ]]; then
@@ -227,7 +225,7 @@ do
     # check for stoppers and halt if found
     # a stopper is normally the PR after the version has been changed
     # ie. the branch point we want to stop at for this version
-    STOPPERS=("#28211")
+    STOPPERS=("#28210")
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
@@ -262,7 +260,7 @@ do
         quietly git -C "$WORKTREE" clean -xf
         echo "autogen & configure"
         quietly ./autogen.sh
-        quietly ./configure --with-seccomp=no
+        quietly ./configure --with-incompatible-bdb
         # The following is an expansion of `make check` that skips the libsecp
         # tests and also the benchmarks (though it does build them!)
         echo "Building"
