@@ -29,7 +29,7 @@ uint256 CBlockHeader::GetHash() const
     bool is_dyna = false;
     int32_t nVersion = this->nVersion;
     if (!m_dynafed_params.IsNull()) {
-        nVersion |= DYNAFED_HF_MASK;
+        nVersion |= (int32_t)DYNAFED_HF_MASK;
         is_dyna = true;
     }
     s << (nVersion);
