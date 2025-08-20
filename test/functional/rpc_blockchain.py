@@ -534,7 +534,8 @@ class BlockchainTest(BitcoinTestFramework):
 
         def assert_hexblock_hashes(verbosity):
             block = node.getblock(blockhash, verbosity)
-            assert_equal(blockhash, hash256(bytes.fromhex(block[:156]))[::-1].hex()) # ELEMENTS FIXME explain this
+            print(block)
+            assert_equal(blockhash, hash256(bytes.fromhex(block[:156]))[::-1].hex())
 
         def assert_fee_not_in_block(verbosity):
            block = node.getblock(blockhash, verbosity)
@@ -559,7 +560,7 @@ class BlockchainTest(BitcoinTestFramework):
                total_vin += vin["prevout"]["value"]
            for vout in tx["vout"]:
                total_vout += vout["value"]
-           assert_equal(total_vin, total_vout) # ELEMENTS: FIXME explain why the fee is not included
+           assert_equal(total_vin, total_vout) # ELEMENTS: fee is included as explicit output
 
         def assert_vin_does_not_contain_prevout(verbosity):
            block = node.getblock(blockhash, verbosity)
