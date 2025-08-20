@@ -48,45 +48,44 @@ class ReplaceByFeeTest(BitcoinTestFramework):
     def run_test(self):
         self.wallet = MiniWallet(self.nodes[0])
 
-        # ELEMENTS: FIXME
-        # self.log.info("Running test simple doublespend...")
-        # self.test_simple_doublespend()
+        self.log.info("Running test simple doublespend...")
+        self.test_simple_doublespend()
 
-        # self.log.info("Running test doublespend chain...")
-        # self.test_doublespend_chain()
+        self.log.info("Running test doublespend chain...")
+        self.test_doublespend_chain()
 
-        # self.log.info("Running test doublespend tree...")
-        # self.test_doublespend_tree()
+        self.log.info("Running test doublespend tree...")
+        self.test_doublespend_tree()
 
-        # self.log.info("Running test replacement feeperkb...")
-        # self.test_replacement_feeperkb()
+        self.log.info("Running test replacement feeperkb...")
+        self.test_replacement_feeperkb()
 
-        # self.log.info("Running test spends of conflicting outputs...")
-        # self.test_spends_of_conflicting_outputs()
+        self.log.info("Running test spends of conflicting outputs...")
+        self.test_spends_of_conflicting_outputs()
 
-        # self.log.info("Running test new unconfirmed inputs...")
-        # self.test_new_unconfirmed_inputs()
+        self.log.info("Running test new unconfirmed inputs...")
+        self.test_new_unconfirmed_inputs()
 
-        # self.log.info("Running test too many replacements...")
-        # self.test_too_many_replacements()
+        self.log.info("Running test too many replacements...")
+        self.test_too_many_replacements()
 
-        #self.log.info("Running test too many replacements using default mempool params...")
-        #self.test_too_many_replacements_with_default_mempool_params()
+        self.log.info("Running test too many replacements using default mempool params...")
+        self.test_too_many_replacements_with_default_mempool_params()
 
-        #self.log.info("Running test opt-in...")
-        #self.test_opt_in()
+        self.log.info("Running test opt-in...")
+        self.test_opt_in()
 
-        # self.log.info("Running test RPC...")
-        # self.test_rpc()
+        self.log.info("Running test RPC...")
+        self.test_rpc()
 
-        # self.log.info("Running test prioritised transactions...")
-        # self.test_prioritised_transactions()
+        self.log.info("Running test prioritised transactions...")
+        self.test_prioritised_transactions()
 
-        # self.log.info("Running test no inherited signaling...")
-        # self.test_no_inherited_signaling()
+        self.log.info("Running test no inherited signaling...")
+        self.test_no_inherited_signaling()
 
-        # self.log.info("Running test replacement relay fee...")
-        # self.test_replacement_relay_fee()
+        self.log.info("Running test replacement relay fee...")
+        self.test_replacement_relay_fee()
 
         self.log.info("Running test full replace by fee...")
         self.test_fullrbf()
@@ -127,15 +126,10 @@ class ReplaceByFeeTest(BitcoinTestFramework):
         # This will raise an exception due to insufficient fee
         assert_raises_rpc_error(-26, "insufficient fee", self.nodes[0].sendrawtransaction, tx.serialize().hex(), 0)
 
-        # ELEMENTS FIXME: fixing lint warnings only, see upstream for these tests
-        initial_nValue = 5 * COIN
-        tx0_outpoint = self.make_utxo(self.nodes[0], initial_nValue)
-        feeout = CTxOut(int(0.1*COIN), CScript())
-
         # Extra 0.1 BTC fee
-        tx = CTransaction()
-        tx.vin = [CTxIn(tx0_outpoint, nSequence=0)]
-        tx.vout = [CTxOut(int(0.9 * COIN), b''), feeout, feeout]
+        tx.vout[0].nValue = CTxOutValue(tx.vout[0].nValue.getAmount() - int(0.1 * COIN))
+        tx.vout[1].nValue = CTxOutValue(tx.vout[1].nValue.getAmount() + int(0.1 * COIN))
+
         tx1b_hex = tx.serialize().hex()
         # Works when enabled
         tx1b_txid = self.nodes[0].sendrawtransaction(tx1b_hex, 0)
@@ -179,7 +173,8 @@ class ReplaceByFeeTest(BitcoinTestFramework):
         assert_raises_rpc_error(-26, "insufficient fee", self.nodes[0].sendrawtransaction, dbl_tx_hex, 0)
 
         # Accepted with sufficient fee
-        dbl_tx.vout[0].nValue = int(0.1 * COIN)
+        dbl_tx.vout[1].nValue = CTxOutValue(dbl_tx.vout[1].nValue.getAmount() + dbl_tx.vout[0].nValue.getAmount() - int(0.1 * COIN))
+        dbl_tx.vout[0].nValue = CTxOutValue(int(0.1 * COIN))
         dbl_tx_hex = dbl_tx.serialize().hex()
         self.nodes[0].sendrawtransaction(dbl_tx_hex, 0)
 
@@ -215,8 +210,6 @@ class ReplaceByFeeTest(BitcoinTestFramework):
             _total_txs[0] += 1
 
             for utxo in tx["new_utxos"]:
-                if utxo.is_fee():
-                    continue
                 for x in branch(utxo, txout_value,
                                   max_txs,
                                   tree_width=tree_width, fee=fee,
@@ -396,6 +389,8 @@ class ReplaceByFeeTest(BitcoinTestFramework):
 
         # If we remove an input, it should pass
         double_tx.vin.pop()
+        # update the fee output
+        double_tx.vout[1].nValue = CTxOutValue(double_tx.vout[1].nValue.getAmount() - split_value)
         double_tx_hex = double_tx.serialize().hex()
         self.nodes[0].sendrawtransaction(double_tx_hex, 0)
 
@@ -625,7 +620,7 @@ class ReplaceByFeeTest(BitcoinTestFramework):
         us0 = self.wallet.get_utxo()
         ins = [us0]
         outs = [{ADDRESS_BCRT1_UNSPENDABLE: Decimal(1.0000000)}]
-        outs.append({"fee": us0["amount"] - Decimal(1.0000000)})
+        outs.append({"fee": us0["value"] - Decimal(1.0000000)})
         rawtx0 = self.nodes[0].createrawtransaction(ins, outs, 0, True)
         rawtx1 = self.nodes[0].createrawtransaction(ins, outs, 0, False)
         json0 = self.nodes[0].decoderawtransaction(rawtx0)
@@ -712,7 +707,7 @@ class ReplaceByFeeTest(BitcoinTestFramework):
 
         # Higher fee, higher feerate, different txid, but the replacement does not provide a relay
         # fee conforming to node's `incrementalrelayfee` policy of 1000 sat per KB.
-        assert_equal(self.nodes[0].getmempoolinfo()["incrementalrelayfee"], Decimal("0.00001"))
+        assert_equal(self.nodes[0].getmempoolinfo()["incrementalrelayfee"], Decimal("0.000001"))
         tx.vout[0].nValue = CTxOutValue(tx.vout[0].nValue.getAmount() - 1)
         tx.vout[1].nValue = CTxOutValue(tx.vout[1].nValue.getAmount() + 1)
         assert_raises_rpc_error(-26, "insufficient fee", self.nodes[0].sendrawtransaction, tx.serialize().hex())
