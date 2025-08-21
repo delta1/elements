@@ -108,8 +108,8 @@ class FeatureIndexPruneTest(BitcoinTestFramework):
 
         self.log.info("prune exactly up to the indices best blocks while the indices are disabled")
         for i in range(3):
-            pruneheight_2 = self.nodes[i].pruneblockchain(700) # ELEMENTS FIXME: this should be 1000
-            assert_equal(pruneheight_2, 589) # ELEMENTS FIXME: why this number?
+            pruneheight_2 = self.nodes[i].pruneblockchain(700)
+            assert_equal(pruneheight_2, 589) # prune height from disk serialization and default elements block file size.
             # Restart the nodes again with the indices activated
             self.restart_node(i, extra_args=self.extra_args[i])
 
