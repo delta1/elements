@@ -1619,10 +1619,7 @@ RPCHelpMan sendall()
             }
 
             // ELEMENTS: add explicit fee output
-            CTxOut feeOutput;
-            feeOutput.nValue = fee_from_size;
-            feeOutput.scriptPubKey = CScript(); // Empty scriptPubKey represents fee
-            rawTx.vout.push_back(feeOutput);
+            rawTx.vout.emplace_back(::policyAsset, fee_from_size, CScript());
 
             const bool lock_unspents{options.exists("lock_unspents") ? options["lock_unspents"].get_bool() : false};
             if (lock_unspents) {

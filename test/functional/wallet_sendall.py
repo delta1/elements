@@ -39,7 +39,7 @@ class SendallTest(BitcoinTestFramework):
 
     def assert_balance_swept_completely(self, tx, balance):
         output_sum = sum([o["value"] for o in tx["decoded"]["vout"]])
-        assert_equal(output_sum, balance + tx["fee"]['bitcoin'])
+        assert_equal(output_sum, balance) # ELEMENTS: fee is included in the output sum
         assert_equal(0, self.wallet.getbalances()["mine"]["trusted"]["bitcoin"]) # wallet is empty
 
     def assert_tx_has_output(self, tx, addr, value=None):
@@ -328,10 +328,10 @@ class SendallTest(BitcoinTestFramework):
         psbt = sendall_tx_receipt["psbt"]
         decoded = self.nodes[0].decodepsbt(psbt)
         assert_equal(len(decoded["inputs"]), 1)
-        assert_equal(len(decoded["outputs"]), 1)
-        assert_equal(decoded["tx"]["vin"][0]["txid"], utxo["txid"])
-        assert_equal(decoded["tx"]["vin"][0]["vout"], utxo["vout"])
-        assert_equal(decoded["tx"]["vout"][0]["scriptPubKey"]["address"], self.remainder_target)
+        assert_equal(len(decoded["outputs"]), 2) # ELEMENTS
+        assert_equal(decoded["inputs"][0]["previous_txid"], utxo["txid"])
+        assert_equal(decoded["inputs"][0]["previous_vout"], utxo["vout"])
+        assert_equal(decoded["outputs"][0]["script"]["address"], self.remainder_target)
 
     @cleanup
     def sendall_with_minconf(self):
@@ -441,7 +441,7 @@ class SendallTest(BitcoinTestFramework):
         self.sendall_duplicate_recipient()
 
         # Sendall fails when trying to spend more than the balance
-        # self.sendall_invalid_amounts() # ELEMENTS: FIXME 'tx decode failed'
+        self.sendall_invalid_amounts()
 
         # Sendall fails when wallet has no economically spendable UTXOs
         self.sendall_negative_effective_value()
@@ -468,7 +468,7 @@ class SendallTest(BitcoinTestFramework):
         self.sendall_fails_on_low_fee()
 
         # Sendall succeeds with watchonly wallets spending specific UTXOs
-        # self.sendall_watchonly_specific_inputs() # ELEMENTS: FIXME
+        self.sendall_watchonly_specific_inputs()
 
         # Sendall only uses outputs with at least a give number of confirmations when using minconf
         self.sendall_with_minconf()
