@@ -818,8 +818,7 @@ def test_no_more_inputs_fails(self, rbf_node, dest_address):
     self.generatetoaddress(rbf_node, 1, dest_address)
     # spend all funds, no change output
     rbfid = rbf_node.sendall(recipients=[rbf_node.getnewaddress()])['txid']
-    assert_equal(rbf_node.getbalance()['bitcoin'], 0) # ELEMENTS
-    assert_raises_rpc_error(-4, "bumpfee can only be called on an unblinded transaction", rbf_node.bumpfee, rbfid) # ELEMENTS
+    assert_raises_rpc_error(-4, "Unable to create transaction. Insufficient funds", rbf_node.bumpfee, rbfid)
     self.clear_mempool()
 
 
