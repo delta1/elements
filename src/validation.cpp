@@ -664,7 +664,7 @@ private:
     }
 
     // ELEMENTS: check if peg-in transaction pays the burn subsidy, and if minimum peg-in amount is met
-    bool CheckPeginSubsidyAndMinimum(TxValidationState& state, const int64_t vsize, const CTransaction& tx, const std::vector<unsigned int>& pegin_indices)
+    bool CheckPeginSubsidyAndMinimum(TxValidationState& state, const CTransaction& tx, const std::vector<unsigned int>& pegin_indices)
     {
         // pegin_indices was calculated directly from the tx in prechecks, assert this invariant
         assert(tx.witness.vtxinwit.size() >= pegin_indices.size());
@@ -764,7 +764,7 @@ private:
 
                 // for peg-ins below the subsidy threshold, check for enough subsidy
                 CAmount threshold = Params().GetPeginSubsidy().threshold;
-                CAmount expected_subsidy = parent_feerate.GetFee(vsize);
+                CAmount expected_subsidy = parent_feerate.GetFee(parent_vsize);
                 if (value < threshold && subsidy < expected_subsidy) {
                     return state.Invalid(TxValidationResult::TX_NOT_STANDARD, "pegin-subsidy-too-low",
                                          strprintf("peg-in value: %d, subsidy threshold: %d, subsidy value: %d, expected subsidy: %d, parent feerate: %s",
@@ -1037,7 +1037,7 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
     int64_t package_size = Params().GetAcceptDiscountCT() ? GetDiscountVirtualTransactionSize(tx) : ws.m_vsize;
     if (!bypass_limits && !CheckFeeRate(package_size, ws.m_modified_fees, state)) return false;
     // ELEMENTS: check if peg-in subsidy is required and min peg-in amount is met
-    if (!CheckPeginSubsidyAndMinimum(state, ws.m_vsize, tx, pegin_indices)) return false;
+    if (!CheckPeginSubsidyAndMinimum(state, tx, pegin_indices)) return false;
 
     ws.m_iters_conflicting = m_pool.GetIterSet(ws.m_conflicts);
     // Calculate in-mempool ancestors, up to a limit.
