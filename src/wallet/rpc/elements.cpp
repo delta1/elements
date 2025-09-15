@@ -858,7 +858,9 @@ static UniValue createrawpegin(const JSONRPCRequest& request, T_tx_ref& txBTCRef
     }
 
     CAmount fee = 0;
+    uint32_t parent_vsize = 0;
     CFeeRate feerate = CFeeRate{0};
+    bool manual = false;
     if (gArgs.GetBoolArg("-validatepegin", false) && subsidy_required) {
         std::string txid = txBTCRef->GetHash().ToString();
         std::string blockhash = merkleBlock.header.GetHash().ToString();
@@ -870,7 +872,7 @@ static UniValue createrawpegin(const JSONRPCRequest& request, T_tx_ref& txBTCRef
         if (result["error"].isStr()) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, result["error"]["message"].get_str());
         } else {
-            uint32_t vsize = result["result"]["vsize"].get_int64();
+            parent_vsize = result["result"]["vsize"].get_int64();
             if (result["result"]["fee"].isNum()) {
                 fee = static_cast<CAmount>(std::round(result["result"]["fee"].get_real() * COIN));
             } else if (result["result"]["fee"].isObject()) {
@@ -883,9 +885,10 @@ static UniValue createrawpegin(const JSONRPCRequest& request, T_tx_ref& txBTCRef
             } else {
                 throw JSONRPCError(RPC_MISC_ERROR, "Fee result is not a number or object.");
             }
-            feerate = CFeeRate{fee, vsize};
+            feerate = CFeeRate{fee, parent_vsize};
         }
     } else if (!request.params[3].isNull()) {
+        manual = true;
         // manual feerate, specified in sats/vb but CFeeRate takes sats/Kvb
         CAmount satsperk = request.params[3].get_real() * 1000;
         feerate = CFeeRate{satsperk};
@@ -929,7 +932,11 @@ static UniValue createrawpegin(const JSONRPCRequest& request, T_tx_ref& txBTCRef
         if (feerate < CFeeRate{1000}) {
             throw JSONRPCError(RPC_WALLET_ERROR, "Parent transaction must have a feerate of at least 1 sat/vb");
         }
-        CAmount subsidy = feerate.GetFee(nBytes);
+        CAmount subsidy = feerate.GetFee(parent_vsize);
+        // without validatepegin, use the vsize of the sidechain claim transaction
+        if (manual) {
+            subsidy = feerate.GetFee(nBytes);
+        }
         CAmount value = mtx.vout[0].nValue.GetAmount() - nFeeNeeded - subsidy;
         mtx.vout[0].nValue = value;
         mtx.vout[1].nValue = subsidy;
