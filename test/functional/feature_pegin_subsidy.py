@@ -394,7 +394,8 @@ class PeginSubsidyTest(BitcoinTestFramework):
             },
         ]
         fee = Decimal("0.00000363")
-        subsidy = Decimal("0.00001193")
+        subsidy = -parent.gettransaction(txid)["fee"] if self.options.parent_bitcoin else -parent.gettransaction(txid)["fee"]["bitcoin"]
+        subsidy -= Decimal("0.00000001")
         outputs = [
             {addr: Decimal("1.0") - fee - subsidy},
             {changeaddr: utxo["amount"]},
@@ -653,7 +654,9 @@ class PeginSubsidyTest(BitcoinTestFramework):
             },
         ]
         fee = Decimal("0.00000363")
-        subsidy = Decimal("0.00001193")  # low enough to fail with bitcoind and elementsd
+        subsidy = -parent.gettransaction(txid1)["fee"] if self.options.parent_bitcoin else -parent.gettransaction(txid1)["fee"]["bitcoin"]
+        subsidy += -parent.gettransaction(txid2)["fee"] if self.options.parent_bitcoin else -parent.gettransaction(txid2)["fee"]["bitcoin"]
+        subsidy -= Decimal("0.00000001")
         outputs = [
             {addr1: Decimal("0.5") - fee - subsidy},
             {addr2: 1.0},
