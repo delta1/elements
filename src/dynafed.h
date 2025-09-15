@@ -15,5 +15,9 @@ DynaFedParamEntry ComputeNextBlockFullCurrentParameters(const CBlockIndex* pinde
  * publish signblockscript-related fields */
 DynaFedParamEntry ComputeNextBlockCurrentParameters(const CBlockIndex* pindexPrev, const Consensus::Params& consensus);
 
+/* Get the threshold (t) and the total pubkeys (n) of the first OP_CHECKMULTISIG in the fedpegscript.
+ * Assumes the fedpegscript starts with the threshold, otherwise returns false.
+ * Uses CScript::DecodeOP_N, so only supports up to 16 of 16 and may assert!  */
+bool ParseFedPegQuorum(const CScript& fedpegscript, int& t, int& n);
 
 #endif // BITCOIN_DYNAFED_H
