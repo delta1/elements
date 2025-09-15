@@ -40,6 +40,7 @@
 #include <txdb.h>
 #include <txmempool.h>
 #include <undo.h>
+#include <util/moneystr.h>
 #include <util/strencodings.h>
 #include <util/string.h>
 #include <util/translation.h>
@@ -3134,6 +3135,21 @@ static RPCHelpMan getsidechaininfo()
         obj.pushKV("parent_chain_signblockscript_hex", HexStr(consensus.parent_chain_signblockscript));
         obj.pushKV("parent_pegged_asset", consensus.parent_pegged_asset.GetHex());
     }
+
+    CAmount pegin_min_amount = Params().GetPeginMinAmount();
+    if (pegin_min_amount > 0) {
+        obj.pushKV("pegin_min_amount", FormatMoney(pegin_min_amount));
+    }
+
+    PeginSubsidy pegin_subsidy = Params().GetPeginSubsidy();
+    if (pegin_subsidy.threshold > 0) {
+        obj.pushKV("pegin_subsidy_threshold", FormatMoney(pegin_subsidy.threshold));
+    }
+    if (pegin_subsidy.height < std::numeric_limits<int>::max()) {
+        obj.pushKV("pegin_subsidy_height", pegin_subsidy.height);
+        obj.pushKV("pegin_subsidy_active", chainman.ActiveTip()->nHeight >= pegin_subsidy.height);
+    }
+
     return obj;
 },
     };
