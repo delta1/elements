@@ -234,13 +234,17 @@ class PeginSubsidyTest(BitcoinTestFramework):
             vout = find_vout_for_address(parent, txid, mainchain_address)
             self.generate(parent, 12, sync_fun=self.no_op)
             txoutproof = parent.gettxoutproof([txid])
-            bitcoin_txhex = parent.gettransaction(txid)["hex"]
+            tx = parent.gettransaction(txid)
+            bitcoin_txhex = tx["hex"]
+            # tx fee result is negative so negate it
+            fee = -tx["fee"] if self.options.parent_bitcoin else -tx["fee"]["bitcoin"]
             return (
                 txid,
                 vout,
                 txoutproof,
                 bitcoin_txhex,
                 claim_script,
+                fee,
             )
 
         self.log.info("check new fields for getpeginaddress and getsidechaininfo")
@@ -256,7 +260,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
         assert_equal(result["pegin_subsidy_active"], False)
 
         self.log.info("createrawpegin before enforcement, with validatepegin, below threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=1.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=1.0, feerate=2.0)
         pegintx = sidechain.createrawpegin(bitcoin_txhex, txoutproof, claim_script)
         signed = sidechain.signrawtransactionwithwallet(pegintx["hex"])
         assert_equal(signed["complete"], True)
@@ -266,7 +270,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
         self.generate(sidechain, 1, sync_fun=sync_sidechain)
 
         self.log.info("createrawpegin before enforcement, with validatepegin, above threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=2.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=2.0, feerate=2.0)
         pegintx = sidechain.createrawpegin(bitcoin_txhex, txoutproof, claim_script)
         signed = sidechain.signrawtransactionwithwallet(pegintx["hex"])
         assert_equal(signed["complete"], True)
@@ -276,7 +280,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
         self.generate(sidechain, 1, sync_fun=sync_sidechain)
 
         self.log.info("createrawpegin before enforcement, without validatepegin, below threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=1.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, amount=1.0, feerate=2.0)
         pegintx = sidechain2.createrawpegin(bitcoin_txhex, txoutproof, claim_script)
         signed = sidechain2.signrawtransactionwithwallet(pegintx["hex"])
         assert_equal(signed["complete"], True)
@@ -286,7 +290,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
         self.log.info("createrawpegin before enforcement, without validatepegin, above threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=2.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, amount=2.0, feerate=2.0)
         pegintx = sidechain2.createrawpegin(bitcoin_txhex, txoutproof, claim_script)
         signed = sidechain2.signrawtransactionwithwallet(pegintx["hex"])
         assert_equal(signed["complete"], True)
@@ -296,35 +300,35 @@ class PeginSubsidyTest(BitcoinTestFramework):
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
         self.log.info("claimpegin before enforcement, with validatepegin, below threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=1.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=1.0, feerate=2.0)
         pegin_txid = sidechain.claimpegin(bitcoin_txhex, txoutproof, claim_script)
         pegin_tx = sidechain.gettransaction(pegin_txid, True, True)
         assert_equal(len(pegin_tx["decoded"]["vout"]), 2)
         self.generate(sidechain, 1, sync_fun=sync_sidechain)
 
         self.log.info("claimpegin before enforcement, with validatepegin, above threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=2.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=2.0, feerate=2.0)
         pegin_txid = sidechain.claimpegin(bitcoin_txhex, txoutproof, claim_script)
         pegin_tx = sidechain.gettransaction(pegin_txid, True, True)
         assert_equal(len(pegin_tx["decoded"]["vout"]), 2)
         self.generate(sidechain, 1, sync_fun=sync_sidechain)
 
         self.log.info("claimpegin before enforcement, without validatepegin, below threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=1.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, amount=1.0, feerate=2.0)
         pegin_txid = sidechain2.claimpegin(bitcoin_txhex, txoutproof, claim_script)
         pegin_tx = sidechain2.gettransaction(pegin_txid, True, True)
         assert_equal(len(pegin_tx["decoded"]["vout"]), 2)
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
         self.log.info("claimpegin before enforcement, without validatepegin, above threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=2.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, amount=2.0, feerate=2.0)
         pegin_txid = sidechain2.claimpegin(bitcoin_txhex, txoutproof, claim_script)
         pegin_tx = sidechain2.gettransaction(pegin_txid, True, True)
         assert_equal(len(pegin_tx["decoded"]["vout"]), 2)
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
         self.log.info("check min pegin amount before subsidy height")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=0.5)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=0.5)
         assert_raises_rpc_error(
             -4,
             "Pegin amount (0.50) is lower than the minimum pegin amount for this chain (1.00).",
@@ -376,7 +380,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
 
         # blinded pegins
         self.log.info("blinded pegin below threshold, with validatepegin, subsidy too low")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=1.0, feerate=1.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, subsidy = parent_pegin(parent, sidechain, amount=1.0, feerate=1.0)
         addr = sidechain.getnewaddress(address_type="blech32")
         utxo = sidechain.listunspent()[0]
         changeaddr = sidechain.getrawchangeaddress(address_type="blech32")
@@ -394,7 +398,6 @@ class PeginSubsidyTest(BitcoinTestFramework):
             },
         ]
         fee = Decimal("0.00000363")
-        subsidy = -parent.gettransaction(txid)["fee"] if self.options.parent_bitcoin else -parent.gettransaction(txid)["fee"]["bitcoin"]
         subsidy -= Decimal("0.00000001")
         outputs = [
             {addr: Decimal("1.0") - fee - subsidy},
@@ -421,7 +424,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
         )
 
         self.log.info("blinded pegin above threshold, with validatepegin")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=2.0, feerate=1.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=2.0, feerate=1.0)
         addr = sidechain.getnewaddress(address_type="blech32")
         utxo = sidechain.listunspent()[0]
         changeaddr = sidechain.getrawchangeaddress(address_type="blech32")
@@ -453,18 +456,17 @@ class PeginSubsidyTest(BitcoinTestFramework):
         # =======
 
         self.log.info("createrawpegin after enforcement, with validatepegin, below threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, parent_fee = parent_pegin(parent, sidechain)
         pegintx = sidechain.createrawpegin(bitcoin_txhex, txoutproof, claim_script)
         signed = sidechain.signrawtransactionwithwallet(pegintx["hex"])
         pegin_txid = sidechain.sendrawtransaction(signed["hex"])
         pegin_tx = sidechain.gettransaction(pegin_txid, True, True)
         assert_equal(len(pegin_tx["decoded"]["vout"]), 3)
-        vsize = pegin_tx["decoded"]["vsize"]
-        assert pegin_tx["decoded"]["vout"][1]["value"] * COIN >= DEFAULT_FEERATE * pegin_tx["decoded"]["vsize"]
+        assert_equal(pegin_tx["decoded"]["vout"][1]["value"], parent_fee)
         self.generate(sidechain, 1, sync_fun=sync_sidechain)
 
         self.log.info("createrawpegin after enforcement, with validatepegin, above threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=3.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=3.0, feerate=2.0)
         pegintx = sidechain.createrawpegin(bitcoin_txhex, txoutproof, claim_script)
         signed = sidechain.signrawtransactionwithwallet(pegintx["hex"])
         pegin_txid = sidechain.sendrawtransaction(signed["hex"])
@@ -474,7 +476,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
 
         self.log.info("createrawpegin after enforcement, without validatepegin, below threshold")
         feerate = 2.0
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, 1.0, feerate)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, parent_fee = parent_pegin(parent, sidechain2, 1.0, feerate)
         assert_raises_rpc_error(
             -8,
             "Bitcoin transaction fee rate must be supplied, because validatepegin is off and this pegin requires a burn subsidy.",
@@ -488,13 +490,13 @@ class PeginSubsidyTest(BitcoinTestFramework):
         signed = sidechain2.signrawtransactionwithwallet(pegintx["hex"])
         pegin_txid = sidechain2.sendrawtransaction(signed["hex"])
         pegin_tx = sidechain2.gettransaction(pegin_txid, True, True)
-        vsize = pegin_tx["decoded"]["vsize"]
         assert_equal(len(pegin_tx["decoded"]["vout"]), 3)
-        assert pegin_tx["decoded"]["vout"][1]["value"] * COIN >= feerate * vsize
+        # without validatepegin the subsidy value is calculated with the claim tx vsize
+        assert pegin_tx["decoded"]["vout"][1]["value"] >= parent_fee
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
         self.log.info("createrawpegin after enforcement, without validatepegin, above threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=2.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, amount=2.0, feerate=2.0)
         pegintx = sidechain2.createrawpegin(bitcoin_txhex, txoutproof, claim_script, feerate)
         signed = sidechain2.signrawtransactionwithwallet(pegintx["hex"])
         assert_equal(signed["complete"], True)
@@ -504,16 +506,16 @@ class PeginSubsidyTest(BitcoinTestFramework):
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
         self.log.info("claimpegin after enforcement, with validatepegin, below threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=1.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, parent_fee = parent_pegin(parent, sidechain, amount=1.0, feerate=2.0)
         pegin_txid = sidechain.claimpegin(bitcoin_txhex, txoutproof, claim_script)
         pegin_tx = sidechain.gettransaction(pegin_txid, True, True)
         vsize = pegin_tx["decoded"]["vsize"]
         assert_equal(len(pegin_tx["decoded"]["vout"]), 3)
-        assert pegin_tx["decoded"]["vout"][1]["value"] * COIN >= feerate * vsize
+        assert_equal(pegin_tx["decoded"]["vout"][1]["value"], parent_fee)
         self.generate(sidechain, 1, sync_fun=sync_sidechain)
 
         self.log.info("claimpegin after enforcement, with validatepegin, above threshold")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=2.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=2.0, feerate=2.0)
         pegin_txid = sidechain.claimpegin(bitcoin_txhex, txoutproof, claim_script)
         pegin_tx = sidechain.gettransaction(pegin_txid, True, True)
         assert_equal(len(pegin_tx["decoded"]["vout"]), 2)
@@ -521,7 +523,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
 
         self.log.info("claimpegin after enforcement, without validatepegin, below threshold")
         feerate = 2.0
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, 1.0, feerate)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, 1.0, feerate)
         # validatepegin off means fee rate must be supplied
         assert_raises_rpc_error(
             -8,
@@ -541,7 +543,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
 
         self.log.info("claimpegin after enforcement, without validatepegin, above threshold")
         feerate = 2.0
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, 2.0, feerate)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, 2.0, feerate)
         pegin_txid = sidechain2.claimpegin(bitcoin_txhex, txoutproof, claim_script, feerate)
         pegin_tx = sidechain2.gettransaction(pegin_txid, True, True)
         assert_equal(len(pegin_tx["decoded"]["vout"]), 2)
@@ -549,7 +551,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
 
         self.log.info("claimpegin after enforcement, without validatepegin, below threshold, with incorrect subsidy output")
         # should be accepted by sidechain2 but rejected by the node that is validating pegins
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=1.0, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, amount=1.0, feerate=2.0)
         # validatepegin off means fee rate must be supplied
         assert_raises_rpc_error(
             -8,
@@ -570,7 +572,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
         assert_equal(accept[0]["reject-reason"], "pegin-subsidy-too-low")
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=1.99999999, feerate=2.0)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, amount=1.99999999, feerate=2.0)
         # validatepegin off means fee rate must be supplied
         assert_raises_rpc_error(
             -8,
@@ -592,7 +594,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
         # sub 1sat/vb claim should be rejected
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=1, feerate=0.1)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, subsidy = parent_pegin(parent, sidechain, amount=1, feerate=0.1)
         assert_raises_rpc_error(
             -4,
             "Parent transaction must have a feerate of at least 1 sat/vb",
@@ -613,7 +615,6 @@ class PeginSubsidyTest(BitcoinTestFramework):
             },
         ]
         fee = Decimal("0.00000363")
-        subsidy = Decimal("0.00001194")
         outputs = [
             {addr: Decimal("1.0") - fee - subsidy},
             {"burn": subsidy},
@@ -631,8 +632,8 @@ class PeginSubsidyTest(BitcoinTestFramework):
 
         self.log.info("construct a multi-pegin tx, below threshold")
         feerate = 2.0
-        txid1, vout1, txoutproof1, bitcoin_txhex1, claim_script1 = parent_pegin(parent, sidechain, 0.5, feerate)
-        txid2, vout2, txoutproof2, bitcoin_txhex2, claim_script2 = parent_pegin(parent, sidechain, 1.0, feerate)
+        txid1, vout1, txoutproof1, bitcoin_txhex1, claim_script1, parent_fee1 = parent_pegin(parent, sidechain, 0.5, feerate)
+        txid2, vout2, txoutproof2, bitcoin_txhex2, claim_script2, parent_fee2 = parent_pegin(parent, sidechain, 1.0, feerate)
 
         addr1 = get_new_unconfidential_address(sidechain)
         addr2 = get_new_unconfidential_address(sidechain)
@@ -654,9 +655,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
             },
         ]
         fee = Decimal("0.00000363")
-        subsidy = -parent.gettransaction(txid1)["fee"] if self.options.parent_bitcoin else -parent.gettransaction(txid1)["fee"]["bitcoin"]
-        subsidy += -parent.gettransaction(txid2)["fee"] if self.options.parent_bitcoin else -parent.gettransaction(txid2)["fee"]["bitcoin"]
-        subsidy -= Decimal("0.00000001")
+        subsidy = parent_fee1 + parent_fee2 - Decimal("0.00000001")
         outputs = [
             {addr1: Decimal("0.5") - fee - subsidy},
             {addr2: 1.0},
@@ -686,8 +685,8 @@ class PeginSubsidyTest(BitcoinTestFramework):
         self.generate(sidechain2, 1, sync_fun=sync_sidechain)
 
         self.log.info("construct a multi-pegin tx, above threshold")
-        txid1, vout1, txoutproof1, bitcoin_txhex1, claim_script1 = parent_pegin(parent, sidechain, amount=0.5, feerate=1.0)
-        txid2, vout2, txoutproof2, bitcoin_txhex2, claim_script2 = parent_pegin(parent, sidechain, amount=1.5, feerate=2.0)
+        txid1, vout1, txoutproof1, bitcoin_txhex1, claim_script1, _ = parent_pegin(parent, sidechain, amount=0.5, feerate=1.0)
+        txid2, vout2, txoutproof2, bitcoin_txhex2, claim_script2, _ = parent_pegin(parent, sidechain, amount=1.5, feerate=2.0)
         addr1 = get_new_unconfidential_address(sidechain)
         addr2 = get_new_unconfidential_address(sidechain)
 
@@ -722,7 +721,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
 
         # minimum pegin amount is 1.0
         self.log.info("claimpegin below minimum pegin amount")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, amount=0.99999999)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount=0.99999999)
         assert_raises_rpc_error(
             -4,
             "Pegin amount (0.99999999) is lower than the minimum pegin amount for this chain (1.00).",
@@ -734,7 +733,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
 
         # check minimum pegin amount in mempool validation by constructing manually
         self.log.info("rawtransaction below minimum pegin amount")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=0.99999999)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, subsidy = parent_pegin(parent, sidechain2, amount=0.99999999)
         addr = sidechain2.getnewaddress()
         inputs = [
             {
@@ -746,7 +745,6 @@ class PeginSubsidyTest(BitcoinTestFramework):
             },
         ]
         fee = Decimal("0.00000363")
-        subsidy = Decimal("0.00001194")
         outputs = [
             {addr: Decimal("0.99999999") - fee - subsidy},
             {"burn": subsidy},
@@ -774,12 +772,12 @@ class PeginSubsidyTest(BitcoinTestFramework):
         # test various feerates
         self.log.info("claimpegin with validatepegin, below threshold, at various feerates")
         for feerate in [1.0, 1.5, 2.0, 2.3, 3.9, 4.6, 5.2, 6.1, 10.01, 20.7, 22.22, 24.18]:
-            txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain, 1.0, feerate)
+            txid, vout, txoutproof, bitcoin_txhex, claim_script, parent_fee = parent_pegin(parent, sidechain, 1.0, feerate)
             pegin_txid = sidechain.claimpegin(bitcoin_txhex, txoutproof, claim_script)
             pegin_tx = sidechain.gettransaction(pegin_txid, True, True)
             vsize = pegin_tx["decoded"]["vsize"]
             assert_equal(len(pegin_tx["decoded"]["vout"]), 3)
-            assert pegin_tx["decoded"]["vout"][1]["value"] * COIN >= feerate * vsize
+            assert_equal(pegin_tx["decoded"]["vout"][1]["value"], parent_fee)
             self.generate(sidechain, 1, sync_fun=sync_sidechain)
 
         # dust error
@@ -787,7 +785,8 @@ class PeginSubsidyTest(BitcoinTestFramework):
         self.stop_node(1, expected_stderr=self.expected_stderr)  # when running with bitcoind as parent node this stderr can occur
         self.start_node(1, extra_args=sidechain.extra_args + ["-peginminamount=0"])
         self.log.info("claimpegin dust error")
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=0.00000645)
+        amount = Decimal("0.00000546") if self.options.parent_bitcoin else Decimal("0.00000645")
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain, amount)
         assert_raises_rpc_error(
             -4,
             "Pegin transaction would create dust output. See the log for details.",
@@ -797,7 +796,7 @@ class PeginSubsidyTest(BitcoinTestFramework):
             claim_script,
         )
         # check dust mempool validation by constructing manually
-        txid, vout, txoutproof, bitcoin_txhex, claim_script = parent_pegin(parent, sidechain2, amount=0.00001570)
+        txid, vout, txoutproof, bitcoin_txhex, claim_script, _ = parent_pegin(parent, sidechain2, amount=0.00001570)
         addr = sidechain2.getnewaddress()
         inputs = [
             {
