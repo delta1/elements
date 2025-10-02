@@ -92,7 +92,7 @@ class ResendWalletTransactionsTest(BitcoinTestFramework):
         # ordering of child before parent.
         child_inputs = [{"txid": txid, "vout": 0}]
         utxo = node.gettxout(txid, 0) # ELEMENTS
-        child_txid = node.send(outputs=[{addr: utxo['value']}], inputs=child_inputs, subtract_fee_from_outputs=[0], replaceable=True)["txid"] # ELEMENTS FIXME: fix intermittent error "Transaction is not BIP 125 replaceable", changed from sendall
+        child_txid = node.send(outputs=[{addr: utxo['value']}], inputs=child_inputs, subtract_fee_from_outputs=[0], replaceable=True)["txid"] # walletrbf=0 by default in BitcoinTestFramework
         # Get the child tx's info for manual bumping
         child_tx_info = node.gettransaction(txid=child_txid, verbose=True)
         child_output_value = child_tx_info["decoded"]["vout"][0]["value"]
