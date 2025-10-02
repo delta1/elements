@@ -307,8 +307,7 @@ class WalletTaprootTest(BitcoinTestFramework):
         # Cleanup
         txid = rpc_online.sendall(recipients=[self.boring.getnewaddress()])["txid"]
         self.generatetoaddress(self.nodes[0], 1, self.boring.getnewaddress(), sync_fun=self.no_op)
-        print(txid)
-        # assert rpc_online.gettransaction(txid)["confirmations"] > 0 # ELEMENTS FIXME: investigate this with fixes to sendall
+        assert rpc_online.gettransaction(txid)["confirmations"] > 0
         rpc_online.unloadwallet()
 
     def do_test_psbt(self, comment, pattern, privmap, treefn, keys_pay, keys_change):
