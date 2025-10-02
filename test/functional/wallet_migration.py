@@ -337,7 +337,7 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_raises_rpc_error(-5, "Invalid or non-wallet transaction id", imports0.gettransaction, sent_watchonly_txid)
         assert_equal(len(imports0.listtransactions(include_watchonly=True)), 1)
         imports0.gettransaction(received_txid)
-        assert_equal(imports0.getbalance()['bitcoin'], spendable_bal)
+        assert_equal(imports0.getbalance(), spendable_bal)
 
         assert_equal("imports0_watchonly" in self.nodes[0].listwallets(), True)
         watchonly = self.nodes[0].get_wallet_rpc("imports0_watchonly")
@@ -352,7 +352,7 @@ class WalletMigrationTest(BitcoinTestFramework):
         assert_equal(received_sent_watchonly_tx_info["time"], received_sent_migrated_watchonly_tx_info["time"])
         assert_equal(received_sent_watchonly_tx_info["timereceived"], received_sent_migrated_watchonly_tx_info["timereceived"])
         watchonly.gettransaction(sent_watchonly_txid)
-        assert_equal(watchonly.getbalance()['bitcoin'], watchonly_bal)
+        assert_equal(watchonly.getbalance(), watchonly_bal)
         assert_raises_rpc_error(-5, "Invalid or non-wallet transaction id", watchonly.gettransaction, received_txid)
         assert_equal(len(watchonly.listtransactions(include_watchonly=True)), 3)
 
@@ -893,7 +893,7 @@ class WalletMigrationTest(BitcoinTestFramework):
         # TODO: Test the actual records in the wallet for these tests too. The behavior may be correct, but the data written may not be what we actually want
         self.test_basic()
         self.test_multisig()
-        # self.test_other_watchonly() # ELEMENTS FIXME
+        self.test_other_watchonly()
         self.test_no_privkeys()
         self.test_pk_coinbases()
         self.test_encrypted()
