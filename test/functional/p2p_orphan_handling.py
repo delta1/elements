@@ -32,6 +32,7 @@ from test_framework.wallet import (
     MiniWallet,
     MiniWalletMode,
 )
+from decimal import Decimal
 
 # Time to bump forward (using setmocktime) before waiting for the node to send getdata(tx) in response
 # to an inv(tx), in seconds. This delay includes all possible delays + 1, so it should only be used
@@ -177,7 +178,7 @@ class OrphanHandlingTest(BitcoinTestFramework):
         peer2 = node.add_p2p_connection(PeerTxRelayer())
 
         self.log.info("Test orphan handling when a nonsegwit parent is known to be invalid")
-        parent_low_fee_nonsegwit = self.wallet_nonsegwit.create_self_transfer(fee_rate=0)
+        parent_low_fee_nonsegwit = self.wallet_nonsegwit.create_self_transfer(fee_rate=Decimal(0.00000001))  # ELEMENTS: zero fee output not consensus valid
         assert_equal(parent_low_fee_nonsegwit["txid"], parent_low_fee_nonsegwit["tx"].getwtxid())
         parent_other = self.wallet_nonsegwit.create_self_transfer()
         child_nonsegwit = self.wallet_nonsegwit.create_self_transfer_multi(
@@ -200,7 +201,7 @@ class OrphanHandlingTest(BitcoinTestFramework):
         peer2.assert_never_requested(int(parent_low_fee_nonsegwit["txid"], 16))
 
         self.log.info("Test orphan handling when a segwit parent was invalid but may be retried with another witness")
-        parent_low_fee = self.wallet.create_self_transfer(fee_rate=0)
+        parent_low_fee = self.wallet.create_self_transfer(fee_rate=Decimal(0.00000001))  # ELEMENTS: zero fee output not consensus valid
         child_low_fee = self.wallet.create_self_transfer(utxo_to_spend=parent_low_fee["new_utxo"])
 
         # Relay the low fee parent. It should not be accepted.
@@ -369,14 +370,14 @@ class OrphanHandlingTest(BitcoinTestFramework):
         peer3 = node.add_p2p_connection(PeerTxRelayer())
 
         self.log.info("Test that an orphan with rejected parents, along with any descendants, cannot be retried with an alternate witness")
-        parent_low_fee_nonsegwit = self.wallet_nonsegwit.create_self_transfer(fee_rate=0)
+        parent_low_fee_nonsegwit = self.wallet_nonsegwit.create_self_transfer(fee_rate=Decimal(0.00000001)) # ELEMENTS: zero fee output not consensus valid
         assert_equal(parent_low_fee_nonsegwit["txid"], parent_low_fee_nonsegwit["tx"].getwtxid())
         child = self.wallet.create_self_transfer(utxo_to_spend=parent_low_fee_nonsegwit["new_utxo"])
         grandchild = self.wallet.create_self_transfer(utxo_to_spend=child["new_utxo"])
         assert child["txid"] != child["tx"].getwtxid()
         assert grandchild["txid"] != grandchild["tx"].getwtxid()
 
-        # Relay the parent. It should be rejected because it pays 0 fees.
+        # Relay the parent. It should be rejected because it pays too low fees.
         self.relay_transaction(peer1, parent_low_fee_nonsegwit["tx"])
 
         # Relay the child. It should be rejected for having missing parents, and this rejection is
@@ -405,11 +406,11 @@ class OrphanHandlingTest(BitcoinTestFramework):
         self.wallet = MiniWallet(self.nodes[0])
         self.generate(self.wallet, 160)
         self.test_arrival_timing_orphan()
-        # self.test_orphan_rejected_parents_exceptions() # ELEMENTS FIXME
+        self.test_orphan_rejected_parents_exceptions()
         self.test_orphan_multiple_parents()
         self.test_orphans_overlapping_parents()
         self.test_orphan_of_orphan()
-        # self.test_orphan_inherit_rejection() # ELEMENTS FIXME
+        self.test_orphan_inherit_rejection()
 
 
 if __name__ == '__main__':
