@@ -1789,13 +1789,18 @@ bool FillInputToWeight(CMutableTransaction& mtx, size_t nIn, int64_t target_weig
 bool CWallet::DummySignTx(CMutableTransaction &txNew, const std::vector<CTxOut> &txouts, const CCoinControl* coin_control) const
 {
     // Fill in dummy signatures for fee calculation.
-    int nIn = 0;
+    size_t nIn = 0;
     const bool can_grind_r = CanGrindR();
     for (const auto& txout : txouts)
     {
         CTxIn& txin = txNew.vin[nIn];
         // If weight was provided, fill the input to that weight
         if (coin_control && coin_control->HasInputWeight(txin.prevout)) {
+            // ELEMENTS: ensure input witness is large enough for rare case in bumpfee
+            if (txNew.witness.vtxinwit.size() <= nIn) {
+                txNew.witness.vtxinwit.resize(nIn + 1);
+            }
+            assert(txNew.witness.vtxinwit.size() > nIn);
             if (!FillInputToWeight(txNew, nIn, coin_control->GetInputWeight(txin.prevout))) {
                 return false;
             }

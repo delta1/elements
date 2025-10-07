@@ -1188,7 +1188,7 @@ static RPCHelpMan decodepsbt()
             result.pushKV("fallback_locktime", static_cast<uint64_t>(*psbtx.fallback_locktime));
         }
         result.pushKV("input_count", static_cast<uint64_t>(psbtx.inputs.size()));
-        result.pushKV("output_count", static_cast<uint64_t>(psbtx.inputs.size()));
+        result.pushKV("output_count", static_cast<uint64_t>(psbtx.outputs.size()));
         if (psbtx.m_tx_modifiable != std::nullopt) {
             result.pushKV("inputs_modifiable", psbtx.m_tx_modifiable->test(0));
             result.pushKV("outputs_modifiable", psbtx.m_tx_modifiable->test(1));

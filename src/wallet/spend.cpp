@@ -1869,6 +1869,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
                 }
 
                 // Error if this output is reduced to be below dust
+                txout.nValue = value;
                 if (IsDust(txout, wallet.chain().relayDustFee())) {
                     if (value < 0) {
                         return util::Error{_("The transaction amount is too small to pay the fee")};
@@ -1876,8 +1877,6 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
                         return util::Error{_("The transaction amount is too small to send after the fee has been deducted")};
                     }
                 }
-
-                txout.nValue = value;
             }
             ++i;
         }

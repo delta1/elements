@@ -309,6 +309,9 @@ Result CreateRateBumpTransaction(CWallet& wallet, const uint256& txid, const CCo
         }
         temp_mtx.vout = txouts;
         temp_mtx.witness.vtxoutwit.clear(); // ELEMENTS
+        for (auto& inwit : temp_mtx.witness.vtxinwit) {
+            inwit.scriptWitness.SetNull();
+        }
         const int64_t maxTxSize{CalculateMaximumSignedTxSize(CTransaction(temp_mtx), &wallet, &new_coin_control).vsize};
         Result res = CheckFeeRate(wallet, temp_mtx, *new_coin_control.m_feerate, maxTxSize, old_fee, errors);
         if (res != Result::OK) {

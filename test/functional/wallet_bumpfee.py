@@ -284,18 +284,10 @@ class BumpFeeTest(BitcoinTestFramework):
         self.generate(self.nodes[0], 1)
         utxos = wallet.listunspent()
 
-        # ELEMENTS FIXME: use createrawtransaction until sendall is fixed
-        # tx = wallet.sendall(recipients=[wallet.getnewaddress()], fee_rate=2, options={"inputs": [utxos[0]]})
-        fee = Decimal("0.00001000")
-        tx = wallet.createrawtransaction([{"txid": utxos[0]["txid"], "vout": utxos[0]["vout"]}], [{wallet.getnewaddress(): utxos[0]["amount"] - fee}, {"fee": fee}])
-        signed = wallet.signrawtransactionwithwallet(tx)
-        assert signed["complete"]
-        txid = wallet.sendrawtransaction(signed["hex"])
-        tx = {"txid": txid}
+        tx = wallet.sendall(recipients=[wallet.getnewaddress()], fee_rate=2, options={"inputs": [utxos[0]]})
 
         # Set the only output with a crazy high feerate as change, should fail as the output would be dust
-        # ELEMENTS FIXME
-        # assert_raises_rpc_error(-4, "The transaction amount is too small to pay the fee", wallet.bumpfee, txid=tx["txid"], options={"fee_rate": 1100, "original_change_index": 0})
+        assert_raises_rpc_error(-4, "The transaction amount is too small to pay the fee", wallet.bumpfee, txid=tx["txid"], options={"fee_rate": 1100, "original_change_index": 0})
 
         # Specify single output as change successfully
         bumped = wallet.bumpfee(txid=tx["txid"], options={"fee_rate": 11, "original_change_index": 0}) # ELEMENTS
@@ -353,7 +345,7 @@ def test_simple_bumpfee_succeeds(self, mode, rbf_node, peer_node, dest_address):
     # if this is a new_outputs test, check that outputs were indeed replaced
     if mode == "new_outputs":
         assert len(bumpedwtx["details"]) == 1
-        # assert bumpedwtx["details"][0]["address"] == new_address # ELEMENTS FIXME: address differs
+        assert bumpedwtx["details"][0]["address"] == new_address
     self.clear_mempool()
 
 
@@ -410,7 +402,6 @@ def test_notmine_bumpfee(self, rbf_node, peer_node, dest_address):
     entry = rbf_node.getmempoolentry(rbfid)
     old_fee = entry["fees"]["base"]
     old_feerate = int(old_fee / entry["vsize"] * Decimal(1e8))
-    print(old_feerate) # ELEMENTS FIXME lint
     assert_raises_rpc_error(-4, "Transaction contains inputs that don't belong to this wallet",
                             rbf_node.bumpfee, rbfid)
 
@@ -421,13 +412,12 @@ def test_notmine_bumpfee(self, rbf_node, peer_node, dest_address):
         assert res[0]["allowed"]
         assert_greater_than(res[0]["fees"]["base"], old_fee)
 
-    # ELEMENTS FIXME: insufficient funds
-    # self.log.info("Test that psbtbumpfee works for non-owned inputs")
-    # psbt = rbf_node.psbtbumpfee(txid=rbfid)
-    # finish_psbtbumpfee(psbt["psbt"])
+    self.log.info("Test that psbtbumpfee works for non-owned inputs")
+    psbt = rbf_node.psbtbumpfee(txid=rbfid)
+    finish_psbtbumpfee(psbt["psbt"])
 
-    # psbt = rbf_node.psbtbumpfee(txid=rbfid, fee_rate=old_feerate + 10)
-    # finish_psbtbumpfee(psbt["psbt"])
+    psbt = rbf_node.psbtbumpfee(txid=rbfid, fee_rate=old_feerate + 10)
+    finish_psbtbumpfee(psbt["psbt"])
 
     self.clear_mempool()
 
@@ -507,7 +497,7 @@ def test_small_output_with_feerate_succeeds(self, rbf_node, dest_address):
         tx_fee = rbfid_new_details["fee"]
 
         # Total value from input not going to destination
-        if tx_fee > Decimal('0.00040000'): # ELEMENTS FIXME: this was 0.00050000 in bitcoin (since spend_one_input leaves 0.0005 for the fee)
+        if tx_fee > Decimal('0.00050000'):
             break
 
     # input(s) have been added
@@ -837,20 +827,19 @@ def test_feerate_checks_replaced_outputs(self, rbf_node, peer_node):
     # Calculate the minimum feerate required for the bump to work.
     # Since the bumped tx will replace all of the outputs with a single output, we can estimate that its size will 31 * (len(outputs) - 1) bytes smaller
     tx_size = tx_details["decoded"]["vsize"]
-    est_bumped_size = tx_size - (len(tx_details["decoded"]["vout"]) - 1) * 31
+    est_bumped_size = tx_size - (len(tx_details["decoded"]["vout"]) - 1) * 66 # ELEMENTS: our outputs are larger
     inc_fee_rate = max(rbf_node.getmempoolinfo()["incrementalrelayfee"], Decimal(0.00005000)) # Wallet has a fixed incremental relay fee of 5 sat/vb
     # RPC gives us fee as negative
     min_fee = (-tx_details["fee"]["bitcoin"] + get_fee(est_bumped_size, inc_fee_rate)) * Decimal(1e8)
     min_fee_rate = (min_fee / est_bumped_size).quantize(Decimal("1.000"))
-    print(min_fee_rate) # ELEMENTS FIXME: lint
 
     # Attempt to bumpfee and replace all outputs with a single one using a feerate slightly less than the minimum
     new_outputs = [{rbf_node.getnewaddress(address_type="bech32"): 49}]
-    print(len(new_outputs)) # ELEMENTS FIXME: lint
-    # assert_raises_rpc_error(-8, "Insufficient total fee", rbf_node.bumpfee, tx_res["txid"], {"fee_rate": min_fee_rate - 1, "outputs": new_outputs}) # ELEMENTS FIXME
+    assert_raises_rpc_error(-8, "Insufficient total fee", rbf_node.bumpfee, tx_res["txid"], {"fee_rate": min_fee_rate - 1, "outputs": new_outputs})
 
     # Bumpfee and replace all outputs with a single one using the minimum feerate
-    # rbf_node.bumpfee(tx_res["txid"], {"fee_rate": min_fee_rate, "outputs": new_outputs}) # ELEMENTS FIXME
+    min_fee_rate += 4 # ELEMENTS: additional offset
+    rbf_node.bumpfee(tx_res["txid"], {"fee_rate": min_fee_rate, "outputs": new_outputs})
     self.clear_mempool()
 
 
