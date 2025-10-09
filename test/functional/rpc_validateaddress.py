@@ -38,8 +38,8 @@ INVALID_DATA = [
     ),
     (
         "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sL5k7",
-        "Invalid character or mixed case",  # tb1, Mixed case
-        [58], # ELEMENTS
+        "Invalid or unsupported Segwit (Bech32) or Base58 encoding.",  # tb1, Mixed case # ELEMENTS
+        [],
     ),
     (
         "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3t4",
@@ -111,8 +111,8 @@ INVALID_DATA = [
     ),
     (
         "tb1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vq47Zagq",
-        "Invalid character or mixed case",  # tb1, Mixed case
-        [58], # ELEMENTS
+        "Invalid or unsupported Segwit (Bech32) or Base58 encoding.",  # tb1, Mixed case
+        [],
     ),
     (
         "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7v07qwwzcrf",
