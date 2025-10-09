@@ -21,10 +21,11 @@ class WalletChangeAddressTest(BitcoinTestFramework):
         self.setup_clean_chain = True
         self.num_nodes = 3
         # discardfee is used to make change outputs less likely in the change_pos test
+        # ELEMENTS: remove discardfee since we always create a change output to reduce
         self.extra_args = [
             [],
-            ["-discardfee=1", "-maxtxfee=100.0"], # ELEMENTS FIXME: high maxtxfee to work around `send` calls at end of test
-            ["-avoidpartialspends", "-discardfee=1", "-maxtxfee=100.0"]
+            [],
+            ["-avoidpartialspends"]
         ]
 
     def skip_test_if_missing_module(self):
@@ -34,20 +35,20 @@ class WalletChangeAddressTest(BitcoinTestFramework):
         change_index = None
         for vout in tx["vout"]:
             # ELEMENTS: skip fee outputs
-            if vout["scriptPubKey"]["type"] == "fee":
+            if "address" not in vout["scriptPubKey"]:
                 continue
             info = node.getaddressinfo(vout["scriptPubKey"]["address"])
             if (info["ismine"] and info["ischange"]):
                 change_index = int(re.findall(r'\d+', info["hdkeypath"])[-1])
                 break
-        print(change_index) # ELEMENTS FIXME printing for 'unused' lint
-        # assert_equal(change_index, index) # ELEMENTS FIXME
+        # assert_equal(change_index, index) # ELEMENTS: our transaction construction differs too much for this invariant
+        self.log.debug(change_index) # ELEMENTS: lint
 
     def assert_change_pos(self, wallet, tx, pos):
         change_pos = None
         for index, output in enumerate(tx["vout"]):
             # ELEMENTS: skip fee outputs
-            if output["scriptPubKey"]["type"] == "fee":
+            if "address" not in output["scriptPubKey"]:
                 continue
             info = wallet.getaddressinfo(output["scriptPubKey"]["address"])
             if (info["ismine"] and info["ischange"]):
@@ -99,7 +100,7 @@ class WalletChangeAddressTest(BitcoinTestFramework):
         node = self.nodes[2]
         res = w2.send([{sendTo1: "1.0"}, {sendTo2: "1.0"}, {sendTo3: "0.9999"}], options={"change_position": 0})
         tx = node.getrawtransaction(res["txid"], True)
-        # self.assert_change_pos(w2, tx, 0) # ELEMENTS FIXME
+        self.assert_change_pos(w2, tx, 0)
 
         # The default wallet will internally create a tx without change first,
         # then create a second candidate using APS that requires a change output.
@@ -109,7 +110,7 @@ class WalletChangeAddressTest(BitcoinTestFramework):
         tx = node.getrawtransaction(res["txid"], True)
         # If the wallet ignores the user's change_position there is still a 25%
         # that the random change position passes the test
-        # self.assert_change_pos(w1, tx, 0) # ELEMENTS FIXME
+        self.assert_change_pos(w1, tx, 0)
 
 if __name__ == '__main__':
     WalletChangeAddressTest().main()
