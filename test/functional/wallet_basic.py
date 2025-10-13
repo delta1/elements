@@ -775,30 +775,28 @@ class WalletTest(BitcoinTestFramework):
         # spend confirmed UTXO to ourselves
         zeroconf_wallet.sendall(recipients=[zeroconf_wallet.getnewaddress()])
         utxos = zeroconf_wallet.listunspent(minconf=0)
-        # ELEMENTS: FIXME
-        # assert_equal(len(utxos), 1)
-        # assert_equal(utxos[0]['confirmations'], 0)
-        # # accounts for untrusted pending balance
-        # bal = zeroconf_wallet.getbalances()
-        # print(bal)
-        # assert_equal(bal['mine']['trusted'], 0)
-        # assert_equal(bal['mine']['untrusted_pending'], utxos[0]['amount'])
+        assert_equal(len(utxos), 1)
+        assert_equal(utxos[0]['confirmations'], 0)
+        # accounts for untrusted pending balance
+        bal = zeroconf_wallet.getbalances()
+        assert_equal(bal['mine']['trusted']['bitcoin'], 0)
+        assert_equal(bal['mine']['untrusted_pending']['bitcoin'], utxos[0]['amount'])
 
-        # # spending an unconfirmed UTXO sent to ourselves should fail
-        # assert_raises_rpc_error(-6, "Insufficient funds", zeroconf_wallet.sendtoaddress, zeroconf_wallet.getnewaddress(), Decimal('0.5'))
+        # spending an unconfirmed UTXO sent to ourselves should fail
+        assert_raises_rpc_error(-6, "Insufficient funds", zeroconf_wallet.sendtoaddress, zeroconf_wallet.getnewaddress(), Decimal('0.5'))
 
-        # # check that it works again with -spendzeroconfchange set (=default)
-        # self.restart_node(0, ["-spendzeroconfchange=1"])
-        # zeroconf_wallet = self.nodes[0].get_wallet_rpc("zeroconf")
-        # utxos = zeroconf_wallet.listunspent(minconf=0)
-        # assert_equal(len(utxos), 1)
-        # assert_equal(utxos[0]['confirmations'], 0)
-        # # accounts for trusted balance
-        # bal = zeroconf_wallet.getbalances()
-        # assert_equal(bal['mine']['trusted'], utxos[0]['amount'])
-        # assert_equal(bal['mine']['untrusted_pending'], 0)
+        # check that it works again with -spendzeroconfchange set (=default)
+        self.restart_node(0, ["-spendzeroconfchange=1"])
+        zeroconf_wallet = self.nodes[0].get_wallet_rpc("zeroconf")
+        utxos = zeroconf_wallet.listunspent(minconf=0)
+        assert_equal(len(utxos), 1)
+        assert_equal(utxos[0]['confirmations'], 0)
+        # accounts for trusted balance
+        bal = zeroconf_wallet.getbalances()
+        assert_equal(bal['mine']['trusted']['bitcoin'], utxos[0]['amount'])
+        assert_equal(bal['mine']['untrusted_pending']['bitcoin'], 0)
 
-        # zeroconf_wallet.sendtoaddress(zeroconf_wallet.getnewaddress(), Decimal('0.5'))
+        zeroconf_wallet.sendtoaddress(zeroconf_wallet.getnewaddress(), Decimal('0.5'))
 
         self.test_chain_listunspent()
 
