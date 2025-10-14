@@ -378,7 +378,7 @@ class WalletTaprootTest(BitcoinTestFramework):
             assert psbt_online.gettransaction(txid)['confirmations'] > 0
 
         # Cleanup
-        psbt = psbt_online.sendall(recipients=[self.boring.getnewaddress()], psbt=True)["psbt"]
+        psbt = psbt_online.sendall(recipients=[self.boring.getnewaddress()], psbt=True, estimate_mode='unset')["psbt"]
         res = psbt_offline.walletprocesspsbt(psbt=psbt, finalize=False)
         rawtx = self.nodes[0].finalizepsbt(res['psbt'])['hex']
         txid = self.nodes[0].sendrawtransaction(rawtx)
@@ -392,12 +392,11 @@ class WalletTaprootTest(BitcoinTestFramework):
         keys = random.sample(KEYS, nkeys * 4)
         self.do_test_addr(comment, pattern, privmap, treefn, keys[0:nkeys])
         self.do_test_sendtoaddress(comment, pattern, privmap, treefn, keys[0:nkeys], keys[nkeys:2*nkeys])
-        # self.do_test_psbt(comment, pattern, privmap, treefn, keys[2*nkeys:3*nkeys], keys[3*nkeys:4*nkeys]) # ELEMENTS FIXME: TX decode failed Output asset is required in PSET: iostream error
+        self.do_test_psbt(comment, pattern, privmap, treefn, keys[2*nkeys:3*nkeys], keys[3*nkeys:4*nkeys])
 
     def run_test(self):
         self.nodes[0].createwallet(wallet_name="boring")
         self.boring = self.nodes[0].get_wallet_rpc("boring")
-
         self.log.info("Mining blocks...")
         gen_addr = self.boring.getnewaddress()
         self.generatetoaddress(self.nodes[0], 101, gen_addr, sync_fun=self.no_op)
