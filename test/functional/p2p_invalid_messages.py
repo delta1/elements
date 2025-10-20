@@ -75,7 +75,8 @@ class InvalidMessagesTest(BitcoinTestFramework):
         self.test_oversized_inv_msg()
         self.test_oversized_getdata_msg()
         self.test_oversized_headers_msg()
-        self.test_invalid_pow_headers_msg()
+        # ELEMENTS no PoW headers
+        # self.test_invalid_pow_headers_msg()
         self.test_noncontinuous_headers_msg()
         self.test_resource_exhaustion()
 
@@ -137,7 +138,7 @@ class InvalidMessagesTest(BitcoinTestFramework):
     def test_size(self):
         self.log.info("Test message with oversized payload disconnects peer")
         conn = self.nodes[0].add_p2p_connection(P2PDataStore())
-        with self.nodes[0].assert_debug_log(['Header error: Size too large (badmsg, 4000001 bytes)']):
+        with self.nodes[0].assert_debug_log(['Header error: Size too large (badmsg, 16000001 bytes)']):
             msg = msg_unrecognized(str_data="d" * (VALID_DATA_LIMIT + 1))
             msg = conn.build_message(msg)
             conn.send_raw_message(msg)

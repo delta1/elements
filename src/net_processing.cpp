@@ -2491,12 +2491,6 @@ bool PeerManagerImpl::CheckHeadersPoW(const std::vector<CBlockHeader>& headers, 
         Misbehaving(peer, 100, "header with invalid proof of work");
         return false;
     }
-
-    // Are these headers connected to each other?
-    if (!CheckHeadersAreContinuous(headers)) {
-        Misbehaving(peer, 20, "non-continuous headers sequence");
-        return false;
-    }
     return true;
 }
 
@@ -2880,6 +2874,11 @@ void PeerManagerImpl::ProcessHeadersMessage(CNode& pfrom, Peer& peer,
         // just return. (Note that even if a header is announced via compact
         // block, the header itself should be valid, so this type of error can
         // always be punished.)
+        return;
+    }
+    // Check that headers are connected to each other in a continuous sequence
+    if(!CheckHeadersAreContinuous(headers)) {
+        Misbehaving(peer, 20, "non-continuous headers sequence");
         return;
     }
 
