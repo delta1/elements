@@ -80,7 +80,7 @@ DESCS_PRIV = [
         "sequence": 2,
         "locktime": None,
         "sigs_count": 3,
-        "stack_size": 4,
+        "stack_size": 5,
         "sha256_preimages": {
             "61e33e9dbfefc45f6a194187684d278f789fd4d5e207a357e79971b6519a8b12": "e8774f330f5f330c23e8bbefc5595cb87009ddb7ac3b8deaaa8e9e41702d919c"
         },
@@ -292,38 +292,30 @@ class WalletMiniscriptTest(BitcoinTestFramework):
             [{dest_addr: 0.009}, {"fee": 0.001}], # ELEMENTS
             lt,
         )
-        print(len(psbt)) # ELEMENTS FIXME: printing for lint only
-        print((sigs_count, stack_size, sha256_preimages))
 
-        # ELEMENTS FIXME: psbt decode
-        # self.log.info("Signing it and checking the satisfaction.")
-        # if sha256_preimages is not None:
-        #     psbt = PSBT.from_base64(psbt)
-        #     for (h, preimage) in sha256_preimages.items():
-        #         k = PSBT_IN_SHA256.to_bytes(1, "big") + bytes.fromhex(h)
-        #         psbt.i[0].map[k] = bytes.fromhex(preimage)
-        #     psbt = psbt.to_base64()
-        # res = self.ms_sig_wallet.walletprocesspsbt(psbt=psbt, finalize=False)
-        # psbtin = self.nodes[0].rpc.decodepsbt(res["psbt"])["inputs"][0]
-        # sigs_field_name = "taproot_script_path_sigs" if is_taproot else "partial_signatures"
-        # assert len(psbtin[sigs_field_name]) == sigs_count
-        # res = self.ms_sig_wallet.finalizepsbt(res["psbt"])
-        # assert res["complete"] == (stack_size is not None)
+        self.log.info("Signing it and checking the satisfaction.")
+        # ELEMENTS pset no version 0 PSBT_GLOBAL_UNSIGNED_TX
+        res = self.ms_sig_wallet.walletprocesspsbt(psbt=psbt, finalize=False)
+        psbtin = self.nodes[0].rpc.decodepsbt(res["psbt"])["inputs"][0]
+        sigs_field_name = "taproot_script_path_sigs" if is_taproot else "partial_signatures"
+        assert len(psbtin[sigs_field_name]) == sigs_count
+        res = self.ms_sig_wallet.finalizepsbt(res["psbt"])
+        assert res["complete"] == (stack_size is not None)
 
-        # if stack_size is not None:
-        #     txin = self.nodes[0].rpc.decoderawtransaction(res["hex"])["vin"][0]
-        #     assert len(txin["txinwitness"]) == stack_size, txin["txinwitness"]
-        #     self.log.info("Broadcasting the transaction.")
-        #     # If necessary, satisfy a relative timelock
-        #     if sequence is not None:
-        #         self.funder.generatetoaddress(sequence, self.funder.getnewaddress())
-        #     # If necessary, satisfy an absolute timelock
-        #     height = self.funder.getblockcount()
-        #     if locktime is not None and height < locktime:
-        #         self.funder.generatetoaddress(
-        #             locktime - height, self.funder.getnewaddress()
-        #         )
-        #     self.ms_sig_wallet.sendrawtransaction(res["hex"])
+        if stack_size is not None:
+            txin = self.nodes[0].rpc.decoderawtransaction(res["hex"])["vin"][0]
+            assert len(txin["txinwitness"]) == stack_size, txin["txinwitness"]
+            self.log.info("Broadcasting the transaction.")
+            # If necessary, satisfy a relative timelock
+            if sequence is not None:
+                self.funder.generatetoaddress(sequence, self.funder.getnewaddress())
+            # If necessary, satisfy an absolute timelock
+            height = self.funder.getblockcount()
+            if locktime is not None and height < locktime:
+                self.funder.generatetoaddress(
+                    locktime - height, self.funder.getnewaddress()
+                )
+            self.ms_sig_wallet.sendrawtransaction(res["hex"])
 
     def run_test(self):
         self.log.info("Making a descriptor wallet")
