@@ -93,8 +93,6 @@ EXTENDED_SCRIPTS = [
     'feature_trim_headers.py',
     'wallet_elements_regression_fundrawtransaction.py --legacy-wallet', # ELEMENTS FIXME
     'wallet_pruning.py --legacy-wallet',
-    'wallet_transactiontime_rescan.py --descriptors', # ELEMENTS FIXME: move back to base scripts
-    'wallet_transactiontime_rescan.py --legacy-wallet', # ELEMENTS FIXME: move back to base scripts
 ]
 
 BASE_SCRIPTS = [
@@ -225,6 +223,8 @@ BASE_SCRIPTS = [
     'wallet_txn_doublespend.py --mineblock',
     'tool_wallet.py --legacy-wallet',
     'tool_wallet.py --descriptors',
+    'wallet_transactiontime_rescan.py --descriptors',
+    'wallet_transactiontime_rescan.py --legacy-wallet',
     # 'tool_signet_miner.py --legacy-wallet', # ELEMENTS FIXME: signet mining is not needed, but this test should still work
     # 'tool_signet_miner.py --descriptors', # ELEMENTS FIXME: signet mining is not needed, but this test should still work
     'wallet_txn_clone.py',
