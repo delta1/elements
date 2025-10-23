@@ -1466,7 +1466,7 @@ RPCHelpMan sendall()
             PreventOutdatedOptions(options);
 
 
-            std::set<std::string> addresses_without_amount;
+            std::set<CTxDestination> addresses_without_amount; // ELEMENTS: track destination instead to eventually support blinding
             UniValue recipient_key_value_pairs(UniValue::VARR);
             const UniValue& recipients{request.params[0]};
             for (unsigned int i = 0; i < recipients.size(); ++i) {
@@ -1475,7 +1475,7 @@ RPCHelpMan sendall()
                     UniValue rkvp(UniValue::VOBJ);
                     rkvp.pushKV(recipient.get_str(), 0);
                     recipient_key_value_pairs.push_back(rkvp);
-                    addresses_without_amount.insert(recipient.get_str());
+                    addresses_without_amount.insert(DecodeDestination(recipient.get_str()));
                 } else {
                     recipient_key_value_pairs.push_back(recipient);
                 }
@@ -1600,10 +1600,10 @@ RPCHelpMan sendall()
                 CTxDestination dest;
                 ExtractDestination(out.scriptPubKey, dest);
                 std::string addr{EncodeDestination(dest)};
-                if (addresses_without_amount.count(addr) > 0) {
+                if (addresses_without_amount.count(dest) > 0) {
                     out.nValue = per_output_without_amount;
                     if (!gave_remaining_to_first) {
-                        out.nValue.SetToAmount(out.nValue.GetAmount() + CAmount(remainder % addresses_without_amount.size())); // ELEMENTS FIXME: is it fine to call GetAmount() here? Is the unblinded value always available since it's in our wallet?
+                        out.nValue.SetToAmount(out.nValue.GetAmount() + CAmount(remainder % addresses_without_amount.size()));
                         gave_remaining_to_first = true;
                     }
                     if (IsDust(out, pwallet->chain().relayDustFee())) {

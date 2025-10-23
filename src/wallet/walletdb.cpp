@@ -1045,6 +1045,34 @@ static DBErrors LoadDescriptorWalletRecords(CWallet* pwallet, DatabaseBatch& bat
         return result;
     });
 
+    // ELEMENTS
+    // blindingderivationkey
+    LoadRecords(pwallet, batch, "blindingderivationkey",
+        [] (CWallet* pwallet, DataStream& key, CDataStream& value, std::string& err) {
+        if (pwallet->blinding_derivation_key.IsNull()) {
+            uint256 blinding_derivation_key;
+            value >> blinding_derivation_key;
+            pwallet->blinding_derivation_key = blinding_derivation_key;
+        }
+        return DBErrors::LOAD_OK;
+    });
+
+    // specificblindingkey
+    LoadRecords(pwallet, batch, "specificblindingkey",
+        [] (CWallet* pwallet, DataStream& key, CDataStream& value, std::string& err) {
+        uint160 scriptid;
+        key >> scriptid;
+        uint256 blinding_key;
+        value >> blinding_key;
+        LOCK(pwallet->cs_wallet);
+        if (!pwallet->LoadSpecificBlindingKey(CScriptID(scriptid), blinding_key)) {
+            pwallet->WalletLogPrintf("Error reading wallet database: LoadSpecificBlindingKey failed\n");
+            return DBErrors::LOAD_FAIL;
+        }
+        return DBErrors::LOAD_OK;
+    });
+    // END ELEMENTS
+
     if (desc_res.m_result <= DBErrors::NONCRITICAL_ERROR) {
         // Only log if there are no critical errors
         pwallet->WalletLogPrintf("Descriptors: %u, Descriptor Keys: %u plaintext, %u encrypted, %u total.\n",

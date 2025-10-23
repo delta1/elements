@@ -74,7 +74,7 @@ static RPCHelpMan sendrawtransaction()
 
             const uint256& parent_blockhash = Params().ParentGenesisBlockHash();
             for (const auto& out : mtx.vout) {
-                if(((out.scriptPubKey.IsUnspendableNotFee() && !out.scriptPubKey.IsPegoutScript(parent_blockhash)) || !out.scriptPubKey.HasValidOps()) && out.nValue.GetAmount() > max_burn_amount) {
+                if(((out.scriptPubKey.IsUnspendableNotFee() && !out.scriptPubKey.IsPegoutScript(parent_blockhash)) || !out.scriptPubKey.HasValidOps()) && out.nValue.IsExplicit() && out.nValue.GetAmount() > max_burn_amount) {
                     throw JSONRPCTransactionError(TransactionError::MAX_BURN_EXCEEDED);
                 }
             }
