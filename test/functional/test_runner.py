@@ -178,6 +178,7 @@ BASE_SCRIPTS = [
     'rpc_bind.py --ipv6',
     'rpc_bind.py --nonloopback',
     'p2p_headers_sync_with_minchainwork.py',
+    'p2p_headers_presync.py',
     'p2p_feefilter.py',
     # ELEMENTS: no transitions in Elements
     # 'feature_csv_activation.py',

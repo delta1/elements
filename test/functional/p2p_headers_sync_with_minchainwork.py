@@ -4,22 +4,14 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test that we reject low difficulty headers to prevent our block tree from filling up with useless bloat"""
 
+import time
+
 from test_framework.test_framework import BitcoinTestFramework
 
 from test_framework.p2p import (
+    CBlockHeader,
     P2PInterface,
 )
-
-from test_framework.messages import (
-    msg_headers,
-)
-
-from test_framework.blocktools import (
-    NORMAL_GBT_REQUEST_PARAMS,
-    create_block,
-)
-
-# from test_framework.util import assert_equal
 
 NODE1_BLOCKS_REQUIRED = 15
 NODE2_BLOCKS_REQUIRED = 2047
@@ -97,46 +89,15 @@ class RejectLowDifficultyHeadersTest(BitcoinTestFramework):
         assert len(self.nodes[2].getchaintips()) == 1
 
         self.log.info("Generate long chain for node0/node1")
-        self.generatetoaddress(self.nodes[0], NODE2_BLOCKS_REQUIRED-self.nodes[0].getblockcount(), address, sync_fun=self.no_op)
+        self.generatetoaddress(self.nodes[0], NODE1_BLOCKS_REQUIRED-self.nodes[0].getblockcount(), address, sync_fun=self.no_op)
         self.log.info("Check that node3 accepted these headers as well")
-        # check_node3_chaintips(2, self.nodes[0].getbestblockhash(), NODE1_BLOCKS_REQUIRED) # ELEMENTS FIXME: height is 2047 and branchlen is 2042
+        check_node3_chaintips(2, self.nodes[0].getbestblockhash(), NODE1_BLOCKS_REQUIRED)
 
         self.log.info("Generate long chain for node0/node1/node3")
         self.generatetoaddress(self.nodes[0], NODE2_BLOCKS_REQUIRED-self.nodes[0].getblockcount(), address, sync_fun=self.no_op)
 
         self.log.info("Verify that node2 and node3 will sync the chain when it gets long enough")
         self.sync_blocks()
-
-    def test_peerinfo_includes_headers_presync_height(self):
-        self.log.info("Test that getpeerinfo() includes headers presync height")
-
-        # Disconnect network, so that we can find our own peer connection more
-        # easily
-        self.disconnect_all()
-
-        p2p = self.nodes[0].add_p2p_connection(P2PInterface())
-        node = self.nodes[0]
-
-        # Ensure we have a long chain already
-        current_height = self.nodes[0].getblockcount()
-        if (current_height < 3000):
-            self.generatetoaddress(node, 3000-current_height, address, sync_fun=self.no_op)
-
-        # Send a group of 2000 headers, forking from genesis.
-        new_blocks = []
-        hashPrevBlock = int(node.getblockhash(0), 16)
-        for i in range(2000):
-            block = create_block(hashprev = hashPrevBlock, tmpl=node.getblocktemplate(NORMAL_GBT_REQUEST_PARAMS))
-            block.solve()
-            new_blocks.append(block)
-            hashPrevBlock = block.sha256
-
-        headers_message = msg_headers(headers=new_blocks)
-        p2p.send_and_ping(headers_message)
-
-        # getpeerinfo should show a sync in progress
-        # ELEMENTS FIXME
-        # assert_equal(node.getpeerinfo()[0]['presynced_headers'], 2000)
 
     def test_large_reorgs_can_succeed(self):
         self.log.info("Test that a 2000+ block reorg, starting from a point that is more than 2000 blocks before a locator entry, can succeed")
@@ -167,12 +128,11 @@ class RejectLowDifficultyHeadersTest(BitcoinTestFramework):
         global address
         address = wallet.getnewaddress()
 
+        # ELEMENTS: presync test moved to p2p_headers_presync.py to use elements regtest
+
         self.test_chains_sync_when_long_enough()
 
         self.test_large_reorgs_can_succeed()
-
-        self.test_peerinfo_includes_headers_presync_height()
-
 
 
 if __name__ == '__main__':
