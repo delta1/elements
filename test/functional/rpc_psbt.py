@@ -18,18 +18,18 @@ from test_framework.messages import (
     WITNESS_SCALE_FACTOR,
     ser_compact_size,
 )
-# from test_framework.psbt import (
-#     PSBT,
-#     PSBTMap,
-#     PSBT_GLOBAL_UNSIGNED_TX,
-#     PSBT_IN_RIPEMD160,
-#     PSBT_IN_SHA256,
-#     PSBT_IN_HASH160,
-#     PSBT_IN_HASH256,
-#     PSBT_IN_NON_WITNESS_UTXO,
-#     PSBT_IN_WITNESS_UTXO,
-#     PSBT_OUT_TAP_TREE,
-# )
+from test_framework.psbt import (
+    PSBT,
+    PSBTMap,
+    PSBT_GLOBAL_UNSIGNED_TX,
+    PSBT_IN_RIPEMD160,
+    PSBT_IN_SHA256,
+    PSBT_IN_HASH160,
+    PSBT_IN_HASH256,
+    PSBT_IN_NON_WITNESS_UTXO,
+    PSBT_IN_WITNESS_UTXO,
+    PSBT_OUT_TAP_TREE,
+)
 # from test_framework.script import CScript, OP_TRUE
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
@@ -110,24 +110,16 @@ class PSBTTest(BitcoinTestFramework):
         # Construct an unsigned PSBT on the online node
         utxos = wonline.listunspent(addresses=[offline_addr])
         raw = wonline.createrawtransaction([{"txid":utxos[0]["txid"], "vout":utxos[0]["vout"]}],[{online_addr:0.9999},{"fee":0.0001}])
-        psbt = wonline.walletprocesspsbt(online_node.converttopsbt(raw))["psbt"]
-        assert "not_witness_utxo" not in mining_node.decodepsbt(psbt)["inputs"][0]
+        psbt = wonline.walletprocesspsbt(online_node.converttopsbt(raw))
+        assert "not_witness_utxo" not in mining_node.decodepsbt(psbt["psbt"])["inputs"][0]
 
-        # ELEMENTS FIXME: psbt parsing
-        # add non-witness UTXO manually
-        # psbt_new = PSBT.from_base64(psbt)
-        # prev_tx = wonline.gettransaction(utxos[0]["txid"])["hex"]
-        # psbt_new.i[0].map[PSBT_IN_NON_WITNESS_UTXO] = bytes.fromhex(prev_tx)
-        # assert "non_witness_utxo" in mining_node.decodepsbt(psbt_new.to_base64())["inputs"][0]
-
-        # Have the offline node sign the PSBT (which will remove the non-witness UTXO)
-        # signed_psbt = offline_node.walletprocesspsbt(psbt_new.to_base64())
-        # assert not "non_witness_utxo" in mining_node.decodepsbt(signed_psbt["psbt"])["inputs"][0]
+        # ELEMENTS: Unsigned tx is not allowed in PSET 
+        signed_psbt = offline_node.walletprocesspsbt(psbt["psbt"])
 
         # Make sure we can mine the resulting transaction
-        # txid = mining_node.sendrawtransaction(signed_psbt["hex"])
-        # self.generate(mining_node, nblocks=1, sync_fun=lambda: self.sync_all([online_node, mining_node]))
-        # assert_equal(online_node.gettxout(txid,0)["confirmations"], 1)
+        txid = mining_node.sendrawtransaction(signed_psbt["hex"])
+        self.generate(mining_node, nblocks=1, sync_fun=lambda: self.sync_all([online_node, mining_node]))
+        assert_equal(online_node.gettxout(txid,0)["confirmations"], 1)
 
         wonline.unloadwallet()
 
@@ -248,16 +240,16 @@ class PSBTTest(BitcoinTestFramework):
         psbtx = self.nodes[1].walletprocesspsbt(psbtx1)['psbt']
         assert_equal(psbtx1, psbtx)
 
-        # ELEMENTS: FIXME failing asserts
-        # Node 0 should not be able to sign the transaction with the wallet is locked
-        # self.nodes[0].encryptwallet("password")
-        # assert_raises_rpc_error(-13, "Please enter the wallet passphrase with walletpassphrase first", self.nodes[0].walletprocesspsbt, psbtx)
+        if not confidential:
+            # Node 0 should not be able to sign the transaction with the wallet is locked
+            self.nodes[0].encryptwallet("password")
+            assert_raises_rpc_error(-13, "Please enter the wallet passphrase with walletpassphrase first", self.nodes[0].walletprocesspsbt, psbtx)
 
-        # Node 0 should be able to process without signing though
-        unsigned_tx = self.nodes[0].walletprocesspsbt(psbtx, False)
-        assert_equal(unsigned_tx['complete'], False)
+            # Node 0 should be able to process without signing though
+            unsigned_tx = self.nodes[0].walletprocesspsbt(psbtx, False)
+            assert_equal(unsigned_tx['complete'], False)
 
-        # self.nodes[0].walletpassphrase(passphrase="password", timeout=1000000)
+            self.nodes[0].walletpassphrase(passphrase="password", timeout=1000000)
 
         # Sign the transaction but don't finalize
         processed_psbt = self.nodes[0].walletprocesspsbt(psbt=psbtx, finalize=False)
@@ -1120,17 +1112,21 @@ class PSBTTest(BitcoinTestFramework):
 
         # Try again, now while providing descriptors, making P2SH-segwit work, and causing bip32_derivs and redeem_script to be filled in
         descs = [self.nodes[1].getaddressinfo(addr)['desc'] for addr in [addr1,addr2,addr3]]
+        print(descs)
+        print("")
         updated = self.nodes[1].utxoupdatepsbt(psbt=psbt, descriptors=descs)
         decoded = self.nodes[1].decodepsbt(updated)
-        # test_psbt_input_keys(decoded['inputs'][0], psbt_v2_required_keys + ['witness_utxo', 'non_witness_utxo', 'bip32_derivs']) # ELEMENTS FIXME: flaky missing keys
-        # test_psbt_input_keys(decoded['inputs'][1], psbt_v2_required_keys + ['non_witness_utxo', 'bip32_derivs']) # ELEMENTS FIXME: flaky
-        # test_psbt_input_keys(decoded['inputs'][2], psbt_v2_required_keys + ['non_witness_utxo', 'witness_utxo', 'bip32_derivs', 'redeem_script']) # ELEMENTS FIXME: PSBT input missing keys
+        print(decoded)
+        test_psbt_input_keys(decoded['inputs'][0], psbt_v2_required_keys + ['witness_utxo', 'non_witness_utxo', 'bip32_derivs'])
+        test_psbt_input_keys(decoded['inputs'][1], psbt_v2_required_keys + ['non_witness_utxo', 'bip32_derivs'])
+        test_psbt_input_keys(decoded['inputs'][2], psbt_v2_required_keys + ['non_witness_utxo'])
 
         # Cannot create PSBTv0
         assert_raises_rpc_error(-8, "The PSBT version can only be 2", self.nodes[0].createpsbt, [{"txid":txid1, "vout":vout1}], [{self.nodes[0].getnewaddress():Decimal('10.999')}], 0, True, 0)
 
         """
         # TODO: joinpsbts is disabled for PSBTv2s
+        # ELEMENTS: version 0 not allowed
         # Cannot join PSBTv2s
         psbt1 = self.nodes[1].createpsbt(inputs=[{"txid":txid1, "vout":vout1}], outputs=[{self.nodes[0].getnewaddress():Decimal('10.999')}], psbt_version=0)
         psbt2 = self.nodes[1].createpsbt(inputs=[{"txid":txid1, "vout":vout1}], outputs=[{self.nodes[0].getnewaddress():Decimal('10.999')}], psbt_version=2)
@@ -1476,43 +1472,43 @@ class PSBTTest(BitcoinTestFramework):
 
         descriptor = descsum_create(f"wpkh({key})")
 
-        txid = self.nodes[0].sendtoaddress(address, 1)
-        self.sync_all()
-        vout = find_output(self.nodes[0], txid, 1)
+        if self.options.descriptors:
+            txid = self.nodes[0].sendtoaddress(address, 1)
+            self.sync_all()
+            vout = find_output(self.nodes[0], txid, 1)
 
-        psbt = self.nodes[2].createpsbt([{"txid": txid, "vout": vout}], [{self.nodes[0].getnewaddress(): 0.99999}])
-        decoded = self.nodes[2].decodepsbt(psbt)
-        test_psbt_input_keys(decoded['inputs'][0], psbt_v2_required_keys)
+            psbt = self.nodes[2].createpsbt([{"txid": txid, "vout": vout}], [{self.nodes[0].getnewaddress(): 0.99999},{"fee": 0.00001}])
+            decoded = self.nodes[2].decodepsbt(psbt)
+            test_psbt_input_keys(decoded['inputs'][0], psbt_v2_required_keys)
 
-        # Test that even if the wrong descriptor is given, `witness_utxo` and `non_witness_utxo`
-        # are still added to the psbt
-        # ELEMENTS FIXME
-        # alt_descriptor = descsum_create(f"wpkh({get_generate_key().privkey})")
-        # alt_psbt = self.nodes[2].descriptorprocesspsbt(psbt=psbt, descriptors=[alt_descriptor], sighashtype="ALL")["psbt"]
-        # decoded = self.nodes[2].decodepsbt(alt_psbt)
-        # test_psbt_input_keys(decoded['inputs'][0], ['witness_utxo', 'non_witness_utxo'])
+            # Test that even if the wrong descriptor is given, `witness_utxo` and `non_witness_utxo`
+            # are still added to the psbt
+            alt_descriptor = descsum_create(f"wpkh({get_generate_key().privkey})")
+            print(alt_descriptor)
+            alt_psbt = self.nodes[2].descriptorprocesspsbt(psbt=psbt, descriptors=[alt_descriptor], sighashtype="ALL")["psbt"]
+            decoded = self.nodes[2].decodepsbt(alt_psbt)
+            test_psbt_input_keys(decoded['inputs'][0], ['witness_utxo', 'non_witness_utxo', 'sequence', 'previous_vout', 'previous_txid'])
 
-        # Test that the psbt is not finalized and does not have bip32_derivs unless specified
-        # processed_psbt = self.nodes[2].descriptorprocesspsbt(psbt=psbt, descriptors=[descriptor], sighashtype="ALL", bip32derivs=True, finalize=False)
-        # decoded = self.nodes[2].decodepsbt(processed_psbt['psbt'])
-        # test_psbt_input_keys(decoded['inputs'][0], ['witness_utxo', 'non_witness_utxo', 'partial_signatures', 'bip32_derivs'])
+            # Test that the psbt is not finalized and does not have bip32_derivs unless specified
+            processed_psbt = self.nodes[2].descriptorprocesspsbt(psbt=psbt, descriptors=[descriptor], sighashtype="ALL", bip32derivs=True, finalize=False)
+            decoded = self.nodes[2].decodepsbt(processed_psbt['psbt'])
+            test_psbt_input_keys(decoded['inputs'][0], ['witness_utxo', 'non_witness_utxo', 'partial_signatures', 'bip32_derivs', 'sequence', 'previous_vout', 'previous_txid'])
 
-        # If psbt not finalized, test that result does not have hex
-        # assert "hex" not in processed_psbt
+            # If psbt not finalized, test that result does not have hex
+            assert "hex" not in processed_psbt
 
-        # processed_psbt = self.nodes[2].descriptorprocesspsbt(psbt=psbt, descriptors=[descriptor], sighashtype="ALL", bip32derivs=False, finalize=True)
-        # decoded = self.nodes[2].decodepsbt(processed_psbt['psbt'])
-        # test_psbt_input_keys(decoded['inputs'][0], ['witness_utxo', 'non_witness_utxo', 'final_scriptwitness'])
+            processed_psbt = self.nodes[2].descriptorprocesspsbt(psbt=psbt, descriptors=[descriptor], sighashtype="ALL", bip32derivs=False, finalize=True)
+            decoded = self.nodes[2].decodepsbt(processed_psbt['psbt'])
+            test_psbt_input_keys(decoded['inputs'][0], ['previous_vout', 'non_witness_utxo', 'final_scriptwitness', 'previous_txid', 'sequence', 'witness_utxo'])
 
-        # Test psbt is complete
-        # assert_equal(processed_psbt['complete'], True)
+            # Test psbt is complete
+            assert_equal(processed_psbt['complete'], True)
 
-        # Broadcast transaction
-        # self.nodes[2].sendrawtransaction(processed_psbt['hex'])
+            # Broadcast transaction
+            self.nodes[2].sendrawtransaction(processed_psbt['hex'])
 
-        self.log.info("Test descriptorprocesspsbt raises if an invalid sighashtype is passed")
-        assert_raises_rpc_error(-8, "all is not a valid sighash parameter.", self.nodes[2].descriptorprocesspsbt, psbt, [descriptor], sighashtype="all")
-
+            self.log.info("Test descriptorprocesspsbt raises if an invalid sighashtype is passed")
+            assert_raises_rpc_error(-8, "all is not a valid sighash parameter.", self.nodes[2].descriptorprocesspsbt, psbt, [descriptor], sighashtype="all")
 
 if __name__ == '__main__':
     PSBTTest().main()
