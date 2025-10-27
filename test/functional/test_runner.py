@@ -126,7 +126,6 @@ BASE_SCRIPTS = [
     'wallet_elements_dust_relay.py',
     # Longest test should go first, to favor running tests in parallel
     # vv Tests less than 5m vv
-    # 'feature_fee_estimation.py', # ELEMENTS FIXME: in extended tests
     'feature_taproot.py',
     'feature_block.py',
     'wallet_elements_regression_1263.py',
