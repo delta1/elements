@@ -389,7 +389,7 @@ class CTTest (BitcoinTestFramework):
             if txout is not None and "asset" in txout:
                 unblindfound = True
 
-        if unblindfound == False:
+        if not unblindfound:
             raise Exception("No unconfidential output detected when one should exist")
 
         node0 -= value4

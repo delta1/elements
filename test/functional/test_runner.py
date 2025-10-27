@@ -91,7 +91,6 @@ EXTENDED_SCRIPTS = [
     'feature_fee_estimation.py',
     'feature_index_prune.py',
     'feature_trim_headers.py',
-    'wallet_elements_regression_fundrawtransaction.py --legacy-wallet', # ELEMENTS FIXME
     'wallet_pruning.py --legacy-wallet',
 ]
 
@@ -142,6 +141,7 @@ BASE_SCRIPTS = [
     'rpc_psbt.py --descriptors',
     'wallet_fundrawtransaction.py --legacy-wallet',
     'wallet_fundrawtransaction.py --descriptors',
+    'wallet_elements_regression_fundrawtransaction.py --legacy-wallet',
     'wallet_bumpfee.py --legacy-wallet',
     'wallet_bumpfee.py --descriptors',
     'wallet_import_rescan.py --legacy-wallet',

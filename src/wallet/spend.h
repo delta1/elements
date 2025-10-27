@@ -171,7 +171,8 @@ struct PreSelectedInputs
 
     void Insert(const COutput& output, bool subtract_fee_outputs)
     {
-        if (subtract_fee_outputs) {
+        // ELEMENTS: effective value is negative for non-policy asset, so use its value
+        if (subtract_fee_outputs || output.asset != ::policyAsset) {
             total_amount[output.asset] += output.value;
         } else {
             total_amount[output.asset] += output.GetEffectiveValue();

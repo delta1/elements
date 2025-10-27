@@ -2116,6 +2116,12 @@ bool FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& nFeeRet,
     // CreateTransaction call and LockCoin calls (when lockUnspents is true).
     LOCK(wallet.cs_wallet);
 
+    // ELEMENTS: keep track of output assets, so we can check input assets are accounted for
+    std::set<CAsset> output_assets;
+    for (const auto& recipient : vecSend) {
+        output_assets.insert(recipient.asset);
+    }
+
     // Check any existing inputs for peg-in data and add to external txouts if so
     // Fetch specified UTXOs from the UTXO set to get the scriptPubKeys and values of the outputs being selected
     // and to match with the given solving_data. Only used for non-wallet outputs.
@@ -2139,6 +2145,13 @@ bool FundTransaction(CWallet& wallet, CMutableTransaction& tx, CAmount& nFeeRet,
     for (const CTxIn& txin : tx.vin) {
         const auto& outPoint = txin.prevout;
         if (wallet.IsMine(outPoint)) {
+            // ELEMENTS: check there is an output for each input asset
+            const auto wtx = wallet.GetWalletTx(outPoint.hash);
+            const auto asset = wtx->GetOutputAsset(wallet, outPoint.n);
+            if (asset != ::policyAsset && output_assets.count(asset) == 0) {
+                error = _(strprintf("Transaction is missing an output for input asset %s", asset.GetHex()).c_str());
+                return false;
+            }
             // The input was found in the wallet, so select as internal
             coinControl.Select(outPoint);
         } else if (txin.m_is_pegin) {

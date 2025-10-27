@@ -7,13 +7,16 @@ from test_framework.blocktools import COINBASE_MATURITY
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (
     assert_equal,
+    assert_raises_rpc_error,
 )
 
 class WalletTest(BitcoinTestFramework):
+    def add_options(self, parser):
+        self.add_wallet_options(parser)
+
     def set_test_params(self):
         self.num_nodes = 1
-        self.extra_args = [['-debug=1', '-blindedaddresses=1']] * self.num_nodes
-        self.rpc_timeout = 6666
+        self.extra_args = [['-blindedaddresses=1']] * self.num_nodes
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
@@ -27,14 +30,18 @@ class WalletTest(BitcoinTestFramework):
         issue = self.nodes[0].issueasset(1, 0)
         asset = issue['asset']
 
+        self.log.info("Send some of issued asset and policy asset to ourselves in a single transaction")
         rawtx = self.nodes[0].createrawtransaction([], [{self.nodes[0].getnewaddress(): 1, "asset": asset}, {self.nodes[0].getnewaddress(): 2}], 0, False)
         funded = self.nodes[0].fundrawtransaction(rawtx)
         blinded = self.nodes[0].blindrawtransaction(funded["hex"])
         signed = self.nodes[0].signrawtransactionwithwallet(blinded)
         txid = self.nodes[0].sendrawtransaction(signed["hex"])
 
+        self.log.info("Spend both outputs in a new transaction")
+        # since we support multiple assets, we make fundrawtransaction require the raw tx to have outputs for each pre-selected input asset type
         rawtx = self.nodes[0].createrawtransaction([{"txid":txid, "vout":0}, {"txid":txid, "vout":1}], [{self.nodes[0].getnewaddress():5}])
-        input(f">>> process pid: {self.nodes[0].process.pid}")
+        assert_raises_rpc_error(-4, "Transaction is missing an output for input asset", self.nodes[0].fundrawtransaction, rawtx)
+        rawtx = self.nodes[0].createrawtransaction([{"txid":txid, "vout":0}, {"txid":txid, "vout":1}], [{self.nodes[0].getnewaddress():5}, {self.nodes[0].getnewaddress(): 1, "asset": asset}])
         funded = self.nodes[0].fundrawtransaction(rawtx)
         blinded = self.nodes[0].blindrawtransaction(funded["hex"])
         signed = self.nodes[0].signrawtransactionwithwallet(blinded)
