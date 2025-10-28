@@ -1528,7 +1528,7 @@ static RPCHelpMan finalizecompactblock()
     found.insert(found.end(), transactions.txn.begin(), transactions.txn.end());
 
     // Now construct the final block! (use dummy mempool here, otherwise reconstruction may fail)
-    CTxMemPool dummy_pool{CTxMemPool::Options()}; // ELEMENTS FIXME: are the default options okay here?
+    CTxMemPool dummy_pool{CTxMemPool::Options()};
     PartiallyDownloadedBlock partialBlock(&dummy_pool);
 
     // "Extra" list is really our combined list that will be put into place using InitData
