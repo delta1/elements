@@ -753,9 +753,9 @@ RPCHelpMan gettransaction()
                                     "\"immature\"              Coinbase transactions received with 100 or fewer confirmations.\n"
                                     "\"orphan\"                Orphaned coinbase transactions received."},
                                 {RPCResult::Type::STR_AMOUNT, "amount", "The amount in " + CURRENCY_UNIT},
-                                {RPCResult::Type::STR_HEX, "amountblinder", /*optional=*/true, "The blinding factor for the amount"}, // ELEMENTS FIXME: is this really optional?
+                                {RPCResult::Type::STR_HEX, "amountblinder", "The blinding factor for the amount"},
                                 {RPCResult::Type::STR_HEX, "asset", "The asset being transacted"},
-                                {RPCResult::Type::STR_HEX, "assetblinder", /*optional=*/true, "The blinding factor for the asset"}, // ELEMENTS FIXME: is this really optional?
+                                {RPCResult::Type::STR_HEX, "assetblinder", "The blinding factor for the asset"},
                                 {RPCResult::Type::STR, "label", /*optional=*/true, "A comment for the address/transaction, if any"},
                                 {RPCResult::Type::NUM, "vout", "the vout value"},
                                 {RPCResult::Type::STR_AMOUNT, "fee", /*optional=*/true, "The amount of the fee in " + CURRENCY_UNIT + ". This is negative and only available for the \n"
