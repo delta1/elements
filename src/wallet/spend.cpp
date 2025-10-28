@@ -974,7 +974,7 @@ util::Result<SelectionResult> AutomaticCoinSelection(const CWallet& wallet, Coin
             if (group.m_ancestors >= max_ancestors || group.m_descendants >= max_descendants) total_unconf_long_chain += group.GetSelectionAmount();
         }
 
-        if (CAmount total_amount = available_coins.GetTotalAmount() - CAmountMap{{::policyAsset, total_discarded}} < value_to_select) { // ELEMENTS FIXME: check this
+        if (CAmount total_amount = available_coins.GetTotalAmount() - CAmountMap{{::policyAsset, total_discarded}} < value_to_select) {
             // Special case, too-long-mempool cluster.
             if (CAmountMap{{::policyAsset, total_amount + total_unconf_long_chain}} > value_to_select) {
                 return util::Result<SelectionResult>({_("Unconfirmed UTXOs are available, but spending them creates a chain of transactions that will be rejected by the mempool")});
@@ -1383,9 +1383,6 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
     coin_selection_params.m_change_fee = coin_selection_params.m_effective_feerate.GetFee(coin_selection_params.change_output_size);
     coin_selection_params.m_cost_of_change = coin_selection_params.m_discard_feerate.GetFee(coin_selection_params.change_spend_size) + coin_selection_params.m_change_fee;
 
-    // ELEMENTS FIXME: Please review the map_recipients_sum[::policyAsset] part.
-    //                 In bitcoin the line just says recipients_sum (it's not a map).
-    //                 I'm not sure if the policyAsset value is the right number to use.
     coin_selection_params.m_min_change_target = GenerateChangeTarget(std::floor(map_recipients_sum[::policyAsset] / vecSend.size()), coin_selection_params.m_change_fee, rng_fast);
 
     // The smallest change amount should be:
