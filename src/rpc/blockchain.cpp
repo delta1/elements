@@ -619,21 +619,25 @@ static RPCHelpMan getblockheader()
                             {RPCResult::Type::STR_HEX, "chainwork", /*optional=*/true, "Expected number of hashes required to produce the current chain"}, // Not for elements
                             {RPCResult::Type::NUM, "nTx", "The number of transactions in the block"},
                             {RPCResult::Type::STR, "signblock_challenge", /*optional=*/true, "The challenge for blocksigning (pre-dynafed)"},
-                            {RPCResult::Type::STR, "signblock_witness_asm", "ASM of sign block witness data"},
-                            {RPCResult::Type::STR_HEX, "signblock_witness_hex", "Hex of sign block witness data"},
+                            {RPCResult::Type::STR, "signblock_witness_asm", /*optional=*/true, "ASM of sign block witness data"},
+                            {RPCResult::Type::STR_HEX, "signblock_witness_hex", "Hex of sign block witness data", {}, /*skip_type_check=*/true},
                             {RPCResult::Type::OBJ, "dynamic_parameters", /*optional=*/true, "Dynamic federation parameters in the block, if any",
                             {
                                 {RPCResult::Type::OBJ, "current", "enforced dynamic federation parameters. The signblockscript is published for each block, while others are published only at epoch start",
                                 {
                                     {RPCResult::Type::STR_HEX, "signblockscript", "signblock script"},
                                     {RPCResult::Type::NUM, "max_block_witness", "Maximum serialized size of the block witness stack"},
-                                    {RPCResult::Type::STR_HEX, "fedpegscript", "fedpeg script"},
-                                    {RPCResult::Type::ARR, "extension_space", "array of hex-encoded strings",
+                                    {RPCResult::Type::STR_HEX, "fedpegscript", /*optional=*/true, "fedpeg script"},
+                                    {RPCResult::Type::STR_HEX, "fedpeg_program", /*optional=*/true, "fedpeg program"},
+                                    {RPCResult::Type::STR_HEX, "root", "The Merkle root"},
+                                    {RPCResult::Type::STR_HEX, "extra_root", "extra Merkle root"},
+                                    {RPCResult::Type::STR, "type", "type of parameter encoding (null, compact, full)"},
+                                    {RPCResult::Type::ARR, "extension_space", /*optional=*/true, "array of hex-encoded strings",
                                     {
                                         {RPCResult::Type::ELISION, "", ""}
                                     }}
                                 }},
-                                {RPCResult::Type::OBJ, "proposed", "Proposed parameters. Uninforced. Must be published in full",
+                                {RPCResult::Type::OBJ, "proposed", "Proposed parameters. Unenforced. Must be published in full",
                                 {
                                     {RPCResult::Type::ELISION, "", "same entries as current"}
                                 }},
@@ -1380,6 +1384,7 @@ RPCHelpMan getblockchaininfo()
                 /* ELEMENTS: not present {RPCResult::Type::STR_HEX, "chainwork", "total amount of work in active chain, in hexadecimal"}, */
                 {RPCResult::Type::NUM, "size_on_disk", "the estimated size of the block and undo files on disk"},
                 {RPCResult::Type::BOOL, "pruned", "if the blocks are subject to pruning"},
+                {RPCResult::Type::BOOL, "trim_headers", "if trim_headers is enabled"},
                 {RPCResult::Type::STR_HEX, "current_params_root", /*optional=*/true, "the root of the currently active dynafed params"}, // present if dynafed is active
                 {RPCResult::Type::STR, "signblock_asm", /*optional=*/true, "ASM of sign block challenge data from genesis block"}, // not present if dynafed is active
                 {RPCResult::Type::STR, "signblock_asm", /*optional=*/true, "ASM of sign block challenge data from genesis block"}, // not present if dynafed is active
@@ -2365,9 +2370,9 @@ static RPCHelpMan scantxoutset()
                         {RPCResult::Type::BOOL, "coinbase", "Whether this is a coinbase output"},
                         {RPCResult::Type::NUM, "height", "Height of the unspent transaction output"},
                     }},
-                    {RPCResult::Type::STR_AMOUNT, "total_unblinded_bitcoin_amount", "The total amount of all found unspent unblinded outputs in " + CURRENCY_UNIT},
                 }},
-                {RPCResult::Type::STR_AMOUNT, "total_amount", "The total amount of all found unspent outputs in " + CURRENCY_UNIT},
+                {RPCResult::Type::STR_AMOUNT, "total_unblinded_bitcoin_amount", "The total amount of all found unspent unblinded outputs in " + CURRENCY_UNIT},
+                {RPCResult::Type::STR_AMOUNT, "total_amount", /*optional=*/true, "The total amount of all found unspent outputs in " + CURRENCY_UNIT},
             }},
             scan_result_abort,
             scan_result_status_some,
@@ -3070,7 +3075,7 @@ static RPCHelpMan loadtxoutset()
 const std::vector<RPCResult> RPCHelpForChainstate{
     {RPCResult::Type::NUM, "blocks", "number of blocks in this chainstate"},
     {RPCResult::Type::STR_HEX, "bestblockhash", "blockhash of the tip"},
-    {RPCResult::Type::NUM, "difficulty", "difficulty of the tip"},
+    {RPCResult::Type::NUM, "difficulty", /*optional=*/true, "difficulty of the tip"},
     {RPCResult::Type::NUM, "verificationprogress", "progress towards the network tip"},
     {RPCResult::Type::STR_HEX, "snapshot_blockhash", /*optional=*/true, "the base block of the snapshot this chainstate is based on, if any"},
     {RPCResult::Type::NUM, "coins_db_cache_bytes", "size of the coinsdb cache"},

@@ -1086,18 +1086,16 @@ static std::optional<UniValue::VType> ExpectedType(RPCResult::Type type)
 
 UniValue RPCResult::MatchesType(const UniValue& result) const
 {
-        /* ELEMENTS FIXME: this bitcoin code applies strict type checks to each RPC call's docs.
-           The elements documentation is not up to date, and it is a lot of work to get all the types specified correctly.
-           For now, we have disabled these type checks. The result is that the RPC results specified in the man pages
-           are often incorrect and/or missing some parameters.
-
-           TODO: uncomment this code, remove the 'return' above, and fix the RPC docs. */
-    // if (m_skip_type_check) {
-    //     return true;
-    // }
+    if (m_skip_type_check) {
+        return true;
+    }
 
     const auto exp_type = ExpectedType(m_type);
     if (!exp_type) return true; // can be any type, so nothing to check
+
+    // ELEMENTS: the majority of any RPCResult type checking is now fixed,
+    // but leaving this disabled for now in case there are any conditional
+    // differences that are not yet tested.
 
     // if (*exp_type != result.getType()) {
     //     return strprintf("returned type is %s, but declared as %s in doc", uvTypeName(result.getType()), uvTypeName(*exp_type));

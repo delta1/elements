@@ -660,7 +660,10 @@ RPCHelpMan simulaterawtransaction()
         RPCResult{
             RPCResult::Type::OBJ, "", "",
             {
-                {RPCResult::Type::STR_AMOUNT, "balance_change", "The wallet balance change (negative means decrease)."},
+                {RPCResult::Type::OBJ, "balance_change", "The wallet balance change (negative means decrease).",
+                {
+                    {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                }},
             }
         },
         RPCExamples{

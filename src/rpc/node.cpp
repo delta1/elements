@@ -481,7 +481,7 @@ static RPCHelpMan getpakinfo()
                 RPCResult{
                     RPCResult::Type::OBJ, "", "",
                     {
-                        {RPCResult::Type::ARR, "block_paklist", "The PAK list loaded from latest epoch",
+                        {RPCResult::Type::OBJ, "block_paklist", "The PAK list loaded from latest epoch",
                         {
                             {RPCResult::Type::ELISION, "", ""}
                         }},

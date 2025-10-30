@@ -456,7 +456,7 @@ RPCHelpMan sendtomainchain_base()
                         RPCResult::Type::OBJ, "", "",
                         {
                             {RPCResult::Type::STR_HEX, "txid", "The transaction id."},
-                            {RPCResult::Type::STR, "fee reason", "The transaction fee reason."}
+                            {RPCResult::Type::STR, "fee reason", /*optional=*/true, "The transaction fee reason."}
                         },
                     },
                 },
@@ -568,7 +568,7 @@ RPCHelpMan sendtomainchain_pak()
                     {
                         {RPCResult::Type::STR, "bitcoin_address", "destination address on Bitcoin mainchain"},
                         {RPCResult::Type::STR_HEX, "txid", "transaction ID of the resulting Liquid transaction"},
-                        {RPCResult::Type::STR, "fee reason", "If verbose is set to true, the Liquid transaction fee reason"},
+                        {RPCResult::Type::STR, "fee reason", /*optional=*/true, "If verbose is set to true, the Liquid transaction fee reason"},
                         {RPCResult::Type::STR, "bitcoin_descriptor", "xpubkey of the child destination address"},
                         {RPCResult::Type::STR, "bip32_counter", "derivation counter for the `bitcoin_descriptor`"},
                     },
@@ -905,7 +905,7 @@ RPCHelpMan createrawpegin()
                     RPCResult::Type::OBJ, "", "",
                     {
                         {RPCResult::Type::STR, "hex", "raw transaction data"},
-                        {RPCResult::Type::BOOL, "mature", "Whether the peg-in is mature (only included when validating peg-ins)"},
+                        {RPCResult::Type::BOOL, "mature", /*optional=*/true, "Whether the peg-in is mature (only included when validating peg-ins)"},
                     },
                 },
                 RPCExamples{
@@ -1609,14 +1609,14 @@ RPCHelpMan listissuances()
                             {RPCResult::Type::STR_HEX, "txid", "Transaction id for issuance"},
                             {RPCResult::Type::STR_HEX, "entropy", "Entropy of the asset type"},
                             {RPCResult::Type::STR_HEX, "asset", "Asset type for issuance if known"},
-                            {RPCResult::Type::STR, "assetlabel", "Asset label for issuance if set"},
-                            {RPCResult::Type::STR_HEX, "token", "Token type for issuancen"},
+                            {RPCResult::Type::STR, "assetlabel", /*optional=*/true, "Asset label for issuance if set"},
+                            {RPCResult::Type::STR_HEX, "token", /*optional=*/true, "Token type for issuancen"},
                             {RPCResult::Type::NUM, "vin", "The input position of the issuance in the transaction"},
                             {RPCResult::Type::STR_AMOUNT, "assetamount", "The amount of asset issued. Is -1 if blinded and unknown to wallet"},
-                            {RPCResult::Type::STR_AMOUNT, "tokenamount", "The reissuance token amount issued. Is -1 if blinded and unknown to wallet"},
+                            {RPCResult::Type::STR_AMOUNT, "tokenamount", /*optional=*/true, "The reissuance token amount issued. Is -1 if blinded and unknown to wallet"},
                             {RPCResult::Type::BOOL, "isreissuance", "Whether this is a reissuance"},
                             {RPCResult::Type::STR_HEX, "assetblinds", "Blinding factor for asset amounts"},
-                            {RPCResult::Type::STR_HEX, "tokenblinds", "Blinding factor for token amounts"},
+                            {RPCResult::Type::STR_HEX, "tokenblinds", /*optional=*/true, "Blinding factor for token amounts"},
                         }},
                     }
                 },

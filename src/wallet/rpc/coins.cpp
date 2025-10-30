@@ -492,16 +492,44 @@ RPCHelpMan getbalances()
             {
                 {RPCResult::Type::OBJ, "mine", "balances from outputs that the wallet can sign",
                 {
-                    {RPCResult::Type::STR_AMOUNT, "trusted", "trusted balance (outputs created by the wallet or confirmed outputs)"},
-                    {RPCResult::Type::STR_AMOUNT, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)"},
-                    {RPCResult::Type::STR_AMOUNT, "immature", "balance from immature coinbase outputs"},
-                    {RPCResult::Type::STR_AMOUNT, "used", /*optional=*/true, "(only present if avoid_reuse is set) balance from coins sent to addresses that were previously spent from (potentially privacy violating)"},
+                    {RPCResult::Type::OBJ, "trusted", "trusted balance (outputs created by the wallet or confirmed outputs)",
+                        {
+                            {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                        },
+                    },
+                    {RPCResult::Type::OBJ, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)",
+                        {
+                            {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                        },
+                    },
+                    {RPCResult::Type::OBJ, "immature", "balance from immature coinbase outputs",
+                        {
+                            {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                        },
+                    },
+                    {RPCResult::Type::OBJ, "used", /*optional=*/true, "(only present if avoid_reuse is set) balance from coins sent to addresses that were previously spent from (potentially privacy violating)",
+                        {
+                            {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                        },
+                    },
                 }},
                 {RPCResult::Type::OBJ, "watchonly", /*optional=*/true, "watchonly balances (not present if wallet does not watch anything)",
                 {
-                    {RPCResult::Type::STR_AMOUNT, "trusted", "trusted balance (outputs created by the wallet or confirmed outputs)"},
-                    {RPCResult::Type::STR_AMOUNT, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)"},
-                    {RPCResult::Type::STR_AMOUNT, "immature", "balance from immature coinbase outputs"},
+                    {RPCResult::Type::OBJ, "trusted", "trusted balance (outputs created by the wallet or confirmed outputs)",
+                        {
+                            {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                        },
+                    },
+                    {RPCResult::Type::OBJ, "untrusted_pending", "untrusted pending balance (outputs created by others that are in the mempool)",
+                        {
+                            {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                        },
+                    },
+                    {RPCResult::Type::OBJ, "immature", "balance from immature coinbase outputs",
+                        {
+                            {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                        },
+                    },
                 }},
                 RESULT_LAST_PROCESSED_BLOCK,
             }
@@ -590,9 +618,9 @@ RPCHelpMan listunspent()
                             {RPCResult::Type::STR, "label", /*optional=*/true, "The associated label, or \"\" for the default label"},
                             {RPCResult::Type::STR, "scriptPubKey", "the script key"},
                             {RPCResult::Type::STR_AMOUNT, "amount", "the transaction output amount in " + CURRENCY_UNIT},
-                            {RPCResult::Type::STR_HEX, "amountcommitment", "the transaction output commitment in hex"},
+                            {RPCResult::Type::STR_HEX, "amountcommitment", /*optional=*/true, "the transaction output commitment in hex"},
                             {RPCResult::Type::STR_HEX, "asset", "the transaction output asset in hex"},
-                            {RPCResult::Type::STR_HEX, "assetcommitment", "the transaction output asset commitment in hex"},
+                            {RPCResult::Type::STR_HEX, "assetcommitment", /*optional=*/true, "the transaction output asset commitment in hex"},
                             {RPCResult::Type::STR_HEX, "amountblinder", "the transaction output amount blinding factor in hex"},
                             {RPCResult::Type::STR_HEX, "assetblinder", "the transaction output asset blinding factor in hex"},
                             {RPCResult::Type::NUM, "confirmations", "The number of confirmations"},

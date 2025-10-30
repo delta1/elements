@@ -242,7 +242,7 @@ RPCHelpMan listreceivedbyaddress()
                         {
                             {RPCResult::Type::BOOL, "involvesWatchonly", /*optional=*/true, "Only returns true if imported addresses were involved in transaction"},
                             {RPCResult::Type::STR, "address", "The receiving address"},
-                            {RPCResult::Type::STR_AMOUNT, "amount", "The total amount in " + CURRENCY_UNIT + " received by the address"},
+                            {RPCResult::Type::STR_AMOUNT, "amount", "The total amount in " + CURRENCY_UNIT + " received by the address", {}, /*skip_type_check=*/true},
                             {RPCResult::Type::NUM, "confirmations", "The number of confirmations of the most recent transaction included"},
                             {RPCResult::Type::STR, "label", "The label of the receiving address. The default label is \"\""},
                             {RPCResult::Type::ARR, "txids", "",
@@ -293,7 +293,9 @@ RPCHelpMan listreceivedbylabel()
                         {RPCResult::Type::OBJ, "", "",
                         {
                             {RPCResult::Type::BOOL, "involvesWatchonly", /*optional=*/true, "Only returns true if imported addresses were involved in transaction"},
-                            {RPCResult::Type::STR_AMOUNT, "amount", "The total amount received by addresses with this label"},
+                            {RPCResult::Type::OBJ, "amount", "The total amount received by addresses with this label", {
+                                {RPCResult::Type::ELISION, "", "the amount for each asset"},
+                            }},
                             {RPCResult::Type::NUM, "confirmations", "The number of confirmations of the most recent transaction included"},
                             {RPCResult::Type::STR, "label", "The label of the receiving address. The default label is \"\""},
                         }},
@@ -492,6 +494,9 @@ RPCHelpMan listtransactions()
                                 "\"orphan\"                Orphaned coinbase transactions received."},
                             {RPCResult::Type::STR_AMOUNT, "amount", "The amount in " + CURRENCY_UNIT + ". This is negative for the 'send' category, and is positive\n"
                                 "for all other categories"},
+                            {RPCResult::Type::STR_HEX, "amountblinder", /*optional=*/true, "The amount blinder"},
+                            {RPCResult::Type::STR_HEX, "asset", /*optional=*/true, "The asset type"},
+                            {RPCResult::Type::STR_HEX, "assetblinder", /*optional=*/true, "The asset blinder"},
                             {RPCResult::Type::STR, "label", /*optional=*/true, "A comment for the address/transaction, if any"},
                             {RPCResult::Type::NUM, "vout", "the vout value"},
                             {RPCResult::Type::STR_AMOUNT, "fee", /*optional=*/true, "The amount of the fee in " + CURRENCY_UNIT + ". This is negative and only available for the\n"
@@ -607,6 +612,9 @@ RPCHelpMan listsinceblock()
                                 {RPCResult::Type::STR_AMOUNT, "amount", "The amount in " + CURRENCY_UNIT + ". This is negative for the 'send' category, and is positive\n"
                                     "for all other categories"},
                                 {RPCResult::Type::NUM, "vout", "the vout value"},
+                                {RPCResult::Type::STR_HEX, "amountblinder", /*optional=*/true, "The amount blinder"},
+                                {RPCResult::Type::STR_HEX, "asset", /*optional=*/true, "The asset type"},
+                                {RPCResult::Type::STR_HEX, "assetblinder", /*optional=*/true, "The asset blinder"},
                                 {RPCResult::Type::STR_AMOUNT, "fee", /*optional=*/true, "The amount of the fee in " + CURRENCY_UNIT + ". This is negative and only available for the\n"
                                      "'send' category of transactions."},
                             },
