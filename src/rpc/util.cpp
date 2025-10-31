@@ -536,7 +536,7 @@ RPCHelpMan::RPCHelpMan(std::string name, std::string description, std::vector<RP
         for (const std::string& name : names) {
             auto& param_type = param_names[name];
             CHECK_NONFATAL(!(param_type & POSITIONAL));
-            // CHECK_NONFATAL(!(param_type & NAMED_ONLY)); // ELEMENTS FIXME
+            CHECK_NONFATAL(!(param_type & NAMED_ONLY));
             param_type |= POSITIONAL;
         }
         if (arg.m_type == RPCArg::Type::OBJ_NAMED_PARAMS) {
