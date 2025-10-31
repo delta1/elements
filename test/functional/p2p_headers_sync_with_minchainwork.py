@@ -4,14 +4,12 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test that we reject low difficulty headers to prevent our block tree from filling up with useless bloat"""
 
-import time
-
 from test_framework.test_framework import BitcoinTestFramework
 
-from test_framework.p2p import (
-    CBlockHeader,
-    P2PInterface,
-)
+# from test_framework.p2p import (
+#     CBlockHeader,
+#     P2PInterface,
+# )
 
 NODE1_BLOCKS_REQUIRED = 15
 NODE2_BLOCKS_REQUIRED = 2047

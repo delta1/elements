@@ -13,9 +13,9 @@ from test_framework.messages import (
     MAX_BIP125_RBF_SEQUENCE,
     COIN,
     COutPoint,
-    CTransaction,
+    # CTransaction,
     CTxIn,
-    CTxInWitness,
+    # CTxInWitness,
     CTxOut,
     CTxOutValue,
     MAX_BLOCK_WEIGHT,
@@ -28,19 +28,19 @@ from test_framework.script import (
     OP_0,
     OP_HASH160,
     OP_RETURN,
-    OP_TRUE,
+    # OP_TRUE,
 )
 from test_framework.script_util import (
-    DUMMY_MIN_OP_RETURN_SCRIPT,
+    # DUMMY_MIN_OP_RETURN_SCRIPT,
     keys_to_multisig_script,
-    MIN_PADDING,
+    # MIN_PADDING,
     MIN_STANDARD_TX_NONWITNESS_SIZE,
     script_to_p2sh_script,
-    script_to_p2wsh_script,
+    # script_to_p2wsh_script,
 )
 from test_framework.util import (
     assert_equal,
-    assert_greater_than,
+    # assert_greater_than,
     assert_raises_rpc_error,
 )
 from test_framework.wallet import MiniWallet
@@ -358,7 +358,7 @@ class MempoolAcceptanceTest(BitcoinTestFramework):
             maxfeerate=0,
         )
 
-        # ELEMENTS: not possibe to create a valid transaction of 64 bytes to test "tx-size-small" policy
+        # ELEMENTS: not possible to create a valid transaction of 64 bytes to test "tx-size-small" policy
         # CVE-2017-12842 does not affect elements transactions
         assert_equal(MIN_STANDARD_TX_NONWITNESS_SIZE - 1, 64)
 

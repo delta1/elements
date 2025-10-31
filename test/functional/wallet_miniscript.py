@@ -316,6 +316,7 @@ class WalletMiniscriptTest(BitcoinTestFramework):
                     locktime - height, self.funder.getnewaddress()
                 )
             self.ms_sig_wallet.sendrawtransaction(res["hex"])
+        self.log.debug(sha256_preimages) # ELEMENTS: for lint
 
     def run_test(self):
         self.log.info("Making a descriptor wallet")

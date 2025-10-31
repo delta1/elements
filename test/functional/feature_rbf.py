@@ -6,13 +6,13 @@
 
 from decimal import Decimal
 
-from test_framework.script import CScript
+# from test_framework.script import CScript
 from test_framework.messages import (
     MAX_BIP125_RBF_SEQUENCE,
     COIN,
-    CTransaction,
-    CTxIn,
-    CTxOut,
+    # CTransaction,
+    # CTxIn,
+    # CTxOut,
     CTxOutValue,
     SEQUENCE_FINAL,
 )
