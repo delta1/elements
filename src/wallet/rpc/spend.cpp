@@ -1581,7 +1581,7 @@ RPCHelpMan sendall()
 
             CAmount output_amounts_claimed{0};
             for (const CTxOut& out : rawTx.vout) {
-                output_amounts_claimed += out.nValue.GetAmount(); // ELEMENTS FIXME: is the unblinded value always available since it's in our wallet?
+                output_amounts_claimed += out.nValue.GetAmount(); // ELEMENTS: the value is explicit since the tx is not yet blinded
             }
 
             if (output_amounts_claimed > total_input_value) {
