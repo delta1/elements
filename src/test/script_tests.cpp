@@ -1789,7 +1789,7 @@ static void AssetTest(const UniValue& test)
 #if defined(HAVE_CONSENSUS_LIB)
                 CConfidentialValue value(prevouts[idx].nValue);
                 int lib_ret = bitcoinconsensus_verify_script_with_spent_outputs(nullptr, prevouts[idx].scriptPubKey.data(), prevouts[idx].scriptPubKey.size(), value.vchCommitment.data(), value.vchCommitment.size(), UCharCast(stream.data()), stream.size(), utxos.data(), utxos.size(), idx, flags, nullptr);
-                // BOOST_CHECK(lib_ret == 1); // ELEMENTS FIXME
+                BOOST_CHECK(lib_ret == 1);
 #endif
             }
         }
@@ -1874,7 +1874,7 @@ BOOST_AUTO_TEST_CASE(script_assets_test)
     file.close();
 }
 
-// ELEMENTS: TODO: Some of these test vectors need updating
+// ELEMENTS FIXME: Some of these test vectors need updating
 BOOST_AUTO_TEST_CASE(bip341_keypath_test_vectors)
 {
     UniValue tests;
@@ -1897,7 +1897,7 @@ BOOST_AUTO_TEST_CASE(bip341_keypath_test_vectors)
         PrecomputedTransactionData txdata;
         txdata.Init(tx, std::vector<CTxOut>{utxos}, true);
         // ELEMENTS: add a txout witness for each output
-        for (u_int i = 0; i < (u_int)utxos.size(); i++) {
+        for (size_t i = 0; i < utxos.size(); ++i) {
             tx.witness.vtxoutwit.emplace_back();
         }
 

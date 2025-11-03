@@ -97,7 +97,7 @@ static int verify_script(const unsigned char *hash_genesis_block,
             for (size_t i = 0; i < spentOutputsLen; i++) {
                 CScript spk = CScript(spentOutputs[i].scriptPubKey, spentOutputs[i].scriptPubKey + spentOutputs[i].scriptPubKeySize);
                 const CAmount& value = spentOutputs[i].value;
-                CTxOut tx_out = CTxOut(CAsset(), value, spk); // ELEMENTS FIXME
+                CTxOut tx_out = CTxOut(CAsset(), value, spk); // ELEMENTS: if we need the consensus lib working then it must work with multi assets
                 spent_outputs.push_back(tx_out);
             }
         }
