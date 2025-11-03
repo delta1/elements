@@ -31,7 +31,6 @@ struct TxSize {
 TxSize CalculateMaximumSignedTxSize(const CTransaction& tx, const CWallet* wallet, const std::vector<CTxOut>& txouts, const CCoinControl* coin_control = nullptr);
 TxSize CalculateMaximumSignedTxSize(const CTransaction& tx, const CWallet* wallet, const CCoinControl* coin_control = nullptr);
 // ELEMENTS
-int CalculateMaximumSignedInputSizeWithDummy(const CTxOut& txout, const CWallet* pwallet, const CCoinControl* coin_control);
 TxSize CalculateMaximumSignedTxSizeWithDummy(const CTransaction &tx, const CWallet *wallet, const std::vector<CTxOut>& txouts, const CCoinControl* coin_control);
 
 /**

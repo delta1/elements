@@ -1184,7 +1184,6 @@ bool AddWalletSetting(interfaces::Chain& chain, const std::string& wallet_name);
 bool RemoveWalletSetting(interfaces::Chain& chain, const std::string& wallet_name);
 
 // ELEMENTS: FIXME keeping dummy signing fee estimation until updating to descriptor method
-bool DummySignTx(CMutableTransaction &txNew, const std::vector<CTxOut> &txouts, const CCoinControl* coin_control);
 bool DummySignInput(const SigningProvider& provider, CMutableTransaction& tx, const size_t nIn, const CTxOut& txout, bool can_grind_r, const CCoinControl* coin_control);
 
 bool FillInputToWeight(CMutableTransaction& mtx, size_t nIn, int64_t target_weight);

@@ -38,17 +38,6 @@ using interfaces::FoundBlock;
 namespace wallet {
 static constexpr size_t OUTPUT_GROUP_MAX_ENTRIES{100};
 
-// ELEMENTS
-int CalculateMaximumSignedInputSizeWithDummy(const CTxOut& txout, const COutPoint outpoint, const SigningProvider* provider, bool can_grind_r, const CCoinControl* coin_control) {
-    CMutableTransaction txn;
-    txn.vin.emplace_back(outpoint);
-    if (!provider || !DummySignInput(*provider, txn, 0, txout, can_grind_r, coin_control)) {
-        return -1;
-    }
-    return GetVirtualTransactionInputSize(CTransaction(txn));
-}
-//
-
 /** Whether the descriptor represents, directly or not, a witness program. */
 static bool IsSegwit(const Descriptor& desc) {
     if (const auto typ = desc.GetOutputType()) return *typ != OutputType::LEGACY;
