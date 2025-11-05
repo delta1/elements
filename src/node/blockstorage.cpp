@@ -477,7 +477,12 @@ bool BlockManager::LoadBlockIndex(ChainstateManager& chainman, const std::option
     }
 
     if (snapshot_blockhash) {
-        const AssumeutxoData au_data = *Assert(GetParams().AssumeutxoForBlockhash(*snapshot_blockhash));
+        const std::optional<AssumeutxoData> maybe_au_data = GetParams().AssumeutxoForBlockhash(*snapshot_blockhash);
+        if (!maybe_au_data) {
+            m_opts.notifications.fatalError(strprintf("Assumeutxo data not found for the given blockhash '%s'.", snapshot_blockhash->ToString()));
+            return false;
+        }
+        const AssumeutxoData& au_data = *Assert(maybe_au_data);
         m_snapshot_height = au_data.height;
         CBlockIndex* base{LookupBlockIndex(*snapshot_blockhash)};
 
