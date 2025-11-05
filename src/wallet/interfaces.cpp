@@ -615,7 +615,7 @@ public:
         bilingual_str error;
         std::unique_ptr<Wallet> wallet{MakeWallet(m_context, CreateWallet(m_context, name, /*load_on_start=*/true, options, status, error, warnings))};
         if (wallet) {
-            return {std::move(wallet)};
+            return wallet;
         } else {
             return util::Error{error};
         }
@@ -629,7 +629,7 @@ public:
         bilingual_str error;
         std::unique_ptr<Wallet> wallet{MakeWallet(m_context, LoadWallet(m_context, name, /*load_on_start=*/true, options, status, error, warnings))};
         if (wallet) {
-            return {std::move(wallet)};
+            return wallet;
         } else {
             return util::Error{error};
         }
@@ -640,7 +640,7 @@ public:
         bilingual_str error;
         std::unique_ptr<Wallet> wallet{MakeWallet(m_context, RestoreWallet(m_context, backup_file, wallet_name, /*load_on_start=*/true, status, error, warnings))};
         if (wallet) {
-            return {std::move(wallet)};
+            return wallet;
         } else {
             return util::Error{error};
         }
@@ -655,7 +655,7 @@ public:
             .solvables_wallet_name = res->solvables_wallet ? std::make_optional(res->solvables_wallet->GetName()) : std::nullopt,
             .backup_path = res->backup_path,
         };
-        return {std::move(out)}; // std::move to work around clang bug
+        return out;
     }
     std::string getWalletDir() override
     {
