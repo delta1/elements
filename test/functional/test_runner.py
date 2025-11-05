@@ -292,6 +292,7 @@ BASE_SCRIPTS = [
     'feature_elements_taproot_activation.py',
     'feature_elements_simplicity_activation.py',
     'p2p_invalid_block.py --v2transport',
+    'p2p_invalid_messages.py',
     'p2p_invalid_tx.py',
     'p2p_invalid_tx.py --v2transport',
     'p2p_v2_transport.py',
