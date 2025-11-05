@@ -30,6 +30,7 @@ from .util import (
     PortSeed,
     assert_equal,
     check_json_precision,
+    find_vout_for_address,
     get_datadir_path,
     initialize_datadir,
     p2p_port,
@@ -701,6 +702,33 @@ class BitcoinTestFramework(metaclass=BitcoinTestMetaClass):
         blocks = generator.generatetodescriptor(*args, invalid_call=False, **kwargs)
         sync_fun() if sync_fun else self.sync_all()
         return blocks
+
+    def create_outpoints(self, node, *, outputs, blind=False):
+        """Send funds to a given list of `{address: amount}` targets using the bitcoind
+        wallet and return the corresponding outpoints as a list of dictionaries
+        `[{"txid": txid, "vout": vout1}, {"txid": txid, "vout": vout2}, ...]`.
+        The result can be used to specify inputs for RPCs like `createrawtransaction`,
+        `createpsbt`, `lockunspent` etc."""
+        assert all(len(output.keys()) == 1 for output in outputs)
+        if blind:
+            # ELEMENTS FIXME: use createrawtransaction until `send` can send to blinded addresses
+            raw_tx = node.createrawtransaction([], outputs)
+            funded_tx = node.fundrawtransaction(raw_tx)
+            blinded_tx = node.blindrawtransaction(funded_tx["hex"])
+            signed_tx = node.signrawtransactionwithwallet(blinded_tx)
+            assert signed_tx["complete"]
+            assert node.testmempoolaccept([signed_tx["hex"]])[0]["allowed"]
+            txid = node.sendrawtransaction(signed_tx["hex"])
+            send_res = {"txid": txid}
+        else:
+            send_res = node.send(outputs)
+            assert send_res["complete"]
+        utxos = []
+        for output in outputs:
+            address = list(output.keys())[0]
+            vout = find_vout_for_address(node, send_res["txid"], address)
+            utxos.append({"txid": send_res["txid"], "vout": vout})
+        return utxos
 
     def sync_blocks(self, nodes=None, wait=1, timeout=60, expect_disconnected=False):
         """
