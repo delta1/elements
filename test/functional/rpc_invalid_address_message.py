@@ -24,7 +24,7 @@ BECH32_INVALID_PREFIX = 'bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3z
 BECH32_TOO_LONG = 'ert1q049edschfnwystcqnsvyfpj23mpsg3jcedq9xv049edschfnwystcqnsvyfpj23mpsg3jcedq9xv049edschfnwystcqnsvyfpj23m'
 BECH32_ONE_ERROR = 'ert1qtmp7aayg7p24uslctssvjm06q5phz4yr7gdkdv'
 BECH32_ONE_ERROR_CAPITALS = 'ERT1QTMP7AAYG7P24USLCTSSVJM06Q5PHZ4YR7GDKDV'
-BECH32_TWO_ERRORS = 'ert1qtmp74syg7p24uslctsavjm06q5phz4yr7gdkdv' # should be bcrt1qax9suht3qv95sw33wavx8crpxduefdrsvgsklx
+BECH32_TWO_ERRORS = 'ert1qtmp74syg7p24uslctsavjm06q5phz4yr7gdkdv'
 BECH32_NO_SEPARATOR = 'ertq049ldschfnwystcqnsvyfpj23mpsg3jcedq9xv'
 BECH32_INVALID_CHAR = 'ert1q04oldschfnwystcqnsvyfpj23mpsg3jcedq9xv'
 BECH32_MULTISIG_TWO_ERRORS = 'ert1qmzm84udpua6axdstxlpwafca7g7na5w2yu8c7vqhe0rhjkcrfcfqwymvhe'
@@ -32,7 +32,7 @@ BECH32_WRONG_VERSION = 'ert1ptmp74ayg7p24uslctssvjm06q5phz4yr7gdkdv'
 
 BASE58_VALID = '2dcjQH4DQC3pMcSQkMkSQyPPEr7rZ6Ga4GR'
 BASE58_INVALID_PREFIX = '17VZNX1SN5NtKa8UQFxwQbFeFc3iqRYhem'
-BASE58_INVALID_CHECKSUM = '2NEPDEyVRWtPzPL38jaQZkWvbK8E6ywvB6d'
+BASE58_INVALID_CHECKSUM = 'mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJJfn'
 BASE58_INVALID_LENGTH = '2dcjQH4DQC3pMcSQkMkSQyPPEr7rZ6Ga4GR7rZ6Ga4GR'
 
 INVALID_ADDRESS = 'asfah14i8fajz0123f'
@@ -73,12 +73,12 @@ class InvalidAddressErrorMessageTest(BitcoinTestFramework):
 
     def test_validateaddress(self):
         # Invalid Bech32
-        self.check_invalid(BECH32_INVALID_SIZE, "Invalid Bech32 address program size (41 bytes)")
-        self.check_invalid(BECH32_INVALID_PREFIX, 'Invalid or unsupported prefix for Segwit (Bech32) address (expected ert, got bc).') # ELEMENTS
+        self.check_invalid(BECH32_INVALID_SIZE, 'Invalid Bech32 address program size (41 bytes)')
+        self.check_invalid(BECH32_INVALID_PREFIX, 'Invalid or unsupported prefix for Segwit (Bech32) address (expected ert, got bc).')
         self.check_invalid(BECH32_INVALID_BECH32, 'Version 1+ witness address must use Bech32m checksum')
         self.check_invalid(BECH32_INVALID_BECH32M, 'Version 0 witness address must use Bech32 checksum')
         self.check_invalid(BECH32_INVALID_VERSION, 'Invalid Bech32 address witness version')
-        self.check_invalid(BECH32_INVALID_V0_SIZE, "Invalid Bech32 v0 address program size (21 bytes), per BIP141")
+        self.check_invalid(BECH32_INVALID_V0_SIZE, 'Invalid Bech32 v0 address program size (21 bytes), per BIP141')
         self.check_invalid(BECH32_TOO_LONG, 'Bech32 string too long', list(range(90, 107)))
         self.check_invalid(BECH32_ONE_ERROR, 'Invalid Bech32 checksum', [9])
         self.check_invalid(BECH32_TWO_ERRORS, 'Invalid Bech32 checksum', [10, 23])

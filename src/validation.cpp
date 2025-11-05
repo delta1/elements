@@ -750,6 +750,11 @@ bool MemPoolAccept::PreChecks(ATMPArgs& args, Workspace& ws)
         }
     }
 
+    // Check unblinded issuance is in MoneyRange if configured
+    if (!chainparams.GetAcceptUnlimitedIssuances() && !IsIssuanceInMoneyRange(tx)) {
+        return state.Invalid(TxValidationResult::TX_NOT_STANDARD, "issuance-out-of-range", "Issuance is greater than 21 million and acceptunlimitedissuances is not enabled.");
+    }
+
     // Transactions smaller than 65 non-witness bytes are not relayed to mitigate CVE-2017-12842.
     if (::GetSerializeSize(tx, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) < MIN_STANDARD_TX_NONWITNESS_SIZE)
         return state.Invalid(TxValidationResult::TX_NOT_STANDARD, "tx-size-small");
@@ -2378,12 +2383,12 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
     num_blocks_total++;
 
-    // Check that all non-zero coinbase outputs pay to the required destination
+    // Check that all non-zero policyAsset coinbase outputs pay to the required destination
     const CScript& mandatory_coinbase_destination = params.GetConsensus().mandatory_coinbase_destination;
     if (mandatory_coinbase_destination != CScript()) {
         for (auto& txout : block.vtx[0]->vout) {
             bool mustPay = !txout.nValue.IsExplicit() || txout.nValue.GetAmount() != 0;
-            if (mustPay && txout.scriptPubKey != mandatory_coinbase_destination) {
+            if (mustPay && txout.nAsset.GetAsset() == policyAsset && txout.scriptPubKey != mandatory_coinbase_destination) {
                 LogPrintf("ERROR: ConnectBlock(): Coinbase outputs didn't match required scriptPubKey\n");
                 return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-coinbase-txos");
             }

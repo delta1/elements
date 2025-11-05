@@ -164,7 +164,7 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
     bool is_bech32_hrp = (ToLower(str.substr(0, params.Bech32HRP().size())) == params.Bech32HRP());
     bool is_blech32_hrp = (ToLower(str.substr(0, params.Blech32HRP().size())) == params.Blech32HRP());
 
-    if (!is_bech32 && !is_blech32  && !is_bech32_hrp && !is_blech32_hrp && DecodeBase58Check(str, data, 55)) {
+    if (!is_bech32 && !is_blech32 && !is_bech32_hrp && !is_blech32_hrp && DecodeBase58Check(str, data, 55)) {
         // base58-encoded Bitcoin addresses.
         // Public-key-hash-addresses have version 0 (or 111 testnet).
         // The data vector contains RIPEMD160(SHA256(pubkey)), where pubkey is the serialized public key.
