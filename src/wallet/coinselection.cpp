@@ -34,12 +34,10 @@ COutput::COutput(const COutPoint& outpoint, const CTxOut& txout, int depth, int 
       time{time},
       from_me{from_me}
 {
-    // ELEMENTS FIXME: is this whole block correct?
-    // See: https://github.com/bitcoin/bitcoin/pull/25083/files#diff-38f1a8db124a979cb6dd76ce263f7aae0053d6967ee909e6356115fa0402dc8cR80
     if (feerate) {
         fee = input_bytes < 0 ? 0 : feerate.value().GetFee(input_bytes);
     } else {
-        fee = 0; // ELEMENTS FIXME: is this correct?
+        fee = 0;
     }
 
     if (txout.nValue.IsExplicit()) {
@@ -87,7 +85,6 @@ COutput::COutput(const CWallet& wallet, const CWalletTx& wtx, const COutPoint& o
       safe{safe},
       time{time},
       from_me{from_me},
-      //effective_value{wtx.GetOutputValueOut(wallet, outpoint.n)}, ELEMENTS FIXME: is this needed?
       value{wtx.GetOutputValueOut(wallet, outpoint.n)},
       asset{wtx.GetOutputAsset(wallet, outpoint.n)},
       bf_value{wtx.GetOutputAmountBlindingFactor(wallet, outpoint.n)},
@@ -96,7 +93,7 @@ COutput::COutput(const CWallet& wallet, const CWalletTx& wtx, const COutPoint& o
         if (feerate) {
             fee = input_bytes < 0 ? 0 : feerate.value().GetFee(input_bytes);
         } else {
-            fee = 0; // ELEMENTS FIXME: is this correct?
+            fee = 0;
         }
 
         CAmount output_value = wtx.GetOutputValueOut(wallet, outpoint.n);
@@ -118,7 +115,6 @@ COutput::COutput(const CWallet& wallet, const CWalletTx& wtx, const COutPoint& o
       safe{safe},
       time{time},
       from_me{from_me},
-      //effective_value{wtx.GetOutputValueOut(wallet, outpoint.n)}, ELEMENTS FIXME: is this needed?
       value{wtx.GetOutputValueOut(wallet, outpoint.n)},
       asset{wtx.GetOutputAsset(wallet, outpoint.n)},
       bf_value{wtx.GetOutputAmountBlindingFactor(wallet, outpoint.n)},
@@ -775,7 +771,7 @@ CAmountMap SelectionResult::GetSelectedValue() const
 
 CAmountMap SelectionResult::GetSelectedEffectiveValue() const
 {
-    return std::accumulate(m_selected_inputs.cbegin(), m_selected_inputs.cend(), CAmountMap{}, [](CAmountMap sum, const auto& coin) { return sum + CAmountMap{{coin->asset, coin->GetEffectiveValue()}}; }) + CAmountMap{{::policyAsset, bump_fee_group_discount}}; // ELEMENTS FIXME
+    return std::accumulate(m_selected_inputs.cbegin(), m_selected_inputs.cend(), CAmountMap{}, [](CAmountMap sum, const auto& coin) { return sum + CAmountMap{{coin->asset, coin->GetEffectiveValue()}}; }) + CAmountMap{{::policyAsset, bump_fee_group_discount}};
 }
 
 CAmount SelectionResult::GetTotalBumpFees() const
