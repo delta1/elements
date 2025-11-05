@@ -220,7 +220,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
             CTxDestination dest = DecodeDestination(rcp.address.toStdString());
             CScript scriptPubKey = GetScriptForDestination(dest);
             CPubKey confidentiality_pubkey = GetDestinationBlindingKey(dest);
-            CRecipient recipient = {scriptPubKey, rcp.asset_amount, rcp.asset, confidentiality_pubkey, rcp.fSubtractFeeFromAmount};
+            CRecipient recipient = {dest, rcp.asset_amount, rcp.asset, confidentiality_pubkey, rcp.fSubtractFeeFromAmount};
             vecSend.push_back(recipient);
 
             total[rcp.asset] += rcp.asset_amount;

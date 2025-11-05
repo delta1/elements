@@ -499,7 +499,7 @@ RPCHelpMan sendtomainchain_base()
     CTxDestination address(nulldata);
 
     std::vector<CRecipient> recipients;
-    CRecipient recipient = {GetScriptForDestination(address), nAmount, Params().GetConsensus().pegged_asset, CPubKey(), subtract_fee};
+    CRecipient recipient = {address, nAmount, Params().GetConsensus().pegged_asset, CPubKey(), subtract_fee};
     recipients.push_back(recipient);
 
     EnsureWalletIsUnlocked(*pwallet);
@@ -750,7 +750,7 @@ RPCHelpMan sendtomainchain_pak()
     CHECK_NONFATAL(GetScriptForDestination(nulldata).IsPegoutScript(genesisBlockHash));
 
     std::vector<CRecipient> recipients;
-    CRecipient recipient = {GetScriptForDestination(address), nAmount, Params().GetConsensus().pegged_asset, CPubKey(), subtract_fee};
+    CRecipient recipient = {address, nAmount, Params().GetConsensus().pegged_asset, CPubKey(), subtract_fee};
     recipients.push_back(recipient);
 
     if (!ScriptHasValidPAKProof(GetScriptForDestination(nulldata), Params().ParentGenesisBlockHash(), paklist)) {
@@ -1361,10 +1361,18 @@ static CTransactionRef SendGenerationTransaction(const CScript& asset_script, co
     // Signal outputs to skip "funding" with fixed asset numbers 1, 2, ...
     // We don't know the asset during initial issuance until inputs are chosen
     if (asset_script.size() > 0) {
-        vecSend.push_back({asset_script, asset_amount, CAsset(uint256S("1")), asset_pubkey, false});
+        CTxDestination dest;
+        if (!ExtractDestination(asset_script, dest)) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid asset destination script");
+        }
+        vecSend.push_back({dest, asset_amount, CAsset(uint256S("1")), asset_pubkey, false});
     }
     if (token_script.size() > 0) {
-        CRecipient recipient = {token_script, token_amount, CAsset(uint256S("2")), token_pubkey, false};
+        CTxDestination dest;
+        if (!ExtractDestination(token_script, dest)) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid token destination script");
+        }
+        CRecipient recipient = {dest, token_amount, CAsset(uint256S("2")), token_pubkey, false};
         // We need to select the issuance token(s) to spend
         if (!reissue_token.IsNull()) {
             recipient.asset = reissue_token;
@@ -1742,7 +1750,7 @@ RPCHelpMan destroyamount()
     NullData nulldata;
     CTxDestination address(nulldata);
     std::vector<CRecipient> recipients;
-    CRecipient recipient = {GetScriptForDestination(address), nAmount, asset, CPubKey(), false /* subtract_fee */};
+    CRecipient recipient = {address, nAmount, asset, CPubKey(), false /* subtract_fee */};
     recipients.push_back(recipient);
     CCoinControl no_coin_control; // This is a deprecated API
     return SendMoney(*pwallet, no_coin_control, recipients, std::move(mapValue), verbose, true /* ignore_blind_fail */);
