@@ -84,7 +84,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(QtLibraryDir)\Qt5Test.lib;$(QtReleaseLibraries);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/ignore:4206 /LTCG:OFF</AdditionalOptions>
+      <AdditionalOptions>/LTCG:OFF</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
 
@@ -94,7 +94,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(QtDebugLibraries);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/ignore:4206</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
