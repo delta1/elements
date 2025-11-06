@@ -74,7 +74,7 @@ static void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& 
     // Blockchain contextual information (confirmations and blocktime) is not
     // available to code in bitcoin-common, so we query them here and push the
     // data into the returned UniValue.
-    TxToUniv(tx, /*block_hash=*/uint256(), entry, /*include_hex=*/true, RPCSerializationFlags(), txundo, verbosity);
+    TxToUniv(tx, /*block_hash=*/uint256(), entry, /*include_hex=*/true, RPCSerializationWithoutWitness(), txundo, verbosity);
 
     if (!hashBlock.IsNull()) {
         LOCK(cs_main);
@@ -450,7 +450,7 @@ static RPCHelpMan getrawtransaction()
     }
 
     if (verbosity <= 0) {
-        return EncodeHexTx(CTransaction(*tx), RPCSerializationFlags());
+        return EncodeHexTx(CTransaction(*tx), /*without_witness=*/RPCSerializationWithoutWitness());
     }
 
     UniValue result(UniValue::VOBJ);
@@ -1449,16 +1449,16 @@ static RPCHelpMan decodepsbt()
             if (input.m_peg_in_tx.index() > 0) {
                 const auto peg_in_tx = std::get_if<Sidechain::Bitcoin::CTransactionRef>(&input.m_peg_in_tx);
                 if (peg_in_tx) {
-                    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
-                    ss_tx << *peg_in_tx;
+                    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION);
+                    ss_tx << TX_NO_WITNESS(*peg_in_tx);
                     in.pushKV("pegin_bitcoin_tx", HexStr(ss_tx));
                 }
             }
             if (input.m_peg_in_txout_proof.index() > 0) {
                 const auto txout_proof = std::get_if<Sidechain::Bitcoin::CMerkleBlock>(&input.m_peg_in_txout_proof);
                 if (txout_proof) {
-                    CDataStream ss_mb(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
-                    ss_mb << *txout_proof;
+                    CDataStream ss_mb(SER_NETWORK, PROTOCOL_VERSION);
+                    ss_mb << TX_NO_WITNESS(*txout_proof);
                     in.pushKV("pegin_txout_proof", HexStr(ss_mb));
                 }
             }
@@ -1466,16 +1466,16 @@ static RPCHelpMan decodepsbt()
             if (input.m_peg_in_tx.index() > 0) {
                 const auto peg_in_tx = std::get_if<CTransactionRef>(&input.m_peg_in_tx);
                 if (peg_in_tx) {
-                    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
-                    ss_tx << *peg_in_tx;
+                    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION);
+                    ss_tx << TX_NO_WITNESS(*peg_in_tx);
                     in.pushKV("pegin_bitcoin_tx", HexStr(ss_tx));
                 }
             }
             if (input.m_peg_in_txout_proof.index() > 0) {
                 const auto txout_proof = std::get_if<CMerkleBlock>(&input.m_peg_in_txout_proof);
                 if (txout_proof) {
-                    CDataStream ss_mb(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
-                    ss_mb << *txout_proof;
+                    CDataStream ss_mb(SER_NETWORK, PROTOCOL_VERSION);
+                    ss_mb << TX_NO_WITNESS(*txout_proof);
                     in.pushKV("pegin_txout_proof", HexStr(ss_mb));
                 }
             }
@@ -1981,15 +1981,15 @@ static RPCHelpMan finalizepsbt()
     bool complete = FinalizeAndExtractPSBT(psbtx, mtx);
 
     UniValue result(UniValue::VOBJ);
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssTx{};
     std::string result_str;
 
     if (complete && extract) {
-        ssTx << mtx;
+        ssTx << TX_WITH_WITNESS(mtx);
         result_str = HexStr(ssTx);
         result.pushKV("hex", result_str);
     } else {
-        ssTx << psbtx;
+        ssTx << TX_WITH_WITNESS(psbtx);
         result_str = EncodeBase64(ssTx.str());
         result.pushKV("psbt", result_str);
     }
@@ -2205,8 +2205,8 @@ static RPCHelpMan converttopsbt()
     }
 
     // Serialize the PSBT
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbtx;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbtx);
 
     return EncodeBase64(ssTx);
 },
@@ -2252,8 +2252,8 @@ static RPCHelpMan utxoupdatepsbt()
         /*sighash_type=*/SIGHASH_ALL,
         /*finalize=*/false);
 
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbtx;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbtx);
     return EncodeBase64(ssTx);
 },
     };
@@ -2286,8 +2286,8 @@ static RPCHelpMan parsepsbt()
     }
 
     // Serialize the PSBT
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbtx;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbtx);
     const std::string encoded = EncodeBase64(ssTx);
     UniValue result(UniValue::VOBJ);
     result.pushKV("psbt", encoded);
@@ -2603,10 +2603,10 @@ static RPCHelpMan rawblindrawtransaction()
     NodeContext& node = EnsureAnyNodeContext(request.context);
     ChainstateManager& chainman = EnsureChainman(node);
     std::vector<unsigned char> txData(ParseHexV(request.params[0], "argument 1"));
-    CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssData(txData);
     CMutableTransaction tx;
     try {
-        ssData >> tx;
+        ssData >> TX_WITH_WITNESS(tx);
     } catch (const std::exception &) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }
@@ -3183,15 +3183,15 @@ static RPCHelpMan updatepsbtpegin()
     // Peg-in tx
     if (!request.params[3].isNull()) {
         const std::vector<unsigned char> tx_data = ParseHex(request.params[3].get_str());
-        CDataStream ss_tx(tx_data, SER_NETWORK, PROTOCOL_VERSION);
+        DataStream ss_tx(tx_data);
         try {
             if (Params().GetConsensus().ParentChainHasPow()) {
                 Sidechain::Bitcoin::CTransactionRef tx;
-                ss_tx >> tx;
+                ss_tx >> TX_WITH_WITNESS(tx);
                 input.m_peg_in_tx = tx;
             } else {
                 CTransactionRef tx;
-                ss_tx >> tx;
+                ss_tx >> TX_WITH_WITNESS(tx);
                 input.m_peg_in_tx = tx;
             }
         } catch (...) {
@@ -3202,15 +3202,15 @@ static RPCHelpMan updatepsbtpegin()
     // Txout proof
     if (!request.params[4].isNull()) {
         const std::vector<unsigned char> proof_data = ParseHex(request.params[4].get_str());
-        CDataStream ss_proof(proof_data, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
+        CDataStream ss_proof(proof_data, SER_NETWORK, PROTOCOL_VERSION);
         try {
             if (Params().GetConsensus().ParentChainHasPow()) {
                 Sidechain::Bitcoin::CMerkleBlock merkle_block;
-                ss_proof >> merkle_block;
+                ss_proof >> TX_NO_WITNESS(merkle_block);
                 input.m_peg_in_txout_proof = merkle_block;
             } else {
                 CMerkleBlock merkle_block;
-                ss_proof >> merkle_block;
+                ss_proof >> TX_NO_WITNESS(merkle_block);
                 input.m_peg_in_txout_proof = merkle_block;
             }
         } catch (...) {
@@ -3305,8 +3305,8 @@ RPCHelpMan descriptorprocesspsbt()
         complete &= PSBTInputSigned(input);
     }
 
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbtx;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbtx);
 
     UniValue result(UniValue::VOBJ);
 
@@ -3316,8 +3316,8 @@ RPCHelpMan descriptorprocesspsbt()
         CMutableTransaction mtx;
         PartiallySignedTransaction psbtx_copy = psbtx;
         CHECK_NONFATAL(FinalizeAndExtractPSBT(psbtx_copy, mtx));
-        CDataStream ssTx_final(SER_NETWORK, PROTOCOL_VERSION);
-        ssTx_final << mtx;
+        DataStream ssTx_final;
+        ssTx_final << TX_WITH_WITNESS(mtx);
         result.pushKV("hex", HexStr(ssTx_final));
     }
     return result;

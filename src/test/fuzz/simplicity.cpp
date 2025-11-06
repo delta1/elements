@@ -113,9 +113,9 @@ FUZZ_TARGET(simplicity, .init = initialize_simplicity)
 
     // 2. Parse the transaction (the program and witness are just raw bytes)
     CMutableTransaction mtx;
-    CDataStream txds{Span{tx_data, tx_data_len}, SER_NETWORK, INIT_PROTO_VERSION};
+    DataStream txds{Span{tx_data, tx_data_len}};
     try {
-        txds >> mtx;
+        txds >> TX_WITH_WITNESS(mtx);
         mtx.witness.vtxinwit.resize(mtx.vin.size());
         mtx.witness.vtxoutwit.resize(mtx.vout.size());
 

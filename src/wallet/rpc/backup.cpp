@@ -352,9 +352,9 @@ RPCHelpMan importprunedfunds()
     }
     uint256 hashTx = tx.GetHash();
 
-    CDataStream ssMB(ParseHexV(request.params[1], "proof"), SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssMB(ParseHexV(request.params[1], "proof"));
     CMerkleBlock merkleBlock;
-    ssMB >> merkleBlock;
+    ssMB >> TX_WITH_WITNESS(merkleBlock);
 
     //Search partial merkle tree in proof for our transaction and index in valid block
     std::vector<uint256> vMatch;

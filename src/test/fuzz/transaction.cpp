@@ -40,7 +40,7 @@ FUZZ_TARGET(transaction, .init = initialize_transaction)
     bool valid_tx = true;
     const CTransaction tx = [&] {
         try {
-            CMutableTransaction mtx{deserialize, ds};
+            CMutableTransaction mtx{deserialize, TX_WITH_WITNESS, ds};
             mtx.witness.vtxinwit.resize(mtx.vin.size());
             return CTransaction(mtx);
         } catch (const std::ios_base::failure&) {
@@ -55,7 +55,7 @@ FUZZ_TARGET(transaction, .init = initialize_transaction)
         int nVersion;
         ds_mtx >> nVersion;
         ds_mtx.SetVersion(nVersion);
-        ds_mtx >> mutable_tx;
+        ds_mtx >> TX_WITH_WITNESS(mutable_tx);
     } catch (const std::ios_base::failure&) {
         valid_mutable_tx = false;
     }

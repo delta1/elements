@@ -97,10 +97,10 @@ BOOST_AUTO_TEST_CASE(witness_valid)
     witness.stack = witness_stack;
 
     // Check validation of peg-in transaction's inputs and balance
-    CDataStream ssTx(pegin_transaction, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssTx(pegin_transaction);
     CTransactionRef txRef;
     try {
-        ssTx >> txRef;
+        ssTx >> TX_WITH_WITNESS(txRef);
     } catch (...) {
         BOOST_CHECK(false);
         return;

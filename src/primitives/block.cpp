@@ -23,7 +23,7 @@ std::string CProof::ToString() const
 // Only include `challenge` of CProof here, and no signblock witness
 uint256 CBlockHeader::GetHash() const
 {
-    CHashWriter s{PROTOCOL_VERSION};
+    HashWriter s{};
     // Detect dynamic federation block serialization using "HF bit",
     // or the signed bit which is invalid in Bitcoin
     bool is_dyna = false;
@@ -77,8 +77,8 @@ uint256 DynaFedParamEntry::CalculateRoot() const
     }
 
     std::vector<uint256> compact_leaves;
-    compact_leaves.push_back((CHashWriter{0} << m_signblockscript).GetHash());
-    compact_leaves.push_back((CHashWriter{0} << m_signblock_witness_limit).GetHash());
+    compact_leaves.push_back((HashWriter{} << m_signblockscript).GetHash());
+    compact_leaves.push_back((HashWriter{} << m_signblock_witness_limit).GetHash());
     uint256 compact_root(ComputeFastMerkleRoot(compact_leaves));
 
     uint256 extra_root;
@@ -99,9 +99,9 @@ uint256 DynaFedParamEntry::CalculateRoot() const
 uint256 DynaFedParamEntry::CalculateExtraRoot() const
 {
     std::vector<uint256> extra_leaves;
-    extra_leaves.push_back((CHashWriter{0} << m_fedpeg_program).GetHash());
-    extra_leaves.push_back((CHashWriter{0} << m_fedpegscript).GetHash());
-    extra_leaves.push_back((CHashWriter{0} << m_extension_space).GetHash());
+    extra_leaves.push_back((HashWriter{} << m_fedpeg_program).GetHash());
+    extra_leaves.push_back((HashWriter{} << m_fedpegscript).GetHash());
+    extra_leaves.push_back((HashWriter{} << m_extension_space).GetHash());
     return ComputeFastMerkleRoot(extra_leaves);
 }
 

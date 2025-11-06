@@ -75,9 +75,9 @@ FUZZ_TARGET(simplicity_tx, .init = initialize_simplicity_tx)
     // 2. Construct transaction.
     CMutableTransaction mtx;
     {
-        CDataStream txds{buffer, SER_NETWORK, INIT_PROTO_VERSION};
+        DataStream txds{buffer};
         try {
-            txds >> mtx;
+            txds >> TX_WITH_WITNESS(mtx);
         } catch (const std::ios_base::failure&) {
             return;
         }

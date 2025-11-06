@@ -72,8 +72,8 @@ UniValue ExternalSigner::GetDescriptors(const int account)
 bool ExternalSigner::SignTransaction(PartiallySignedTransaction& psbtx, std::string& error)
 {
     // Serialize the PSBT
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbtx;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbtx);
     // parse ExternalSigner master fingerprint
     std::vector<unsigned char> parsed_m_fingerprint = ParseHex(m_fingerprint);
     // Check if signer fingerprint matches any input master key fingerprint

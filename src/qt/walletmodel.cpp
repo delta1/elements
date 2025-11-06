@@ -300,8 +300,8 @@ void WalletModel::sendCoins(WalletModelTransaction& transaction, wallet::BlindDe
         auto& newTx = transaction.getWtx();
         wallet().commitTransaction(newTx, /*value_map=*/{}, std::move(vOrderForm), blind_details);
 
-        CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-        ssTx << *newTx;
+        DataStream ssTx;
+        ssTx << TX_WITH_WITNESS(*newTx);
         transaction_array.append((const char*)ssTx.data(), ssTx.size());
     }
 
@@ -583,8 +583,8 @@ bool WalletModel::bumpFee(uint256 hash, uint256& new_hash)
             return false;
         }
         // Serialize the PSBT
-        CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-        ssTx << psbtx;
+        DataStream ssTx{};
+        ssTx << TX_WITH_WITNESS(psbtx);
         GUIUtil::setClipboard(EncodeBase64(ssTx.str()).c_str());
         Q_EMIT message(tr("PSBT copied"), tr("Copied to clipboard", "Fee-bump PSBT saved"), CClientUIInterface::MSG_INFORMATION);
         return true;

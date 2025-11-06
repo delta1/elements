@@ -202,7 +202,7 @@ FUZZ_TARGET_DESERIALIZE(key_origin_info_deserialize, {
 })
 FUZZ_TARGET_DESERIALIZE(partially_signed_transaction_deserialize, {
     PartiallySignedTransaction partially_signed_transaction;
-    DeserializeFromFuzzingInput(buffer, partially_signed_transaction);
+    DeserializeFromFuzzingInput(buffer, TX_WITH_WITNESS(partially_signed_transaction));
 })
 FUZZ_TARGET_DESERIALIZE(prefilled_transaction_deserialize, {
     PrefilledTransaction prefilled_transaction;
@@ -210,15 +210,15 @@ FUZZ_TARGET_DESERIALIZE(prefilled_transaction_deserialize, {
 })
 FUZZ_TARGET_DESERIALIZE(psbt_input_deserialize, {
     PSBTInput psbt_input(2);
-    DeserializeFromFuzzingInput(buffer, psbt_input);
+    DeserializeFromFuzzingInput(buffer, TX_WITH_WITNESS(psbt_input));
 })
 FUZZ_TARGET_DESERIALIZE(psbt_output_deserialize, {
     PSBTOutput psbt_output(2);
-    DeserializeFromFuzzingInput(buffer, psbt_output);
+    DeserializeFromFuzzingInput(buffer, TX_WITH_WITNESS(psbt_output));
 })
 FUZZ_TARGET_DESERIALIZE(block_deserialize, {
     CBlock block;
-    DeserializeFromFuzzingInput(buffer, block);
+    DeserializeFromFuzzingInput(buffer, TX_WITH_WITNESS(block));
 })
 FUZZ_TARGET_DESERIALIZE(blocklocator_deserialize, {
     CBlockLocator bl;
@@ -226,7 +226,7 @@ FUZZ_TARGET_DESERIALIZE(blocklocator_deserialize, {
 })
 FUZZ_TARGET_DESERIALIZE(blockmerkleroot, {
     CBlock block;
-    DeserializeFromFuzzingInput(buffer, block);
+    DeserializeFromFuzzingInput(buffer, TX_WITH_WITNESS(block));
     bool mutated;
     BlockMerkleRoot(block, &mutated);
 })

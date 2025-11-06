@@ -145,8 +145,8 @@ template<typename T>
 static bool CheckPeginTx(const std::vector<unsigned char>& tx_data, T& pegtx, const COutPoint& prevout, const CAmount claim_amount, const CScript& claim_script, const std::vector<std::pair<CScript, CScript>>& fedpegscripts)
 {
     try {
-        CDataStream pegtx_stream(tx_data, SER_NETWORK, PROTOCOL_VERSION);
-        pegtx_stream >> pegtx;
+        DataStream pegtx_stream(tx_data);
+        pegtx_stream >> TX_WITH_WITNESS(pegtx);
         if (!pegtx_stream.empty()) {
             return false;
         }
@@ -202,8 +202,8 @@ static bool GetBlockAndTxFromMerkleBlock(uint256& block_hash, uint256& tx_hash, 
     try {
         std::vector<uint256> tx_hashes;
         std::vector<unsigned int> tx_indices;
-        CDataStream merkle_block_stream(merkle_block_raw, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
-        merkle_block_stream >> merkle_block;
+        CDataStream merkle_block_stream(merkle_block_raw, SER_NETWORK, PROTOCOL_VERSION);
+        merkle_block_stream >> TX_NO_WITNESS(merkle_block);
         block_hash = merkle_block.header.GetHash();
 
         if (!merkle_block_stream.empty()) {
@@ -514,14 +514,14 @@ CScriptWitness CreatePeginWitnessInner(const CAmount& value, const CAsset& asset
     }
 
     // Strip witness data for proof inclusion since only TXID-covered fields matters
-    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
-    ss_tx << tx_ref;
+    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION);
+    ss_tx << TX_NO_WITNESS(tx_ref);
     const auto* ss_tx_ptr = UCharCast(ss_tx.data());
     std::vector<unsigned char> tx_data_stripped(ss_tx_ptr, ss_tx_ptr + ss_tx.size());
 
     // Serialize merkle block
-    CDataStream ss_txout_proof(SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
-    ss_txout_proof << merkle_block;
+    CDataStream ss_txout_proof(SER_NETWORK, PROTOCOL_VERSION);
+    ss_txout_proof << TX_NO_WITNESS(merkle_block);
     const auto* ss_txout_ptr = UCharCast(ss_txout_proof.data());
     std::vector<unsigned char> txout_proof_bytes(ss_txout_ptr, ss_txout_ptr + ss_txout_proof.size());
 
@@ -564,25 +564,25 @@ bool DecomposePeginWitness(const CScriptWitness& witness, CAmount& value, CAsset
     CScript s(stack[3].begin(), stack[3].end());
     claim_script = s;
 
-    CDataStream ss_tx(stack[4], SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ss_tx(stack[4]);
     if (Params().GetConsensus().ParentChainHasPow()) {
         Sidechain::Bitcoin::CTransactionRef btc_tx;
-        ss_tx >> btc_tx;
+        ss_tx >> TX_WITH_WITNESS(btc_tx);
         tx = btc_tx;
     } else {
         CTransactionRef elem_tx;
-        ss_tx >> elem_tx;
+        ss_tx >> TX_WITH_WITNESS(elem_tx);
         tx = elem_tx;
     }
 
-    CDataStream ss_proof(stack[5], SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ss_proof(stack[5]);
     if (Params().GetConsensus().ParentChainHasPow()) {
         Sidechain::Bitcoin::CMerkleBlock tx_proof;
-        ss_proof >> tx_proof;
+        ss_proof >> TX_WITH_WITNESS(tx_proof);
         merkle_block = tx_proof;
     } else {
         CMerkleBlock tx_proof;
-        ss_proof >> tx_proof;
+        ss_proof >> TX_WITH_WITNESS(tx_proof);
         merkle_block = tx_proof;
     }
 

@@ -410,8 +410,8 @@ static RPCHelpMan generateblock()
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("hash", block_out->GetHash().GetHex());
     if (!process_new_block) {
-        CDataStream block_ser{SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags()};
-        block_ser << *block_out;
+        DataStream block_ser;
+        block_ser << RPCTxSerParams(*block_out);
         obj.pushKV("hex", HexStr(block_ser));
     }
     return obj;
@@ -1235,8 +1235,8 @@ static RPCHelpMan getnewblockhex()
         pblocktemplate->block.m_signblock_witness.stack.emplace_back(op_true.begin(), op_true.end());
     }
 
-    CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
-    ssBlock << pblocktemplate->block;
+    DataStream ssBlock{};
+    ssBlock << TX_WITH_WITNESS(pblocktemplate->block);
     return HexStr(ssBlock);
 },
     };
@@ -1320,8 +1320,8 @@ static RPCHelpMan combineblocksigs()
         block.proof.solution = sig_data.scriptSig;
     }
 
-    CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags());
-    ssBlock << block;
+    DataStream ssBlock;
+    ssBlock << RPCTxSerParams(block);
     UniValue result(UniValue::VOBJ);
     result.pushKV("hex", HexStr(ssBlock));
     result.pushKV("complete", CheckProof(block, params));
@@ -1348,8 +1348,8 @@ static RPCHelpMan getcompactsketch()
 {
     CBlock block;
     std::vector<unsigned char> block_bytes(ParseHex(request.params[0].get_str()));
-    CDataStream ssBlock(block_bytes, SER_NETWORK, PROTOCOL_VERSION);
-    ssBlock >> block;
+    DataStream ssBlock(block_bytes);
+    ssBlock >> TX_WITH_WITNESS(block);
 
     if (block.vtx.empty()) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Cannot obtain sketch of empty block.");
@@ -1357,8 +1357,8 @@ static RPCHelpMan getcompactsketch()
 
     CBlockHeaderAndShortTxIDs cmpctblock(block);
 
-    CDataStream ssCompactBlock(SER_NETWORK, PROTOCOL_VERSION);
-    ssCompactBlock << cmpctblock;
+    DataStream ssCompactBlock;
+    ssCompactBlock << TX_WITH_WITNESS(cmpctblock);
     return HexStr(ssCompactBlock);
 },
     };
@@ -1391,9 +1391,9 @@ static RPCHelpMan consumecompactsketch()
     UniValue ret(UniValue::VOBJ);
 
     std::vector<unsigned char> compact_block_bytes(ParseHex(request.params[0].get_str()));
-    CDataStream ssBlock(compact_block_bytes, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssBlock(compact_block_bytes);
     CBlockHeaderAndShortTxIDs cmpctblock;
-    ssBlock >> cmpctblock;
+    ssBlock >> TX_WITH_WITNESS(cmpctblock);
 
     const NodeContext& node = EnsureAnyNodeContext(request.context);
     LOCK(node.mempool->cs);
@@ -1426,14 +1426,14 @@ static RPCHelpMan consumecompactsketch()
         } else if (status == READ_STATUS_CHECKBLOCK_FAILED) {
             throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Checkblock failed.");
         }
-        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
-        ssBlock << *pblock;
+        DataStream ssBlock{};
+        ssBlock << TX_WITH_WITNESS(*pblock);
 
         ret.pushKV("blockhex", HexStr(ssBlock));
     } else {
         // Serialize the list of transactions we found
-        CDataStream ssFound(SER_NETWORK, PROTOCOL_VERSION);
-        ssFound << found;
+        DataStream ssFound;
+        ssFound << TX_WITH_WITNESS(found);
 
         ret.pushKV("block_tx_req", HexStr(ssReq));
         ret.pushKV("found_transactions", HexStr(ssFound));
@@ -1461,15 +1461,15 @@ static RPCHelpMan consumegetblocktxn()
 {
     CBlock block;
     std::vector<unsigned char> block_bytes(ParseHex(request.params[0].get_str()));
-    CDataStream ssBlock(block_bytes, SER_NETWORK, PROTOCOL_VERSION);
-    ssBlock >> block;
+    DataStream ssBlock(block_bytes);
+    ssBlock >> TX_WITH_WITNESS(block);
 
     // Take in BlockTransactionsRequest, return BlockTransactions
     std::vector<unsigned char> block_req(ParseHex(request.params[1].get_str()));
-    CDataStream ssReq(block_req, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssReq(block_req);
 
     BlockTransactionsRequest req;
-    ssReq >> req;
+    ssReq >> TX_WITH_WITNESS(req);
 
     BlockTransactions resp(req);
     for (size_t i = 0; i < req.indexes.size(); i++) {
@@ -1479,8 +1479,8 @@ static RPCHelpMan consumegetblocktxn()
         resp.txn[i] = block.vtx[req.indexes[i]];
     }
 
-    CDataStream ssResp(SER_NETWORK, PROTOCOL_VERSION);
-    ssResp << resp;
+    DataStream ssResp{};
+    ssResp << TX_WITH_WITNESS(resp);
 
     return HexStr(ssResp);
 },
@@ -1506,9 +1506,9 @@ static RPCHelpMan finalizecompactblock()
 {
     // Compact block
     std::vector<unsigned char> compact_block_bytes(ParseHex(request.params[0].get_str()));
-    CDataStream ssCompactBlock(compact_block_bytes, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssCompactBlock(compact_block_bytes);
     CBlockHeaderAndShortTxIDs cmpctblock;
-    ssCompactBlock >> cmpctblock;
+    ssCompactBlock >> TX_WITH_WITNESS(cmpctblock);
 
     // BlockTransactions from the server
     std::vector<unsigned char> block_tx(ParseHex(request.params[1].get_str()));
@@ -1519,10 +1519,10 @@ static RPCHelpMan finalizecompactblock()
 
     // Cached transactions
     std::vector<unsigned char> found_tx(ParseHex(request.params[2].get_str()));
-    CDataStream ssFound(found_tx, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssFound(found_tx);
 
     std::vector<CTransactionRef> found;
-    ssFound >> found;
+    ssFound >> TX_WITH_WITNESS(found);
 
     // Make mega-list
     found.insert(found.end(), transactions.txn.begin(), transactions.txn.end());
@@ -1548,8 +1548,8 @@ static RPCHelpMan finalizecompactblock()
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Failed to complete block though all transactions were apparently found.");
     }
 
-    CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
-    ssBlock << *pblock;
+    DataStream ssBlock{};
+    ssBlock << TX_WITH_WITNESS(*pblock);
 
     return HexStr(ssBlock);
 },

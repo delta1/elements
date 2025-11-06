@@ -43,7 +43,7 @@ FUZZ_TARGET(script_sign, .init = initialize_script_sign)
             DeserializeHDKeypaths(random_data_stream, key, hd_keypaths);
         } catch (const std::ios_base::failure&) {
         }
-        CDataStream serialized{SER_NETWORK, PROTOCOL_VERSION};
+        DataStream serialized{};
         SerializeHDKeypaths(serialized, hd_keypaths, CompactSizeWriter(fuzzed_data_provider.ConsumeIntegral<uint8_t>()));
     }
 
@@ -60,7 +60,7 @@ FUZZ_TARGET(script_sign, .init = initialize_script_sign)
             }
             hd_keypaths[*pub_key] = *key_origin_info;
         }
-        CDataStream serialized{SER_NETWORK, PROTOCOL_VERSION};
+        DataStream serialized{};
         try {
             SerializeHDKeypaths(serialized, hd_keypaths, CompactSizeWriter(fuzzed_data_provider.ConsumeIntegral<uint8_t>()));
         } catch (const std::ios_base::failure&) {
@@ -86,7 +86,7 @@ FUZZ_TARGET(script_sign, .init = initialize_script_sign)
     }
 
     {
-        const std::optional<CMutableTransaction> mutable_transaction = ConsumeDeserializable<CMutableTransaction>(fuzzed_data_provider);
+        const std::optional<CMutableTransaction> mutable_transaction = ConsumeDeserializable<CMutableTransaction>(fuzzed_data_provider, TX_WITH_WITNESS);
         const std::optional<CTxOut> tx_out = ConsumeDeserializable<CTxOut>(fuzzed_data_provider);
         const unsigned int n_in = fuzzed_data_provider.ConsumeIntegral<unsigned int>();
         if (mutable_transaction && tx_out && mutable_transaction->vin.size() > n_in) {
@@ -102,7 +102,7 @@ FUZZ_TARGET(script_sign, .init = initialize_script_sign)
         if (mutable_transaction) {
             CTransaction tx_from{*mutable_transaction};
             CMutableTransaction tx_to;
-            const std::optional<CMutableTransaction> opt_tx_to = ConsumeDeserializable<CMutableTransaction>(fuzzed_data_provider);
+            const std::optional<CMutableTransaction> opt_tx_to = ConsumeDeserializable<CMutableTransaction>(fuzzed_data_provider, TX_WITH_WITNESS);
             if (opt_tx_to) {
                 tx_to = *opt_tx_to;
             }

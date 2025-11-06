@@ -941,8 +941,8 @@ std::string PSBTRoleName(PSBTRole role) {
 
 std::string EncodePSBT(const PartiallySignedTransaction& psbt)
 {
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbt;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbt);
     return EncodeBase64(ssTx);
 }
 
@@ -958,9 +958,9 @@ bool DecodeBase64PSBT(PartiallySignedTransaction& psbt, const std::string& base6
 
 bool DecodeRawPSBT(PartiallySignedTransaction& psbt, Span<const std::byte> tx_data, std::string& error)
 {
-    CDataStream ss_data(tx_data, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ss_data(tx_data);
     try {
-        ss_data >> psbt;
+        ss_data >> TX_WITH_WITNESS(psbt);
         if (!ss_data.empty()) {
             error = "extra data after PSBT";
             return false;

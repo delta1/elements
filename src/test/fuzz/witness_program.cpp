@@ -23,12 +23,12 @@ public:
 
 FUZZ_TARGET(witness_program)
 {
-    CDataStream ds(buffer, SER_NETWORK, INIT_PROTO_VERSION);
+    DataStream ds(buffer);
     try {
         CMutableTransaction tx;
         unsigned int nIn;
         CConfidentialValue amountIn;
-        ds >> tx;
+        ds >> TX_NO_WITNESS(tx);
         ds >> nIn;
         ds >> amountIn;
 

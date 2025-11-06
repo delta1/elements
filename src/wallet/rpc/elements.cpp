@@ -872,7 +872,7 @@ static UniValue createrawpegin(const JSONRPCRequest& request, T_tx_ref& txBTCRef
     UniValue ret(UniValue::VOBJ);
 
     // Return hex
-    std::string strHex = EncodeHexTx(CTransaction(mtx), RPCSerializationFlags());
+    std::string strHex = EncodeHexTx(CTransaction(mtx), /*without_witness=*/RPCSerializationWithoutWitness());
     ret.pushKV("hex", strHex);
 
     // Additional block lee-way to avoid bitcoin block races
@@ -1164,10 +1164,10 @@ RPCHelpMan blindrawtransaction()
     CWallet* const pwallet = wallet.get();
 
     std::vector<unsigned char> txData(ParseHexV(request.params[0], "argument 1"));
-    CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssData(txData);
     CMutableTransaction tx;
     try {
-        ssData >> tx;
+        ssData >> TX_WITH_WITNESS(tx);
     } catch (const std::exception &) {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     }

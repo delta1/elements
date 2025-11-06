@@ -406,8 +406,8 @@ bool SendCoinsDialog::PrepareSendText(QString& question_string, QString& informa
 void SendCoinsDialog::presentPSBT(PartiallySignedTransaction& psbtx)
 {
     // Serialize the PSBT
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbtx;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbtx);
     GUIUtil::setClipboard(EncodeBase64(ssTx.str()).c_str());
     QMessageBox msgBox(this);
     //: Caption of "PSBT has been copied" messagebox

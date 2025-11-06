@@ -2366,7 +2366,7 @@ public:
 template <class T>
 uint256 GetOutpointFlagsSHA256(const T& txTo)
 {
-    CHashWriter ss(0);
+    HashWriter ss{};
     for (const auto& txin : txTo.vin) {
         ss << GetOutpointFlag(txin);
     }
@@ -2400,7 +2400,7 @@ uint256 GetSequencesSHA256(const T& txTo)
 template <class T>
 uint256 GetIssuanceSHA256(const T& txTo)
 {
-    CHashWriter ss(0);
+    HashWriter ss{};
     for (const auto& txin : txTo.vin) {
         if (txin.assetIssuance.IsNull())
             ss << (unsigned char)0;
@@ -2416,7 +2416,7 @@ uint256 GetIssuanceSHA256(const T& txTo)
 template <class T>
 uint256 GetOutputWitnessesSHA256(const T& txTo)
 {
-    CHashWriter ss(0);
+    HashWriter ss{};
     for (const auto& outwit : txTo.witness.vtxoutwit) {
         ss << outwit;
     }
@@ -2429,7 +2429,7 @@ uint256 GetOutputWitnessesSHA256(const T& txTo)
 template <class T>
 uint256 GetIssuanceRangeproofsSHA256(const T& txTo)
 {
-    CHashWriter ss(0);
+    HashWriter ss{};
     for (const auto& inwit : txTo.witness.vtxinwit) {
         ss << inwit.vchIssuanceAmountRangeproof;
         ss << inwit.vchInflationKeysRangeproof;
@@ -2501,7 +2501,7 @@ std::vector<uint256> GetOutputScriptPubKeysSHA256(const T& txTo)
 
 template <class T>
 uint256 GetRangeproofsHash(const T& txTo) {
-    CHashWriter ss(0);
+    HashWriter ss{};
     for (size_t i = 0; i < txTo.vout.size(); i++) {
         if (i < txTo.witness.vtxoutwit.size()) {
             ss << txTo.witness.vtxoutwit[i].vchRangeproof;
@@ -2567,7 +2567,7 @@ void PrecomputedTransactionData::Init(const T& txTo, std::vector<CTxOut>&& spent
     if (uses_bip341_taproot && m_spent_outputs_ready) {
         // line copied from GetTransactionWeight() in src/consensus/validation.h
         // (we cannot directly use that function for type reasons)
-        m_tx_weight = ::GetSerializeSize(txTo, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * (WITNESS_SCALE_FACTOR - 1) + ::GetSerializeSize(txTo, PROTOCOL_VERSION);
+        m_tx_weight = ::GetSerializeSize(TX_NO_WITNESS(txTo)) * (WITNESS_SCALE_FACTOR - 1) + ::GetSerializeSize(TX_WITH_WITNESS(txTo));
         m_outpoints_flag_single_hash = GetOutpointFlagsSHA256(txTo);
         m_spent_asset_amounts_single_hash = GetSpentAssetsAmountsSHA256(m_spent_outputs);
         m_issuance_rangeproofs_single_hash = GetIssuanceRangeproofsSHA256(txTo);
@@ -2754,7 +2754,7 @@ bool SignatureHashSchnorr(uint256& hash_out, ScriptExecutionData& execdata, cons
         } else {
             ss << tx_to.vin[in_pos].assetIssuance;
 
-            CHashWriter sha_single_input_issuance_witness(0);
+            HashWriter sha_single_input_issuance_witness{};
             sha_single_input_issuance_witness << tx_to.witness.vtxinwit[in_pos].vchIssuanceAmountRangeproof;
             sha_single_input_issuance_witness << tx_to.witness.vtxinwit[in_pos].vchInflationKeysRangeproof;
             ss << sha_single_input_issuance_witness.GetSHA256();
@@ -2777,7 +2777,7 @@ bool SignatureHashSchnorr(uint256& hash_out, ScriptExecutionData& execdata, cons
 
         // ELEMENTS
         if (!execdata.m_output_witness_hash) {
-            CHashWriter sha_single_output_witness(0);
+            HashWriter sha_single_output_witness{};
             sha_single_output_witness << tx_to.witness.vtxoutwit[in_pos];
             execdata.m_output_witness_hash = sha_single_output_witness.GetSHA256();
         }
@@ -2835,7 +2835,7 @@ uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn
             hashOutputs = ss.GetHash();
 
             if (fRangeproof) {
-                CHashWriter ss(0);
+                HashWriter ss{};
                 if (nIn < txTo.witness.vtxoutwit.size()) {
                     ss << txTo.witness.vtxoutwit[nIn].vchRangeproof;
                     ss << txTo.witness.vtxoutwit[nIn].vchSurjectionproof;

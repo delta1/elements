@@ -236,9 +236,7 @@ public:
     static const uint32_t DYNAFED_HF_MASK = 1 << 31;
 
     template <typename Stream>
-    inline void Serialize(Stream& s) const {
-        const bool fAllowWitness = !(s.GetVersion() & SERIALIZE_TRANSACTION_NO_WITNESS);
-
+    inline void Serialize(Stream& s, const TransactionSerParams& params) const {
         // Detect dynamic federation block serialization using "HF bit",
         // or the signed bit which is invalid in Bitcoin
         bool is_dyna = false;
@@ -256,7 +254,7 @@ public:
             s << block_height;
             s << m_dynafed_params;
             // We do not serialize witness for hashes, or weight calculation
-            if (fAllowWitness) {
+            if (params.allow_witness) {
                 s << m_signblock_witness.stack;
             }
         } else {
@@ -275,10 +273,14 @@ public:
         }
     }
 
+    // ELEMENTS:
+    // Backwards-compatible overload for serializers that don't pass
+    // TransactionSerParams. Default to include witness.
     template <typename Stream>
-    inline void Unserialize(Stream& s) {
-        const bool fAllowWitness = !(s.GetVersion() & SERIALIZE_TRANSACTION_NO_WITNESS);
+    inline void Serialize(Stream& s) const { Serialize(s, TX_WITH_WITNESS); }
 
+    template <typename Stream>
+    inline void Unserialize(Stream& s, const TransactionSerParams& params) {
         // Detect dynamic federation block serialization using "HF bit",
         // or the signed bit which is invalid in Bitcoin
         bool is_dyna = false;
@@ -294,7 +296,7 @@ public:
             s >> block_height;
             s >> m_dynafed_params;
             // We do not serialize witness for hashes, or weight calculation
-            if (fAllowWitness) {
+            if (params.allow_witness) {
                 s >> m_signblock_witness.stack;
             }
         } else {
@@ -312,6 +314,12 @@ public:
             }
         }
     }
+
+    // ELEMENTS:
+    // Backwards-compatible overload for unserializers that don't pass
+    // TransactionSerParams. Default to include witness.
+    template <typename Stream>
+    inline void Unserialize(Stream& s) { Unserialize(s, TX_WITH_WITNESS); }
 
     void SetNull()
     {

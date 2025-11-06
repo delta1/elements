@@ -64,20 +64,21 @@ CMutableTransaction::CMutableTransaction(const CTransaction& tx) : vin(tx.vin), 
 
 uint256 CMutableTransaction::GetHash() const
 {
-    return (CHashWriter{SERIALIZE_TRANSACTION_NO_WITNESS} << *this).GetHash();
+    return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(*this)).GetHash());
 }
 
 uint256 CTransaction::ComputeHash() const
 {
-    return (CHashWriter{SERIALIZE_TRANSACTION_NO_WITNESS} << *this).GetHash();
+    return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(*this)).GetHash());
 }
 
 uint256 CTransaction::ComputeWitnessHash() const
 {
     if (!HasWitness()) {
-        return hash;
+        return Wtxid::FromUint256(hash);
     }
-    return (CHashWriter{0} << *this).GetHash();
+
+    return Wtxid::FromUint256((HashWriter{} << TX_WITH_WITNESS(*this)).GetHash());
 }
 
 /* For backward compatibility, the hash is initialized to 0. TODO: remove the need for this default constructor entirely. */
@@ -99,7 +100,7 @@ CAmount CTransaction::GetValueOut() const
 
 unsigned int CTransaction::GetTotalSize() const
 {
-    return ::GetSerializeSize(*this, PROTOCOL_VERSION);
+    return ::GetSerializeSize(TX_WITH_WITNESS(*this));
 }
 
 std::string CTransaction::ToString() const

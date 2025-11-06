@@ -51,17 +51,17 @@ static void CreatePegInInputInner(CMutableTransaction& mtx, uint32_t input_idx, 
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Attempting to add a peg-in to an input that already has a scriptSig or witness");
     }
 
-    CDataStream ssTx(txData, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssTx(txData);
     try {
-        ssTx >> txBTCRef;
+        ssTx >> TX_WITH_WITNESS(txBTCRef);
     }
     catch (...) {
         throw JSONRPCError(RPC_TYPE_ERROR, "The included bitcoinTx is malformed. Are you sure that is the whole string?");
     }
 
-    CDataStream ssTxOutProof(txOutProofData, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
+    DataStream ssTxOutProof(txOutProofData);
     try {
-        ssTxOutProof >> merkleBlock;
+        ssTxOutProof >> TX_NO_WITNESS(merkleBlock);
     }
     catch (...) {
         throw JSONRPCError(RPC_TYPE_ERROR, "The included txoutproof is malformed. Are you sure that is the whole string?");

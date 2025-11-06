@@ -143,8 +143,8 @@ static int Grind(const std::vector<std::string>& args, std::string& strPrint)
         return EXIT_FAILURE;
     }
 
-    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-    ss << header;
+    DataStream ss{};
+    ss << TX_WITH_WITNESS(header);
     strPrint = HexStr(ss);
     return EXIT_SUCCESS;
 }

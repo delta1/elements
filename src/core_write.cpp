@@ -169,10 +169,14 @@ std::string ScriptToAsmStr(const CScript& script, const bool fAttemptSighashDeco
     return str;
 }
 
-std::string EncodeHexTx(const CTransaction& tx, const int serializeFlags)
+std::string EncodeHexTx(const CTransaction& tx, const bool without_witness)
 {
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION | serializeFlags);
-    ssTx << tx;
+    DataStream ssTx;
+    if (without_witness) {
+        ssTx << TX_NO_WITNESS(tx);
+    } else {
+        ssTx << TX_WITH_WITNESS(tx);
+    }
     return HexStr(ssTx);
 }
 
@@ -224,7 +228,7 @@ void ScriptToUniv(const CScript& script, UniValue& out, bool include_hex, bool i
     }
 }
 
-void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex, int serialize_flags, const CTxUndo* txundo, TxVerbosity verbosity)
+void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry, bool include_hex, bool without_witness, const CTxUndo* txundo, TxVerbosity verbosity)
 {
     CHECK_NONFATAL(verbosity >= TxVerbosity::SHOW_DETAILS);
 
@@ -237,7 +241,7 @@ void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry
     // Transaction version is actually unsigned in consensus checks, just signed in memory,
     // so cast to unsigned before giving it to the user.
     entry.pushKV("version", static_cast<int64_t>(static_cast<uint32_t>(tx.nVersion)));
-    entry.pushKV("size", (int)::GetSerializeSize(tx, PROTOCOL_VERSION));
+    entry.pushKV("size", tx.GetTotalSize());
     entry.pushKV("vsize", (GetTransactionWeight(tx) + WITNESS_SCALE_FACTOR - 1) / WITNESS_SCALE_FACTOR);
     entry.pushKV("weight", GetTransactionWeight(tx));
     // ELEMENTS: add discountvsize
@@ -422,6 +426,6 @@ void TxToUniv(const CTransaction& tx, const uint256& block_hash, UniValue& entry
     }
 
     if (include_hex) {
-        entry.pushKV("hex", EncodeHexTx(tx, serialize_flags)); // The hex-encoded transaction. Used the name "hex" to be consistent with the verbose output of "getrawtransaction".
+        entry.pushKV("hex", EncodeHexTx(tx, without_witness)); // The hex-encoded transaction. Used the name "hex" to be consistent with the verbose output of "getrawtransaction".
     }
 }

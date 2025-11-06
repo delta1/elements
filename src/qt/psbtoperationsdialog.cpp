@@ -128,15 +128,15 @@ void PSBTOperationsDialog::broadcastTransaction()
 }
 
 void PSBTOperationsDialog::copyToClipboard() {
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << m_transaction_data;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(m_transaction_data);
     GUIUtil::setClipboard(EncodeBase64(ssTx.str()).c_str());
     showStatus(tr("PSBT copied to clipboard."), StatusLevel::INFO);
 }
 
 void PSBTOperationsDialog::saveTransaction() {
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << m_transaction_data;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(m_transaction_data);
 
     QString selected_filter;
     QString filename_suggestion = "";

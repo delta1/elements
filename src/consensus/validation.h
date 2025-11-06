@@ -149,11 +149,11 @@ class BlockValidationState : public ValidationState<BlockValidationResult> {};
 // weight = (stripped_size * 3) + total_size.
 static inline int32_t GetTransactionWeight(const CTransaction& tx)
 {
-    return ::GetSerializeSize(tx, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * (WITNESS_SCALE_FACTOR - 1) + ::GetSerializeSize(tx, PROTOCOL_VERSION);
+    return ::GetSerializeSize(TX_NO_WITNESS(tx)) * (WITNESS_SCALE_FACTOR - 1) + ::GetSerializeSize(TX_WITH_WITNESS(tx));
 }
 static inline int64_t GetBlockWeight(const CBlock& block)
 {
-    return ::GetSerializeSize(block, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * (WITNESS_SCALE_FACTOR - 1) + ::GetSerializeSize(block, PROTOCOL_VERSION);
+    return ::GetSerializeSize(TX_NO_WITNESS(block)) * (WITNESS_SCALE_FACTOR - 1) + ::GetSerializeSize(TX_WITH_WITNESS(block));
 }
 
 static inline int64_t GetTransactionInputWeight(const CTransaction& tx, const size_t nIn)
@@ -165,9 +165,7 @@ static inline int64_t GetTransactionInputWeight(const CTransaction& tx, const si
     assert(tx.witness.vtxinwit[nIn].vchIssuanceAmountRangeproof.empty());
     assert(tx.witness.vtxinwit[nIn].vchInflationKeysRangeproof.empty());
 
-    return ::GetSerializeSize(tx.vin[nIn], PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) * (WITNESS_SCALE_FACTOR - 1)
-    + ::GetSerializeSize(tx.vin[nIn], PROTOCOL_VERSION)
-    + ::GetSerializeSize(tx.witness.vtxinwit[nIn].scriptWitness.stack, PROTOCOL_VERSION);
+    return ::GetSerializeSize(TX_NO_WITNESS(tx.vin[nIn])) * (WITNESS_SCALE_FACTOR - 1) + ::GetSerializeSize(TX_WITH_WITNESS(tx.vin[nIn])) + ::GetSerializeSize(tx.witness.vtxinwit[nIn].scriptWitness.stack);
 }
 
 /** Compute at which vout of the block's coinbase transaction the witness commitment occurs, or -1 if not found */

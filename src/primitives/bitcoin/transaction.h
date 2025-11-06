@@ -11,6 +11,7 @@
 #include <script/script.h>
 #include <serialize.h>
 #include <uint256.h>
+#include <primitives/transaction.h>
 
 namespace Sidechain {
 namespace Bitcoin {
@@ -180,8 +181,8 @@ struct CMutableTransaction;
  * - uint32_t nLockTime
  */
 template<typename Stream, typename TxType>
-inline void UnserializeTransaction(TxType& tx, Stream& s) {
-    const bool fAllowWitness = !(s.GetVersion() & SERIALIZE_TRANSACTION_NO_WITNESS);
+inline void UnserializeTransaction(TxType& tx, Stream& s, const TransactionSerParams& params) {
+    const bool fAllowWitness = params.allow_witness;
 
     s >> tx.nVersion;
     unsigned char flags = 0;
@@ -219,8 +220,8 @@ inline void UnserializeTransaction(TxType& tx, Stream& s) {
 }
 
 template<typename Stream, typename TxType>
-inline void SerializeTransaction(const TxType& tx, Stream& s) {
-    const bool fAllowWitness = !(s.GetVersion() & SERIALIZE_TRANSACTION_NO_WITNESS);
+inline void SerializeTransaction(const TxType& tx, Stream& s, const TransactionSerParams& params) {
+    const bool fAllowWitness = params.allow_witness;
 
     s << tx.nVersion;
     unsigned char flags = 0;
@@ -291,13 +292,15 @@ public:
 
     template <typename Stream>
     inline void Serialize(Stream& s) const {
-        Sidechain::Bitcoin::SerializeTransaction(*this, s);
+        Sidechain::Bitcoin::SerializeTransaction(*this, s, s.GetParams());
     }
 
     /** This deserializing constructor is provided instead of an Unserialize method.
      *  Unserialize is not possible, since it would require overwriting const fields. */
     template <typename Stream>
-    CTransaction(deserialize_type, Stream& s) : CTransaction(CMutableTransaction(deserialize, s)) {}
+    CTransaction(deserialize_type, const TransactionSerParams& params, Stream& s) : CTransaction(CMutableTransaction(deserialize, params, s)) {}
+    template <typename Stream>
+    CTransaction(deserialize_type, ParamsStream<TransactionSerParams,Stream>& s) : CTransaction(CMutableTransaction(deserialize, s)) {}
 
     bool IsNull() const {
         return vin.empty() && vout.empty();
@@ -357,13 +360,13 @@ struct CMutableTransaction
 
     template <typename Stream>
     inline void Serialize(Stream& s) const {
-        Sidechain::Bitcoin::SerializeTransaction(*this, s);
+        Sidechain::Bitcoin::SerializeTransaction(*this, s, s.GetParams());
     }
 
 
     template <typename Stream>
     inline void Unserialize(Stream& s) {
-        Sidechain::Bitcoin::UnserializeTransaction(*this, s);
+        Sidechain::Bitcoin::UnserializeTransaction(*this, s, s.GetParams());
     }
 
     template <typename Stream>

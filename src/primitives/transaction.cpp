@@ -79,12 +79,12 @@ CMutableTransaction::CMutableTransaction(const CTransaction& tx) :
 
 Txid CMutableTransaction::GetHash() const
 {
-    return Txid::FromUint256((CHashWriter{SERIALIZE_TRANSACTION_NO_WITNESS} << *this).GetHash());
+    return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(*this)).GetHash());
 }
 
 Txid CTransaction::ComputeHash() const
 {
-    return Txid::FromUint256((CHashWriter{SERIALIZE_TRANSACTION_NO_WITNESS} << *this).GetHash());
+    return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(*this)).GetHash());
 }
 
 Wtxid CTransaction::ComputeWitnessHash() const
@@ -93,7 +93,7 @@ Wtxid CTransaction::ComputeWitnessHash() const
         return Wtxid::FromUint256(hash.ToUint256());
     }
 
-    return Wtxid::FromUint256((CHashWriter{0} << *this).GetHash());
+    return Wtxid::FromUint256((HashWriter{} << TX_WITH_WITNESS(*this)).GetHash());
 }
 
 // ELEMENTS ONLY
@@ -147,7 +147,7 @@ CAmountMap CTransaction::GetValueOutMap() const {
 
 unsigned int CTransaction::GetTotalSize() const
 {
-    return ::GetSerializeSize(*this, PROTOCOL_VERSION);
+    return ::GetSerializeSize(TX_WITH_WITNESS(*this));
 }
 
 std::string CTransaction::ToString() const

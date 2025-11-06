@@ -113,8 +113,8 @@ static UniValue FinishTransaction(const std::shared_ptr<CWallet> pwallet, const 
     bool add_to_wallet{options.exists("add_to_wallet") ? options["add_to_wallet"].get_bool() : true};
     if (psbt_opt_in || !complete || !add_to_wallet) {
         // Serialize the PSBT
-        CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-        ssTx << psbtx;
+        DataStream ssTx{};
+        ssTx << TX_WITH_WITNESS(psbtx);
         result.pushKV("psbt", EncodeBase64(ssTx.str()));
     }
 
@@ -1249,8 +1249,8 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
         const TransactionError err = pwallet->FillPSBT(psbtx, complete, SIGHASH_DEFAULT, /*sign=*/false, /*bip32derivs=*/true);
         CHECK_NONFATAL(err == TransactionError::OK);
         CHECK_NONFATAL(!complete);
-        CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-        ssTx << psbtx;
+        DataStream ssTx{};
+        ssTx << TX_WITH_WITNESS(psbtx);
         result.pushKV("psbt", EncodeBase64(ssTx.str()));
     }
 
@@ -1727,16 +1727,16 @@ RPCHelpMan walletprocesspsbt()
     }
 
     UniValue result(UniValue::VOBJ);
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbtx;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbtx);
     result.pushKV("psbt", EncodeBase64(ssTx.str()));
     result.pushKV("complete", complete);
     if (complete) {
         CMutableTransaction mtx;
         // Returns true if complete, which we already think it is.
         CHECK_NONFATAL(FinalizeAndExtractPSBT(psbtx, mtx));
-        CDataStream ssTx_final(SER_NETWORK, PROTOCOL_VERSION);
-        ssTx_final << mtx;
+        DataStream ssTx_final;
+        ssTx_final << TX_WITH_WITNESS(mtx);
         result.pushKV("hex", HexStr(ssTx_final));
     }
 
@@ -1984,8 +1984,8 @@ RPCHelpMan walletcreatefundedpsbt()
     }
 
     // Serialize the PSBT
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-    ssTx << psbtx;
+    DataStream ssTx{};
+    ssTx << TX_WITH_WITNESS(psbtx);
 
     UniValue result(UniValue::VOBJ);
     result.pushKV("psbt", EncodeBase64(ssTx.str()));
