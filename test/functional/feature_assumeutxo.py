@@ -112,7 +112,7 @@ class AssumeutxoTest(BitcoinTestFramework):
     def test_invalid_chainstate_scenarios(self):
         self.log.info("Test different scenarios of invalid snapshot chainstate in datadir")
 
-        self.log.info("  - snapshot chainstate refering to a block that is not in the assumeutxo parameters")
+        self.log.info("  - snapshot chainstate referring to a block that is not in the assumeutxo parameters")
         self.stop_node(0)
         chainstate_snapshot_path = self.nodes[0].chain_path / "chainstate_snapshot"
         chainstate_snapshot_path.mkdir()

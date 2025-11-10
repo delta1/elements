@@ -1991,7 +1991,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
     }
 
     // Before we return success, we assume any change key will be used to prevent
-    // accidental re-use.
+    // accidental reuse.
     for (auto& reservedest_ : reservedest) {
         reservedest_->KeepDestination();
     }
@@ -2045,7 +2045,7 @@ util::Result<CreatedTransactionResult> CreateTransaction(
         tmp_cc.m_avoid_partial_spends = true;
 
         // ELEMENTS: only for unblinded transactions
-        // Re-use the change destination from the first creation attempt to avoid skipping BIP44 indexes
+        // Reuse the change destination from the first creation attempt to avoid skipping BIP44 indexes
         const int ungrouped_change_pos = txr_ungrouped.change_pos;
         if (ungrouped_change_pos != -1 && !blind_details) {
             const CAsset& asset = txr_ungrouped.tx->vout[ungrouped_change_pos].nAsset.GetAsset();

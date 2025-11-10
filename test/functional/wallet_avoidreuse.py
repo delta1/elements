@@ -257,7 +257,7 @@ class AvoidReuseTest(BitcoinTestFramework):
 
         if not self.options.descriptors:
             # For the second send, we transmute it to a related single-key address
-            # to make sure it's also detected as re-use
+            # to make sure it's also detected as reuse
             validate = self.nodes[1].validateaddress(fundaddr) # ELEMENTS
             fund_spk = validate["scriptPubKey"]
             fund_decoded = self.nodes[0].decodescript(fund_spk)
