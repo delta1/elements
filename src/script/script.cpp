@@ -389,7 +389,7 @@ std::string CScriptWitness::ToString() const
 
 uint32_t CScriptWitness::GetSerializedSize() const
 {
-    return ::GetSerializeSize(stack, 0);
+    return ::GetSerializeSize(stack);
 }
 
 bool CScript::HasValidOps() const

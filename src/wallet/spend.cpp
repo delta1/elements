@@ -1399,7 +1399,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
         txout.nNonce.vchCommitment = std::vector<unsigned char>(recipient.confidentiality_key.begin(), recipient.confidentiality_key.end());
 
         // Include the fee cost for outputs.
-        coin_selection_params.tx_noinputs_size += ::GetSerializeSize(txout, PROTOCOL_VERSION);
+        coin_selection_params.tx_noinputs_size += ::GetSerializeSize(txout);
 
         if (recipient.asset == policyAsset && IsDust(txout, wallet.chain().relayDustFee()))
         {

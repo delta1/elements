@@ -148,7 +148,9 @@ struct PSBTProprietary
 template<typename Stream, typename... X>
 void SerializeToVector(Stream& s, const X&... args)
 {
-    WriteCompactSize(s, GetSerializeSizeMany(0, args...));
+    SizeComputer sizecomp;
+    SerializeMany(sizecomp, args...);
+    WriteCompactSize(s, sizecomp.size());
     SerializeMany(s, args...);
 }
 

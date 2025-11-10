@@ -52,6 +52,7 @@
 #include <confidential_validation.h>
 #include <blind.h>
 #include <issuance.h>
+#include <version.h>
 
 #include <numeric>
 #include <stdint.h>

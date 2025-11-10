@@ -9,7 +9,6 @@
 #include <pubkey.h>
 #include <script/interpreter.h>
 #include <streams.h>
-#include <version.h>
 
 namespace {
 

@@ -2077,7 +2077,7 @@ static RPCHelpMan getblockstats()
                     if (out.nValue.IsExplicit() && out.nAsset.IsExplicit() && out.nAsset.GetAsset() == asset) {
                         tx_total_out += out.nValue.GetAmount();
                     }
-                    size_t out_size = GetSerializeSize(out, PROTOCOL_VERSION) + PER_UTXO_OVERHEAD;
+                    size_t out_size = GetSerializeSize(out) + PER_UTXO_OVERHEAD;
                     utxo_size_inc += out_size;
 
                     // The Genesis block and the repeated BIP30 block coinbases don't change the UTXO
@@ -2095,7 +2095,7 @@ static RPCHelpMan getblockstats()
                 for (const CTxOut& out : tx->vout) {
                     tx_total_out += out.nValue.GetAmount();
 
-                    size_t out_size = GetSerializeSize(out, PROTOCOL_VERSION) + PER_UTXO_OVERHEAD;
+                    size_t out_size = GetSerializeSize(out) + PER_UTXO_OVERHEAD;
                     utxo_size_inc += out_size;
 
                     // The Genesis block and the repeated BIP30 block coinbases don't change the UTXO
@@ -2148,7 +2148,7 @@ static RPCHelpMan getblockstats()
                 const CTxOut& prevoutput = coin.out;
 
                 tx_total_in += g_con_elementsmode ? 0 : prevoutput.nValue.GetAmount();
-                size_t prevout_size = GetSerializeSize(prevoutput, PROTOCOL_VERSION) + PER_UTXO_OVERHEAD;
+                size_t prevout_size = GetSerializeSize(prevoutput) + PER_UTXO_OVERHEAD;
                 utxo_size_inc -= prevout_size;
                 utxo_size_inc_actual -= prevout_size;
             }
