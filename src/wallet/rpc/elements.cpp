@@ -1094,7 +1094,7 @@ void FillBlinds(CWallet* pwallet, CMutableTransaction& tx, std::vector<uint256>&
         }
 
         // Special format for issuance blinding keys, unique for each transaction
-        CScript blindingScript = CScript() << OP_RETURN << std::vector<unsigned char>(tx.vin[nIn].prevout.hash.begin(), tx.vin[nIn].prevout.hash.end()) << tx.vin[nIn].prevout.n;
+        CScript blindingScript = CScript() << OP_RETURN << std::vector<unsigned char>(tx.vin[nIn].prevout.hash.ToUint256().begin(), tx.vin[nIn].prevout.hash.ToUint256().end()) << tx.vin[nIn].prevout.n;
 
         for (size_t nPseudo = 0; nPseudo < 2; nPseudo++) {
             bool issuance_asset = (nPseudo == 0);

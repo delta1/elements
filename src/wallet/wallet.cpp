@@ -690,7 +690,7 @@ std::set<uint256> CWallet::GetConflicts(const uint256& txid) const
 bool CWallet::HasWalletSpend(const CTransactionRef& tx) const
 {
     AssertLockHeld(cs_wallet);
-    const uint256& txid = tx->GetHash();
+    const Txid& txid = tx->GetHash();
     for (unsigned int i = 0; i < tx->vout.size(); ++i) {
         if (IsSpent(COutPoint(txid, i))) {
             return true;
@@ -1382,7 +1382,7 @@ void CWallet::RecursiveUpdateTxState(const uint256& tx_hash, const TryUpdatingSt
             batch.WriteTx(wtx);
             // Iterate over all its outputs, and update those tx states as well (if applicable)
             for (unsigned int i = 0; i < wtx.tx->vout.size(); ++i) {
-                std::pair<TxSpends::const_iterator, TxSpends::const_iterator> range = mapTxSpends.equal_range(COutPoint(now, i));
+                std::pair<TxSpends::const_iterator, TxSpends::const_iterator> range = mapTxSpends.equal_range(COutPoint(Txid::FromUint256(now), i));
                 for (TxSpends::const_iterator iter = range.first; iter != range.second; ++iter) {
                     if (!done.count(iter->second)) {
                         todo.insert(iter->second);
@@ -2335,7 +2335,7 @@ BlindingStatus CWallet::WalletBlindPSBT(PartiallySignedTransaction& psbtx) const
             if (!this->IsMine(CTxOut(Params().GetConsensus().pegged_asset, *input.m_peg_in_value, input.m_peg_in_claim_script))) continue;
             our_input_data[i] = std::make_tuple(*input.m_peg_in_value, Params().GetConsensus().pegged_asset, uint256(), uint256());
         } else {
-            if (!InputIsMine(*this, COutPoint(input.prev_txid, *input.prev_out))) continue;
+            if (!InputIsMine(*this, COutPoint(Txid::FromUint256(input.prev_txid), *input.prev_out))) continue;
             const CWalletTx* wtx = GetWalletTx(input.prev_txid);
             if (!wtx) continue;
             CPubKey blinding_pubkey;
@@ -4403,7 +4403,7 @@ uint256 CWalletTx::GetIssuanceBlindingFactor(const CWallet& wallet, unsigned int
     unsigned int mapValueInd = GetPseudoInputOffset(input_index, reissuance_token) + tx->vout.size();
 
     uint256 ret;
-    CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(tx->vin[input_index].prevout.hash.begin(), tx->vin[input_index].prevout.hash.end()) << tx->vin[input_index].prevout.n);
+    CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(tx->vin[input_index].prevout.hash.ToUint256().begin(), tx->vin[input_index].prevout.hash.ToUint256().end()) << tx->vin[input_index].prevout.n);
     GetBlindingData(wallet, mapValueInd, rangeproof, reissuance_token ? issuance.nInflationKeys : issuance.nAmount, CConfidentialAsset(asset), CConfidentialNonce(), blindingScript, nullptr, nullptr, &ret, nullptr, nullptr);
     return ret;
 }
@@ -4421,7 +4421,7 @@ CAmount CWalletTx::GetIssuanceAmount(const CWallet& wallet, unsigned int input_i
     const std::vector<unsigned char>& rangeproof = wit.vtxinwit.size() <= input_index ? std::vector<unsigned char>() : (reissuance_token ? wit.vtxinwit[input_index].vchInflationKeysRangeproof : wit.vtxinwit[input_index].vchIssuanceAmountRangeproof);
 
     CAmount ret;
-    CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(tx->vin[input_index].prevout.hash.begin(), tx->vin[input_index].prevout.hash.end()) << tx->vin[input_index].prevout.n);
+    CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(tx->vin[input_index].prevout.hash.ToUint256().begin(), tx->vin[input_index].prevout.hash.ToUint256().end()) << tx->vin[input_index].prevout.n);
     GetBlindingData(wallet, mapValueInd, rangeproof, reissuance_token ? issuance.nInflationKeys : issuance.nAmount, CConfidentialAsset(asset), CConfidentialNonce(), blindingScript, nullptr, &ret, nullptr, nullptr, nullptr);
     return ret;
 }

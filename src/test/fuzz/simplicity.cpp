@@ -164,7 +164,7 @@ FUZZ_TARGET(simplicity, .init = initialize_simplicity)
     //
     // We do skip the first byte since that has pegin/issuance flag in it and
     // therefore already has semantic information.
-    size_t nIn = mtx.vin[0].prevout.hash.data()[1] % mtx.vin.size();
+    size_t nIn = mtx.vin[0].prevout.hash.ToUint256().data()[1] % mtx.vin.size();
     std::vector<CTxOut> spent_outs{};
     for (unsigned int i = 0; i < mtx.vin.size(); i++) {
         // Null asset or value would assert in the interpreter, and are impossible
@@ -192,7 +192,7 @@ FUZZ_TARGET(simplicity, .init = initialize_simplicity)
     mtx.witness.vtxinwit[nIn].scriptWitness.stack.clear();
     mtx.witness.vtxinwit[nIn].scriptWitness.stack.push_back(prog_bytes);
     mtx.witness.vtxinwit[nIn].scriptWitness.stack.push_back(TAPROOT_CONTROL);
-    if (mtx.vin[0].prevout.hash.data()[2] & 1) {
+    if (mtx.vin[0].prevout.hash.ToUint256().data()[2] & 1) {
        mtx.witness.vtxinwit[nIn].scriptWitness.stack.push_back(TAPROOT_ANNEX);
     }
 
@@ -209,7 +209,7 @@ FUZZ_TARGET(simplicity, .init = initialize_simplicity)
 
     // 4. Main test
     unsigned char imr_out[32];
-    unsigned char *imr = mtx.vin[0].prevout.hash.data()[2] & 2 ? imr_out : nullptr;
+    unsigned char *imr = mtx.vin[0].prevout.hash.ToUint256().data()[2] & 2 ? imr_out : nullptr;
 
     const elementsTransaction* tx = txdata.m_simplicity_tx_data.get();
     elementsTapEnv* taproot = simplicity_elements_mallocTapEnv(&simplicityRawTap);

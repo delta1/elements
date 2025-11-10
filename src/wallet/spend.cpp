@@ -363,7 +363,7 @@ CoinsResult AvailableCoins(const CWallet& wallet,
     std::set<uint256> trusted_parents;
     for (const auto& entry : wallet.mapWallet)
     {
-        const uint256& wtxid = entry.first;
+        const uint256& txid = entry.first;
         const CWalletTx& wtx = entry.second;
 
         if (wallet.IsTxImmatureCoinBase(wtx) && !params.include_immature_coinbase)
@@ -423,7 +423,7 @@ CoinsResult AvailableCoins(const CWallet& wallet,
 
         for (unsigned int i = 0; i < wtx.tx->vout.size(); i++) {
             const CTxOut& output = wtx.tx->vout[i];
-            const COutPoint outpoint(wtxid, i);
+            const COutPoint outpoint(Txid::FromUint256(txid), i);
 
             CAmount outValue = wtx.GetOutputValueOut(wallet, i);
             CAsset asset = wtx.GetOutputAsset(wallet, i);
@@ -1661,7 +1661,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
             GenerateAssetEntropy(entropy, txNew.vin[0].prevout, issuance_details->contract_hash);
             CalculateAsset(asset, entropy);
             CalculateReissuanceToken(token, entropy, issuance_details->blind_issuance);
-            CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(txNew.vin[0].prevout.hash.begin(), txNew.vin[0].prevout.hash.end()) << txNew.vin[0].prevout.n);
+            CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(txNew.vin[0].prevout.hash.ToUint256().begin(), txNew.vin[0].prevout.hash.ToUint256().end()) << txNew.vin[0].prevout.n);
             txNew.vin[0].assetIssuance.assetEntropy = issuance_details->contract_hash;
             // We're making asset outputs, fill out asset type and issuance input
             if (asset_index != -1) {
@@ -1706,7 +1706,7 @@ static util::Result<CreatedTransactionResult> CreateTransactionInternal(
             CAsset temp_token;
             CalculateReissuanceToken(temp_token, issuance_details->entropy, true);
             if (temp_token == issuance_details->reissuance_token && blind_details) {
-            CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(txNew.vin[reissuance_index].prevout.hash.begin(), txNew.vin[reissuance_index].prevout.hash.end()) << txNew.vin[reissuance_index].prevout.n);
+            CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(txNew.vin[reissuance_index].prevout.hash.ToUint256().begin(), txNew.vin[reissuance_index].prevout.hash.ToUint256().end()) << txNew.vin[reissuance_index].prevout.n);
                 issuance_asset_keys.resize(reissuance_index);
                 issuance_asset_keys.push_back(wallet.GetBlindingKey(&blindingScript));
                 blind_details->num_to_blind++;

@@ -3125,7 +3125,7 @@ static RPCHelpMan calculateasset()
     uint256 entropy;
     CAsset asset;
     CAsset token;
-    COutPoint outpoint(txid, vout);
+    COutPoint outpoint(Txid::FromUint256(txid), vout);
     GenerateAssetEntropy(entropy, outpoint, asset_entropy);
     CalculateAsset(asset, entropy);
     CalculateReissuanceToken(token, entropy, blind_reissuance);

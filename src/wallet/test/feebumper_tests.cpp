@@ -21,7 +21,7 @@ static void CheckMaxWeightComputation(const std::string& script_str, const std::
 {
     std::vector script_data(ParseHex(script_str));
     CScript script(script_data.begin(), script_data.end());
-    CTxIn input(uint256(), 0, script);
+    CTxIn input(Txid{}, 0, script);
     CMutableTransaction mtx;
     mtx.vin.push_back(input);
     mtx.witness.vtxinwit.resize(1);

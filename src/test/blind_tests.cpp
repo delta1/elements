@@ -64,10 +64,10 @@ BOOST_AUTO_TEST_CASE(naive_blinding_test)
         // Build a transaction that spends 2 unblinded coins (11, 111), and produces a single blinded one (100) and fee (22).
         CMutableTransaction tx3;
         tx3.vin.resize(2);
-        tx3.vin[0].prevout.hash = ArithToUint256(1);
+        tx3.vin[0].prevout.hash = Txid::FromUint256(ArithToUint256(1));
 
         tx3.vin[0].prevout.n = 0;
-        tx3.vin[1].prevout.hash = ArithToUint256(2);
+        tx3.vin[1].prevout.hash = Txid::FromUint256(ArithToUint256(2));
         tx3.vin[1].prevout.n = 0;
         tx3.vout.resize(0);
         tx3.vout.emplace_back(bitcoinID, 100, CScript() << OP_TRUE);
@@ -156,9 +156,9 @@ BOOST_AUTO_TEST_CASE(naive_blinding_test)
         // Build a transactions that spends an unblinded (111) and blinded (100) coin, and produces only unblinded coins (impossible)
         CMutableTransaction tx4;
         tx4.vin.resize(2);
-        tx4.vin[0].prevout.hash = ArithToUint256(2);
+        tx4.vin[0].prevout.hash = Txid::FromUint256(ArithToUint256(2));
         tx4.vin[0].prevout.n = 0;
-        tx4.vin[1].prevout.hash = ArithToUint256(3);
+        tx4.vin[1].prevout.hash = Txid::FromUint256(ArithToUint256(3));
         tx4.vin[1].prevout.n = 0;
         tx4.vout.emplace_back(bitcoinID, 30, CScript() << OP_TRUE);
         tx4.vout.emplace_back(bitcoinID, 40, CScript() << OP_TRUE);
@@ -194,9 +194,9 @@ BOOST_AUTO_TEST_CASE(naive_blinding_test)
         // Build a transactions that spends an unblinded (111) and blinded (100) coin, and produces a blinded (30), unblinded (40), and blinded (50) coin and fee (91)
         CMutableTransaction tx4;
         tx4.vin.resize(2);
-        tx4.vin[0].prevout.hash = ArithToUint256(2);
+        tx4.vin[0].prevout.hash = Txid::FromUint256(ArithToUint256(2));
         tx4.vin[0].prevout.n = 0;
-        tx4.vin[1].prevout.hash = ArithToUint256(3);
+        tx4.vin[1].prevout.hash = Txid::FromUint256(ArithToUint256(3));
         tx4.vin[1].prevout.n = 0;
         tx4.vout.emplace_back(bitcoinID, 30, CScript() << OP_TRUE);
         tx4.vout.emplace_back(bitcoinID, 40, CScript() << OP_TRUE);
@@ -288,8 +288,8 @@ BOOST_AUTO_TEST_CASE(naive_blinding_test)
         CMutableTransaction tx5;
         tx5.vin.resize(0);
         tx5.vout.resize(0);
-        tx5.vin.emplace_back(COutPoint(ArithToUint256(3), 0));
-        tx5.vin.emplace_back(COutPoint(ArithToUint256(5), 0));
+        tx5.vin.emplace_back(COutPoint(Txid::FromUint256(ArithToUint256(3)), 0));
+        tx5.vin.emplace_back(COutPoint(Txid::FromUint256(ArithToUint256(5)), 0));
         tx5.vout.emplace_back(bitcoinID, 29, CScript() << OP_TRUE);
         tx5.vout.emplace_back(bitcoinID, 70, CScript() << OP_TRUE);
         tx5.vout.emplace_back(otherID, 250, CScript() << OP_TRUE);

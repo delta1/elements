@@ -1835,7 +1835,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         case OP_INSPECTINPUTOUTPOINT:
                         {
                             // Push prev txid
-                            stack.emplace_back(inp.prevout.hash.begin(), inp.prevout.hash.end());
+                            stack.emplace_back(inp.prevout.hash.ToUint256().begin(), inp.prevout.hash.ToUint256().end());
                             push4_le(stack, inp.prevout.n);
 
                             // Push the outpoint flag
@@ -2579,7 +2579,7 @@ void PrecomputedTransactionData::Init(const T& txTo, std::vector<CTxOut>&& spent
         std::vector<rawElementsBuffer> simplicityRawAnnex(txTo.witness.vtxinwit.size());
         std::vector<rawElementsInput> simplicityRawInput(txTo.vin.size());
         for (size_t i = 0; i < txTo.vin.size(); ++i) {
-            simplicityRawInput[i].prevTxid = txTo.vin[i].prevout.hash.begin();
+            simplicityRawInput[i].prevTxid = txTo.vin[i].prevout.hash.ToUint256().begin();
             simplicityRawInput[i].prevIx = txTo.vin[i].prevout.n;
             simplicityRawInput[i].sequence = txTo.vin[i].nSequence;
             simplicityRawInput[i].txo.asset = m_spent_outputs[i].nAsset.vchCommitment.empty() ? nullptr : m_spent_outputs[i].nAsset.vchCommitment.data();

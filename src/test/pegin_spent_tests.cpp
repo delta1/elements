@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(PeginSpent_validity)
 
     //Basic insert of blank outpoint pair, blank COutPoint allows for checking coinsCache
 
-    std::pair<uint256, COutPoint> outpoint = std::make_pair(GetRandHash(), COutPoint(GetRandHash(), 42));
+    std::pair<uint256, COutPoint> outpoint = std::make_pair(GetRandHash(), COutPoint(Txid::FromUint256(GetRandHash()), 42));
     BOOST_CHECK(!coinsCache.GetCoin(outpoint.second, ret));
 
     //Checking for pegin spentness should not create an entry
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(PeginSpent_validity)
     CCoinsMapMemoryResource resource;
     CCoinsMap mapCoins{0, CCoinsMap::hasher{}, CCoinsMap::key_equal{}, &resource};
     CCoinsCacheEntry entry;
-    std::pair<uint256, COutPoint> outpoint3(std::make_pair(GetRandHash(), COutPoint(GetRandHash(), 42)));
+    std::pair<uint256, COutPoint> outpoint3(std::make_pair(GetRandHash(), COutPoint(Txid::FromUint256(GetRandHash()), 42)));
 
     //Attempt batch write of non-dirty pegin, no effect
     entry.flags = CCoinsCacheEntry::PEGIN;
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(PeginSpent_validity)
     BOOST_CHECK(mapCoins.size() == 0);
 
     //Add an entry we never IsPeginSpent'd first (ie added to cache via SetPeginSpent)
-    std::pair<uint256, COutPoint> outpoint4(std::make_pair(GetRandHash(), COutPoint(GetRandHash(), 42)));
+    std::pair<uint256, COutPoint> outpoint4(std::make_pair(GetRandHash(), COutPoint(Txid::FromUint256(GetRandHash()), 42)));
     coinsCache.SetPeginSpent(outpoint4, true);
 
     // Check the final state of coinsCache.mapCoins is sane.

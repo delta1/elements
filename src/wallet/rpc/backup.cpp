@@ -2248,7 +2248,7 @@ RPCHelpMan importissuanceblindingkey()
         // Import the key in that slot
         uint256 keyval;
         memcpy(keyval.begin(), &keydata[0], 32);
-        CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(pcoin->tx->vin[vindex].prevout.hash.begin(), pcoin->tx->vin[vindex].prevout.hash.end()) << pcoin->tx->vin[vindex].prevout.n);
+        CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(pcoin->tx->vin[vindex].prevout.hash.ToUint256().begin(), pcoin->tx->vin[vindex].prevout.hash.ToUint256().end()) << pcoin->tx->vin[vindex].prevout.n);
         if (!pwallet->AddSpecificBlindingKey(CScriptID(blindingScript), keyval)) {
             throw JSONRPCError(RPC_WALLET_ERROR, "Failed to import blinding key");
         }
@@ -2380,7 +2380,7 @@ RPCHelpMan dumpissuanceblindingkey()
         }
         // We can actually deblind the input
         if (pcoin->GetIssuanceAmount(*pwallet, vindex, false) != -1 ) {
-            CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(pcoin->tx->vin[vindex].prevout.hash.begin(), pcoin->tx->vin[vindex].prevout.hash.end()) << pcoin->tx->vin[vindex].prevout.n);
+            CScript blindingScript(CScript() << OP_RETURN << std::vector<unsigned char>(pcoin->tx->vin[vindex].prevout.hash.ToUint256().begin(), pcoin->tx->vin[vindex].prevout.hash.ToUint256().end()) << pcoin->tx->vin[vindex].prevout.n);
             CKey key;
             key = wallet->GetBlindingKey(&blindingScript);
             return HexStr(Span<const unsigned char>(key.begin(), key.size()));

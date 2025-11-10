@@ -206,7 +206,7 @@ CAmountMap CachedTxGetAvailableCredit(const CWallet& wallet, const CWalletTx& wt
 
     bool allow_used_addresses = (filter & ISMINE_USED) || !wallet.IsWalletFlagSet(WALLET_FLAG_AVOID_REUSE);
     CAmountMap nCredit;
-    uint256 hashTx = wtx.GetHash();
+    Txid hashTx = wtx.GetHash();
     CAsset pegged_asset{Params().GetConsensus().pegged_asset};
     for (unsigned int i = 0; i < wtx.tx->vout.size(); i++) {
         const CTxOut& txout = wtx.tx->vout[i];
@@ -390,7 +390,7 @@ std::map<CTxDestination, CAmount> GetAddressBalances(const CWallet& wallet)
                 if(!ExtractDestination(output.scriptPubKey, addr))
                     continue;
 
-                CAmount n = wallet.IsSpent(COutPoint(walletEntry.first, i)) ? 0 : wtx.GetOutputValueOut(wallet, i);
+                CAmount n = wallet.IsSpent(COutPoint(Txid::FromUint256(walletEntry.first), i)) ? 0 : wtx.GetOutputValueOut(wallet, i);
                 if (n < 0) {
                     continue;
                 }

@@ -121,7 +121,7 @@ CMutableTransaction PartiallySignedTransaction::GetUnsignedTx(bool force_unblind
     uint32_t max_sequence = CTxIn::SEQUENCE_FINAL;
     for (const PSBTInput& input : inputs) {
         CTxIn txin;
-        txin.prevout.hash = input.prev_txid;
+        txin.prevout.hash = Txid::FromUint256(input.prev_txid);
         txin.prevout.n = *input.prev_out;
         txin.nSequence = input.sequence.value_or(max_sequence);
         txin.assetIssuance.assetBlindingNonce = input.m_issuance_blinding_nonce;
@@ -222,7 +222,7 @@ bool PartiallySignedTransaction::AddInput(PSBTInput& psbtin)
 
     if (tx != std::nullopt) {
         // This is a v0 psbt, so do the v0 AddInput
-        CTxIn txin(COutPoint(psbtin.prev_txid, *psbtin.prev_out));
+        CTxIn txin(COutPoint(Txid::FromUint256(psbtin.prev_txid), *psbtin.prev_out));
         if (std::find(tx->vin.begin(), tx->vin.end(), txin) != tx->vin.end()) {
             return false;
         }
@@ -337,7 +337,7 @@ bool PSBTInput::GetUTXO(CTxOut& utxo) const
 
 COutPoint PSBTInput::GetOutPoint() const
 {
-    return COutPoint(prev_txid, *prev_out);
+    return COutPoint(Txid::FromUint256(prev_txid), *prev_out);
 }
 
 bool PartiallySignedTransaction::IsBlinded() const

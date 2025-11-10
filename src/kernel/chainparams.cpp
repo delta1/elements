@@ -976,7 +976,7 @@ protected:
         // Calculate pegged Bitcoin asset
         std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
         uint256 entropy;
-        GenerateAssetEntropy(entropy,  COutPoint(uint256(commit), 0), parentGenesisBlockHash);
+        GenerateAssetEntropy(entropy,  COutPoint(Txid::FromUint256(uint256(commit)), 0), parentGenesisBlockHash);
 
         consensus.total_valid_epochs = args.GetIntArg("-total_valid_epochs", 2);
 
@@ -1009,7 +1009,7 @@ protected:
             std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
             genesis = CreateGenesisBlock(consensus, CScript() << commit, CScript(OP_RETURN), 1296688602, 2, 0x207fffff, 1, 0);
             if (initialFreeCoins != 0 || initial_reissuance_tokens != 0) {
-                AppendInitialIssuance(genesis, COutPoint(uint256(commit), 0), parentGenesisBlockHash, (initialFreeCoins > 0) ? 1 : 0, initialFreeCoins, (initial_reissuance_tokens > 0) ? 1 : 0, initial_reissuance_tokens, CScript() << OP_TRUE);
+                AppendInitialIssuance(genesis, COutPoint(Txid::FromUint256(uint256(commit)), 0), parentGenesisBlockHash, (initialFreeCoins > 0) ? 1 : 0, initialFreeCoins, (initial_reissuance_tokens > 0) ? 1 : 0, initial_reissuance_tokens, CScript() << OP_TRUE);
             }
         } else if (consensus.genesis_style == "dynamic") {
             // Liquid v2 HF, from genesis. Upgrading networks still use "elements".
@@ -1230,7 +1230,7 @@ public:
         // Calculate pegged Bitcoin asset
         std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
         uint256 entropy;
-        GenerateAssetEntropy(entropy,  COutPoint(uint256(commit), 0), parentGenesisBlockHash);
+        GenerateAssetEntropy(entropy,  COutPoint(Txid::FromUint256(uint256(commit)), 0), parentGenesisBlockHash);
 
         // Elements serialization uses derivation, bitcoin serialization uses 0x00
         if (g_con_elementsmode) {
@@ -1596,7 +1596,7 @@ public:
         // Calculate pegged Bitcoin asset
         std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
         uint256 entropy;
-        GenerateAssetEntropy(entropy,  COutPoint(uint256(commit), 0), parentGenesisBlockHash);
+        GenerateAssetEntropy(entropy,  COutPoint(Txid::FromUint256(uint256(commit)), 0), parentGenesisBlockHash);
         CalculateAsset(consensus.pegged_asset, entropy);
 
         if (args.IsArgSet("-con_parent_pegged_asset")) {
@@ -1628,7 +1628,7 @@ public:
             std::vector<unsigned char> commit = CommitToArguments(consensus, m_chain_type.chain_name);
             genesis = CreateGenesisBlock(consensus, CScript() << commit, CScript(OP_RETURN), 1296688602, 2, 0x207fffff, 1, 0);
             if (initialFreeCoins != 0 || initial_reissuance_tokens != 0) {
-                AppendInitialIssuance(genesis, COutPoint(uint256(commit), 0), parentGenesisBlockHash, (initialFreeCoins > 0) ? 1 : 0, initialFreeCoins, (initial_reissuance_tokens > 0) ? 1 : 0, initial_reissuance_tokens, CScript() << OP_TRUE);
+                AppendInitialIssuance(genesis, COutPoint(Txid::FromUint256(uint256(commit)), 0), parentGenesisBlockHash, (initialFreeCoins > 0) ? 1 : 0, initialFreeCoins, (initial_reissuance_tokens > 0) ? 1 : 0, initial_reissuance_tokens, CScript() << OP_TRUE);
             }
         } else if (consensus.genesis_style == "dynamic") {
             // Liquid v2 HF, from genesis. Upgrading networks still use "elements".

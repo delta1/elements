@@ -110,7 +110,7 @@ FUZZ_TARGET(simplicity_tx, .init = initialize_simplicity_tx)
             return;
         }
     }
-    const auto& random_bytes = mtx.vin[0].prevout.hash;
+    const auto& random_bytes = mtx.vin[0].prevout.hash.ToUint256();
 
     // 3. Construct `nIn` and `spent_outs` arrays.
     bool expect_simplicity = false;

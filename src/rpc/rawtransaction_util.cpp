@@ -113,7 +113,7 @@ static void CreatePegInInputInner(CMutableTransaction& mtx, uint32_t input_idx, 
     if (mtx.vin.size() <= input_idx) {
         mtx.vin.resize(input_idx + 1);
     }
-    mtx.vin[input_idx] = CTxIn(COutPoint(txHashes[0], nOut), CScript(), ~(uint32_t)0);
+    mtx.vin[input_idx] = CTxIn(COutPoint(Txid::FromUint256(txHashes[0]), nOut), CScript(), ~(uint32_t)0);
 
     // Construct pegin proof
     CScriptWitness pegin_witness = CreatePeginWitness(value, Params().GetConsensus().pegged_asset, Params().ParentGenesisBlockHash(), witness_script, txBTCRef, merkleBlock);
@@ -158,7 +158,7 @@ void AddInputs(CMutableTransaction& rawTx, const UniValue& inputs_in, std::optio
         const UniValue& input = inputs[idx];
         const UniValue& o = input.get_obj();
 
-        uint256 txid = ParseHashO(o, "txid");
+        Txid txid = Txid::FromUint256(ParseHashO(o, "txid"));
 
         const UniValue& vout_v = o.find_value("vout");
         if (!vout_v.isNum())
@@ -442,7 +442,7 @@ void ParsePrevouts(const UniValue& prevTxsUnival, FillableSigningProvider* keyst
                     {"scriptPubKey", UniValueType(UniValue::VSTR)},
                 });
 
-            uint256 txid = ParseHashO(prevOut, "txid");
+            Txid txid = Txid::FromUint256(ParseHashO(prevOut, "txid"));
 
             int nOut = prevOut.find_value("vout").getInt<int>();
             if (nOut < 0) {
