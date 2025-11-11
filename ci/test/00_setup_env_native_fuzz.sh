@@ -6,7 +6,7 @@
 
 export LC_ALL=C.UTF-8
 
-export CI_IMAGE_NAME_TAG="ubuntu:24.04"
+export CI_IMAGE_NAME_TAG="docker.io/ubuntu:24.04"
 export CONTAINER_NAME=ci_native_fuzz
 export PACKAGES="clang-17 llvm-17 libclang-rt-17-dev libevent-dev libboost-dev libsqlite3-dev"
 export NO_DEPENDS=1
