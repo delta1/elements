@@ -416,7 +416,7 @@ struct PSBTInput
                 const auto& [leaf_hashes, origin] = leaf_origin;
                 SerializeToVector(s, PSBT_IN_TAP_BIP32_DERIVATION, xonly);
                 std::vector<unsigned char> value;
-                CVectorWriter s_value{s.GetParams().allow_witness, value, 0};
+                VectorWriter s_value{value, 0};
                 s_value << leaf_hashes;
                 SerializeKeyOrigin(s_value, origin);
                 s << value;
@@ -1482,7 +1482,7 @@ struct PSBTOutput
         if (!m_tap_tree.empty()) {
             SerializeToVector(s, PSBT_OUT_TAP_TREE);
             std::vector<unsigned char> value;
-            CVectorWriter s_value{s.GetParams().allow_witness, value, 0};
+            VectorWriter s_value{value, 0};
             for (const auto& [depth, leaf_ver, script] : m_tap_tree) {
                 s_value << depth;
                 s_value << leaf_ver;
@@ -1496,7 +1496,7 @@ struct PSBTOutput
             const auto& [leaf_hashes, origin] = leaf;
             SerializeToVector(s, PSBT_OUT_TAP_BIP32_DERIVATION, xonly);
             std::vector<unsigned char> value;
-            CVectorWriter s_value{s.GetParams().allow_witness, value, 0};
+            VectorWriter s_value{value, 0};
             s_value << leaf_hashes;
             SerializeKeyOrigin(s_value, origin);
             s << value;

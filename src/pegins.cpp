@@ -506,7 +506,7 @@ template<typename T_tx_ref, typename T_merkle_block>
 CScriptWitness CreatePeginWitnessInner(const CAmount& value, const CAsset& asset, const uint256& genesis_hash, const CScript& claim_script, const T_tx_ref& tx_ref, const T_merkle_block& merkle_block)
 {
     std::vector<unsigned char> value_bytes;
-    CVectorWriter ss_val(0, value_bytes, 0);
+    VectorWriter ss_val(value_bytes, 0);
     try {
         ss_val << value;
     } catch (...) {

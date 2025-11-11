@@ -26,14 +26,13 @@ void ConnmanTestMsg::Handshake(CNode& node,
 {
     auto& peerman{static_cast<PeerManager&>(*m_msgproc)};
     auto& connman{*this};
-    const CNetMsgMaker mm{0};
 
     peerman.InitializeNode(node, local_services);
     peerman.SendMessages(&node);
     FlushSendBuffer(node); // Drop the version message added by SendMessages.
 
     CSerializedNetMsg msg_version{
-        mm.Make(NetMsgType::VERSION,
+        NetMsg::Make(NetMsgType::VERSION,
                 version,                                        //
                 Using<CustomUintFormatter<8>>(remote_services), //
                 int64_t{},                                      // dummy time
@@ -60,7 +59,7 @@ void ConnmanTestMsg::Handshake(CNode& node,
     assert(statestats.m_relay_txs == (relay_txs && !node.IsBlockOnlyConn()));
     assert(statestats.their_services == remote_services);
     if (successfully_connected) {
-        CSerializedNetMsg msg_verack{mm.Make(NetMsgType::VERACK)};
+        CSerializedNetMsg msg_verack{NetMsg::Make(NetMsgType::VERACK)};
         (void)connman.ReceiveMsgFrom(node, std::move(msg_verack));
         node.fPauseSend = false;
         connman.ProcessMessagesOnce(node);
