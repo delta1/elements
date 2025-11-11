@@ -2228,18 +2228,6 @@ DisconnectResult Chainstate::DisconnectBlock(const CBlock& block, const CBlockIn
     return fClean ? DISCONNECT_OK : DISCONNECT_UNCLEAN;
 }
 
-static CCheckQueue<CCheck> scriptcheckqueue(128);
-
-void StartScriptCheckWorkerThreads(int threads_num)
-{
-    scriptcheckqueue.StartWorkerThreads(threads_num);
-}
-
-void StopScriptCheckWorkerThreads()
-{
-    scriptcheckqueue.StopWorkerThreads();
-}
-
 /**
  * Threshold condition checker that triggers when unknown versionbits are seen on the network.
  */
@@ -2359,7 +2347,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
 
     uint256 block_hash{block.GetHash()};
     assert(*pindex->phashBlock == block_hash);
-    const bool parallel_script_checks{scriptcheckqueue.HasThreads()};
+    const bool parallel_script_checks{m_chainman.GetCheckQueue().HasThreads()};
 
     const auto time_start{SteadyClock::now()};
     const CChainParams& params{m_chainman.GetParams()};
@@ -2569,7 +2557,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     // in multiple threads). Preallocate the vector size so a new allocation
     // doesn't invalidate pointers into the vector, and keep txsdata in scope
     // for as long as `control`.
-    CCheckQueueControl<CCheck> control(fScriptChecks && parallel_script_checks ? &scriptcheckqueue : nullptr);
+    CCheckQueueControl<CCheck> control(fScriptChecks && parallel_script_checks ? &m_chainman.GetCheckQueue() : nullptr);
     std::vector<PrecomputedTransactionData> txsdata;
     for (unsigned int i = 0; i < block.vtx.size(); i++){
         txsdata.emplace_back(m_chainman.GetParams().HashGenesisBlock());
@@ -6268,9 +6256,12 @@ static ChainstateManager::Options&& Flatten(ChainstateManager::Options&& opts)
 }
 
 ChainstateManager::ChainstateManager(const util::SignalInterrupt& interrupt, Options options, node::BlockManager::Options blockman_options)
-    : m_interrupt{interrupt},
+    : m_script_check_queue{/*batch_size=*/128, options.worker_threads_num},
+      m_interrupt{interrupt},
       m_options{Flatten(std::move(options))},
-      m_blockman{interrupt, std::move(blockman_options)} {}
+      m_blockman{interrupt, std::move(blockman_options)}
+{
+}
 
 ChainstateManager::~ChainstateManager()
 {

@@ -276,11 +276,10 @@ void Shutdown(NodeContext& node)
     StopTorControl();
 
     // After everything has been shut down, but before things get flushed, stop the
-    // CScheduler/checkqueue, scheduler and load block thread.
-    if (node.chainman && node.chainman->m_thread_load.joinable()) node.chainman->m_thread_load.join();
+    // scheduler and load block thread.
     if (node.scheduler) node.scheduler->stop();
-    if (node.reverification_scheduler) node.reverification_scheduler->stop();
-    StopScriptCheckWorkerThreads();
+    if (node.reverification_scheduler) node.reverification_scheduler->stop(); // ELEMENTS
+    if (node.chainman && node.chainman->m_thread_load.joinable()) node.chainman->m_thread_load.join();
 
     // After the threads that potentially access these pointers have been stopped,
     // destruct and reset all to nullptr.
@@ -1247,24 +1246,6 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
         || !InitSurjectionproofCache(validation_cache_sizes.surjectionproof_execution_cache_bytes))
     {
         return InitError(strprintf(_("Unable to allocate memory for -maxsigcachesize: '%s' MiB"), args.GetIntArg("-maxsigcachesize", DEFAULT_MAX_SIG_CACHE_BYTES >> 20)));
-    }
-
-    int script_threads = args.GetIntArg("-par", DEFAULT_SCRIPTCHECK_THREADS);
-    if (script_threads <= 0) {
-        // -par=0 means autodetect (number of cores - 1 script threads)
-        // -par=-n means "leave n cores free" (number of cores - n - 1 script threads)
-        script_threads += GetNumCores();
-    }
-
-    // Subtract 1 because the main thread counts towards the par threads
-    script_threads = std::max(script_threads - 1, 0);
-
-    // Number of script-checking threads <= MAX_SCRIPTCHECK_THREADS
-    script_threads = std::min(script_threads, MAX_SCRIPTCHECK_THREADS);
-
-    LogPrintf("Script verification uses %d additional threads\n", script_threads);
-    if (script_threads >= 1) {
-        StartScriptCheckWorkerThreads(script_threads);
     }
 
     assert(!node.scheduler);
