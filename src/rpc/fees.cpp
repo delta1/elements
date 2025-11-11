@@ -14,6 +14,7 @@
 #include <txmempool.h>
 #include <univalue.h>
 #include <util/fees.h>
+#include <validationinterface.h>
 
 #include <algorithm>
 #include <array>
@@ -67,16 +68,17 @@ static RPCHelpMan estimatesmartfee()
             const NodeContext& node = EnsureAnyNodeContext(request.context);
             const CTxMemPool& mempool = EnsureMemPool(node);
 
-    unsigned int max_target = fee_estimator.HighestTargetTracked(FeeEstimateHorizon::LONG_HALFLIFE);
-    unsigned int conf_target = ParseConfirmTarget(request.params[0], max_target);
-    bool conservative = true;
-    if (!request.params[1].isNull()) {
-        FeeEstimateMode fee_mode;
-        if (!FeeModeFromString(request.params[1].get_str(), fee_mode)) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, InvalidEstimateModeErrorMessage());
-        }
-        if (fee_mode == FeeEstimateMode::ECONOMICAL) conservative = false;
-    }
+            SyncWithValidationInterfaceQueue();
+            unsigned int max_target = fee_estimator.HighestTargetTracked(FeeEstimateHorizon::LONG_HALFLIFE);
+            unsigned int conf_target = ParseConfirmTarget(request.params[0], max_target);
+            bool conservative = true;
+            if (!request.params[1].isNull()) {
+                FeeEstimateMode fee_mode;
+                if (!FeeModeFromString(request.params[1].get_str(), fee_mode)) {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, InvalidEstimateModeErrorMessage());
+                }
+                if (fee_mode == FeeEstimateMode::ECONOMICAL) conservative = false;
+            }
 
             UniValue result(UniValue::VOBJ);
             UniValue errors(UniValue::VARR);
@@ -155,15 +157,16 @@ static RPCHelpMan estimaterawfee()
         {
             CBlockPolicyEstimator& fee_estimator = EnsureAnyFeeEstimator(request.context);
 
-    unsigned int max_target = fee_estimator.HighestTargetTracked(FeeEstimateHorizon::LONG_HALFLIFE);
-    unsigned int conf_target = ParseConfirmTarget(request.params[0], max_target);
-    double threshold = 0.95;
-    if (!request.params[1].isNull()) {
-        threshold = request.params[1].get_real();
-    }
-    if (threshold < 0 || threshold > 1) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid threshold");
-    }
+            SyncWithValidationInterfaceQueue();
+            unsigned int max_target = fee_estimator.HighestTargetTracked(FeeEstimateHorizon::LONG_HALFLIFE);
+            unsigned int conf_target = ParseConfirmTarget(request.params[0], max_target);
+            double threshold = 0.95;
+            if (!request.params[1].isNull()) {
+                threshold = request.params[1].get_real();
+            }
+            if (threshold < 0 || threshold > 1) {
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid threshold");
+            }
 
     UniValue result(UniValue::VOBJ);
 
