@@ -115,7 +115,7 @@ static UniValue FinishTransaction(const std::shared_ptr<CWallet> pwallet, const 
     if (psbt_opt_in || !complete || !add_to_wallet) {
         // Serialize the PSBT
         DataStream ssTx{};
-        ssTx << TX_WITH_WITNESS(psbtx);
+        ssTx << psbtx;
         result.pushKV("psbt", EncodeBase64(ssTx.str()));
     }
 
@@ -1251,7 +1251,7 @@ static RPCHelpMan bumpfee_helper(std::string method_name)
         CHECK_NONFATAL(err == TransactionError::OK);
         CHECK_NONFATAL(!complete);
         DataStream ssTx{};
-        ssTx << TX_WITH_WITNESS(psbtx);
+        ssTx << psbtx;
         result.pushKV("psbt", EncodeBase64(ssTx.str()));
     }
 
@@ -1729,7 +1729,7 @@ RPCHelpMan walletprocesspsbt()
 
     UniValue result(UniValue::VOBJ);
     DataStream ssTx{};
-    ssTx << TX_WITH_WITNESS(psbtx);
+    ssTx << psbtx;
     result.pushKV("psbt", EncodeBase64(ssTx.str()));
     result.pushKV("complete", complete);
     if (complete) {
@@ -1986,7 +1986,7 @@ RPCHelpMan walletcreatefundedpsbt()
 
     // Serialize the PSBT
     DataStream ssTx{};
-    ssTx << TX_WITH_WITNESS(psbtx);
+    ssTx << psbtx;
 
     UniValue result(UniValue::VOBJ);
     result.pushKV("psbt", EncodeBase64(ssTx.str()));

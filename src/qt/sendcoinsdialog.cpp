@@ -407,7 +407,7 @@ void SendCoinsDialog::presentPSBT(PartiallySignedTransaction& psbtx)
 {
     // Serialize the PSBT
     DataStream ssTx{};
-    ssTx << TX_WITH_WITNESS(psbtx);
+    ssTx << psbtx;
     GUIUtil::setClipboard(EncodeBase64(ssTx.str()).c_str());
     QMessageBox msgBox(this);
     //: Caption of "PSBT has been copied" messagebox

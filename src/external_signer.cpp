@@ -75,7 +75,7 @@ bool ExternalSigner::SignTransaction(PartiallySignedTransaction& psbtx, std::str
 {
     // Serialize the PSBT
     DataStream ssTx{};
-    ssTx << TX_WITH_WITNESS(psbtx);
+    ssTx << psbtx;
     // parse ExternalSigner master fingerprint
     std::vector<unsigned char> parsed_m_fingerprint = ParseHex(m_fingerprint);
     // Check if signer fingerprint matches any input master key fingerprint

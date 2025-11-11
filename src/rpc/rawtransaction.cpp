@@ -2207,7 +2207,7 @@ static RPCHelpMan converttopsbt()
 
     // Serialize the PSBT
     DataStream ssTx{};
-    ssTx << TX_WITH_WITNESS(psbtx);
+    ssTx << psbtx;
 
     return EncodeBase64(ssTx);
 },
@@ -2254,7 +2254,7 @@ static RPCHelpMan utxoupdatepsbt()
         /*finalize=*/false);
 
     DataStream ssTx{};
-    ssTx << TX_WITH_WITNESS(psbtx);
+    ssTx << psbtx;
     return EncodeBase64(ssTx);
 },
     };
@@ -2402,7 +2402,7 @@ static RPCHelpMan joinpsbts()
     }
     shuffled_psbt.unknown.insert(merged_psbt.unknown.begin(), merged_psbt.unknown.end());
 
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssTx{};
     ssTx << shuffled_psbt;
     return EncodeBase64(ssTx);
 },
@@ -3307,7 +3307,7 @@ RPCHelpMan descriptorprocesspsbt()
     }
 
     DataStream ssTx{};
-    ssTx << TX_WITH_WITNESS(psbtx);
+    ssTx << psbtx;
 
     UniValue result(UniValue::VOBJ);
 

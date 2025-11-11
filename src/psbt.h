@@ -659,7 +659,7 @@ struct PSBTInput
             }
 
             // Type is compact size uint at beginning of key
-            SpanReader skey{s.GetParams().allow_witness, key};
+            SpanReader skey{key};
             uint64_t type = ReadCompactSize(skey);
 
             // Do stuff based on type
@@ -935,7 +935,7 @@ struct PSBTInput
                     } else if (key.size() != 65) {
                         throw std::ios_base::failure("Input Taproot script signature key is not 65 bytes");
                     }
-                    SpanReader s_key{s.GetParams().allow_witness, Span{key}.subspan(1)};
+                    SpanReader s_key{Span{key}.subspan(1)};
                     XOnlyPubKey xonly;
                     uint256 hash;
                     s_key >> xonly;
@@ -977,7 +977,7 @@ struct PSBTInput
                     } else if (key.size() != 33) {
                         throw std::ios_base::failure("Input Taproot BIP32 keypath key is not at 33 bytes");
                     }
-                    SpanReader s_key{s.GetParams().allow_witness, Span{key}.subspan(1)};
+                    SpanReader s_key{Span{key}.subspan(1)};
                     XOnlyPubKey xonly;
                     s_key >> xonly;
                     std::set<uint256> leaf_hashes;
@@ -1532,7 +1532,7 @@ struct PSBTOutput
             }
 
             // Type is compact size uint at beginning of key
-            SpanReader skey{s.GetParams().allow_witness, key};
+            SpanReader skey{key};
             uint64_t type = ReadCompactSize(skey);
 
             // Do stuff based on type
@@ -1605,7 +1605,7 @@ struct PSBTOutput
                     }
                     std::vector<unsigned char> tree_v;
                     s >> tree_v;
-                    SpanReader s_tree{s.GetParams().allow_witness, tree_v};
+                    SpanReader s_tree{tree_v};
                     if (s_tree.empty()) {
                         throw std::ios_base::failure("Output Taproot tree must not be empty");
                     }
@@ -1989,7 +1989,7 @@ struct PartiallySignedTransaction
             }
 
             // Type is compact size uint at beginning of key
-            SpanReader skey{s.GetParams().allow_witness, key};
+            SpanReader skey{key};
             uint64_t type = ReadCompactSize(skey);
 
             // Do stuff based on type
