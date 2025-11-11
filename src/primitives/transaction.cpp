@@ -14,6 +14,7 @@
 #include <util/strencodings.h>
 #include <util/transaction_identifier.h>
 
+#include <algorithm>
 #include <cassert>
 #include <stdexcept>
 
@@ -81,6 +82,11 @@ Txid CMutableTransaction::GetHash() const
     return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(*this)).GetHash());
 }
 
+bool CTransaction::ComputeHasWitness() const
+{
+    return !witness.IsNull();
+}
+
 Txid CTransaction::ComputeHash() const
 {
     return Txid::FromUint256((HashWriter{} << TX_NO_WITNESS(*this)).GetHash());
@@ -123,10 +129,8 @@ uint256 CTransaction::GetWitnessOnlyHash() const
     return ComputeFastMerkleRoot(leaves);
 }
 
-CTransaction::CTransaction(const CMutableTransaction& tx) :
-        vin(tx.vin), vout(tx.vout), nVersion(tx.nVersion), nLockTime(tx.nLockTime), witness(tx.witness), hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
-CTransaction::CTransaction(CMutableTransaction&& tx) :
-        vin(std::move(tx.vin)), vout(std::move(tx.vout)), nVersion(tx.nVersion), nLockTime(tx.nLockTime), witness(std::move(tx.witness)),hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
+CTransaction::CTransaction(const CMutableTransaction& tx) : vin(tx.vin), vout(tx.vout), nVersion(tx.nVersion), nLockTime(tx.nLockTime), witness(tx.witness), m_has_witness{ComputeHasWitness()}, hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
+CTransaction::CTransaction(CMutableTransaction&& tx) : vin(std::move(tx.vin)), vout(std::move(tx.vout)), nVersion(tx.nVersion), nLockTime(tx.nLockTime), witness(std::move(tx.witness)), m_has_witness{ComputeHasWitness()}, hash{ComputeHash()}, m_witness_hash{ComputeWitnessHash()} {}
 
 CAmountMap CTransaction::GetValueOutMap() const {
 
