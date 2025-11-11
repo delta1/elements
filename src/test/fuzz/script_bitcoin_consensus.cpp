@@ -30,7 +30,7 @@ FUZZ_TARGET(script_bitcoin_consensus)
     }
     (void)bitcoinconsensus_verify_script(random_hash.begin() ,random_bytes_1.data(), random_bytes_1.size(), random_bytes_2.data(), random_bytes_2.size(), n_in, flags, err_p);
     if (money) {
-        CDataStream data_stream(SER_NETWORK, PROTOCOL_VERSION);
+        DataStream data_stream{};
         data_stream << *money;
         (void)bitcoinconsensus_verify_script_with_amount(random_hash.begin(), random_bytes_1.data(), random_bytes_1.size(), (unsigned char*) data_stream.data(), data_stream.size(), random_bytes_2.data(), random_bytes_2.size(), n_in, flags, err_p);
 

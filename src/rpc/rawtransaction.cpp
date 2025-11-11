@@ -52,7 +52,6 @@
 #include <confidential_validation.h>
 #include <blind.h>
 #include <issuance.h>
-#include <version.h>
 
 #include <numeric>
 #include <stdint.h>
@@ -1450,7 +1449,7 @@ static RPCHelpMan decodepsbt()
             if (input.m_peg_in_tx.index() > 0) {
                 const auto peg_in_tx = std::get_if<Sidechain::Bitcoin::CTransactionRef>(&input.m_peg_in_tx);
                 if (peg_in_tx) {
-                    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION);
+                    DataStream ss_tx{};
                     ss_tx << TX_NO_WITNESS(*peg_in_tx);
                     in.pushKV("pegin_bitcoin_tx", HexStr(ss_tx));
                 }
@@ -1458,7 +1457,7 @@ static RPCHelpMan decodepsbt()
             if (input.m_peg_in_txout_proof.index() > 0) {
                 const auto txout_proof = std::get_if<Sidechain::Bitcoin::CMerkleBlock>(&input.m_peg_in_txout_proof);
                 if (txout_proof) {
-                    CDataStream ss_mb(SER_NETWORK, PROTOCOL_VERSION);
+                    DataStream ss_mb{};
                     ss_mb << TX_NO_WITNESS(*txout_proof);
                     in.pushKV("pegin_txout_proof", HexStr(ss_mb));
                 }
@@ -1467,7 +1466,7 @@ static RPCHelpMan decodepsbt()
             if (input.m_peg_in_tx.index() > 0) {
                 const auto peg_in_tx = std::get_if<CTransactionRef>(&input.m_peg_in_tx);
                 if (peg_in_tx) {
-                    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION);
+                    DataStream ss_tx{};
                     ss_tx << TX_NO_WITNESS(*peg_in_tx);
                     in.pushKV("pegin_bitcoin_tx", HexStr(ss_tx));
                 }
@@ -1475,7 +1474,7 @@ static RPCHelpMan decodepsbt()
             if (input.m_peg_in_txout_proof.index() > 0) {
                 const auto txout_proof = std::get_if<CMerkleBlock>(&input.m_peg_in_txout_proof);
                 if (txout_proof) {
-                    CDataStream ss_mb(SER_NETWORK, PROTOCOL_VERSION);
+                    DataStream ss_mb{};
                     ss_mb << TX_NO_WITNESS(*txout_proof);
                     in.pushKV("pegin_txout_proof", HexStr(ss_mb));
                 }
@@ -3203,7 +3202,7 @@ static RPCHelpMan updatepsbtpegin()
     // Txout proof
     if (!request.params[4].isNull()) {
         const std::vector<unsigned char> proof_data = ParseHex(request.params[4].get_str());
-        CDataStream ss_proof(proof_data, SER_NETWORK, PROTOCOL_VERSION);
+        DataStream ss_proof{proof_data};
         try {
             if (Params().GetConsensus().ParentChainHasPow()) {
                 Sidechain::Bitcoin::CMerkleBlock merkle_block;

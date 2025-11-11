@@ -276,7 +276,7 @@ std::string ConsumeScalarRPCArgument(FuzzedDataProvider& fuzzed_data_provider, b
                 good_data = false;
                 return;
             }
-            CDataStream data_stream{SER_NETWORK, PROTOCOL_VERSION};
+            DataStream data_stream{};
             data_stream << TX_WITH_WITNESS(*opt_block);
             r = HexStr(data_stream);
         },
@@ -287,7 +287,7 @@ std::string ConsumeScalarRPCArgument(FuzzedDataProvider& fuzzed_data_provider, b
                 good_data = false;
                 return;
             }
-            CDataStream data_stream{SER_NETWORK, INIT_PROTO_VERSION};
+            DataStream data_stream{};
             data_stream << *opt_block_header;
             r = HexStr(data_stream);
         },
@@ -311,7 +311,7 @@ std::string ConsumeScalarRPCArgument(FuzzedDataProvider& fuzzed_data_provider, b
                 return;
             }
             DataStream data_stream{};
-            data_stream << TX_WITH_WITNESS(*opt_psbt);
+            data_stream << *opt_psbt;
             r = EncodeBase64(data_stream);
         },
         [&] {

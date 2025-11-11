@@ -4029,7 +4029,7 @@ void CWalletTx::GetBlindingData(const CWallet& wallet, const unsigned int map_in
     // * 32 bytes asset blinding factor
     // * 32 bytes asset
     // * 33 bytes blinding pubkey (ECDH pubkey of the destination)
-    // This is really ugly, and should use CDataStream serialization instead.
+    // This is really ugly, and should use DataStream serialization instead.
 
     if (mapValue["blindingdata"].size() < (map_index + 1) * 138) {
         mapValue["blindingdata"].resize((tx->vout.size() + GetNumIssuances(*tx)) * 138);

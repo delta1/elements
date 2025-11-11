@@ -1421,7 +1421,7 @@ static RPCHelpMan consumecompactsketch()
         }
     }
 
-    CDataStream ssReq(SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssReq{};
     ssReq << req;
 
     if (req.indexes.empty()) {
@@ -1521,7 +1521,7 @@ static RPCHelpMan finalizecompactblock()
 
     // BlockTransactions from the server
     std::vector<unsigned char> block_tx(ParseHex(request.params[1].get_str()));
-    CDataStream ssResp(block_tx, SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ssResp{block_tx};
 
     BlockTransactions transactions;
     ssResp >> transactions;

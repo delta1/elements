@@ -9,7 +9,6 @@
 #include <consensus/consensus.h>
 #include <cstdint>
 #include <primitives/transaction.h>
-#include <version.h>
 
 /**
  * Calculate a smaller weight for discounted Confidential Transactions.

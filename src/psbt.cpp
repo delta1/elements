@@ -12,7 +12,6 @@
 #include <script/signingprovider.h>
 #include <util/check.h>
 #include <util/strencodings.h>
-#include <version.h>
 
 
 PartiallySignedTransaction::PartiallySignedTransaction(const CMutableTransaction& tx, uint32_t version) : m_version(version)
@@ -959,7 +958,7 @@ bool DecodeBase64PSBT(PartiallySignedTransaction& psbt, const std::string& base6
 
 bool DecodeRawPSBT(PartiallySignedTransaction& psbt, Span<const std::byte> tx_data, std::string& error)
 {
-    DataStream ss_data(tx_data);
+    DataStream ss_data{tx_data};
     try {
         ss_data >> TX_WITH_WITNESS(psbt);
         if (!ss_data.empty()) {

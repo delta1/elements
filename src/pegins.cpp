@@ -202,7 +202,7 @@ static bool GetBlockAndTxFromMerkleBlock(uint256& block_hash, uint256& tx_hash, 
     try {
         std::vector<uint256> tx_hashes;
         std::vector<unsigned int> tx_indices;
-        CDataStream merkle_block_stream(merkle_block_raw, SER_NETWORK, PROTOCOL_VERSION);
+        DataStream merkle_block_stream{merkle_block_raw};
         merkle_block_stream >> TX_NO_WITNESS(merkle_block);
         block_hash = merkle_block.header.GetHash();
 
@@ -270,7 +270,7 @@ bool IsValidPeginWitness(const CScriptWitness& pegin_witness, const std::vector<
         return false;
     }
 
-    CDataStream stream(stack[0], SER_NETWORK, PROTOCOL_VERSION);
+    DataStream stream{stack[0]};
     CAmount value;
     try {
         stream >> value;
@@ -514,13 +514,13 @@ CScriptWitness CreatePeginWitnessInner(const CAmount& value, const CAsset& asset
     }
 
     // Strip witness data for proof inclusion since only TXID-covered fields matters
-    CDataStream ss_tx(SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ss_tx{};
     ss_tx << TX_NO_WITNESS(tx_ref);
     const auto* ss_tx_ptr = UCharCast(ss_tx.data());
     std::vector<unsigned char> tx_data_stripped(ss_tx_ptr, ss_tx_ptr + ss_tx.size());
 
     // Serialize merkle block
-    CDataStream ss_txout_proof(SER_NETWORK, PROTOCOL_VERSION);
+    DataStream ss_txout_proof{};
     ss_txout_proof << TX_NO_WITNESS(merkle_block);
     const auto* ss_txout_ptr = UCharCast(ss_txout_proof.data());
     std::vector<unsigned char> txout_proof_bytes(ss_txout_ptr, ss_txout_ptr + ss_txout_proof.size());
@@ -552,7 +552,7 @@ bool DecomposePeginWitness(const CScriptWitness& witness, CAmount& value, CAsset
 
     if (stack.size() < 5) return false;
 
-    CDataStream stream(stack[0], SER_NETWORK, PROTOCOL_VERSION);
+    DataStream stream{stack[0]};
     stream >> value;
 
     CAsset tmp_asset(stack[1]);
