@@ -53,6 +53,7 @@
 #include <txdb.h>
 #include <txmempool.h>
 #include <util/chaintype.h>
+#include <util/check.h>
 #include <util/rbf.h>
 #include <util/strencodings.h>
 #include <util/string.h>
@@ -91,6 +92,15 @@ std::ostream& operator<<(std::ostream& os, const uint256& num)
     os << num.ToString();
     return os;
 }
+
+struct NetworkSetup
+{
+    NetworkSetup()
+    {
+        Assert(SetupNetworking());
+    }
+};
+static NetworkSetup g_networksetup_instance;
 
 BasicTestingSetup::BasicTestingSetup(const ChainType chainType, const std::vector<const char*>& extra_args, const std::string& fedpegscript)
     : m_path_root{fs::temp_directory_path() / "test_common_" PACKAGE_NAME / g_insecure_rand_ctx_temp_path.rand256().ToString()},
@@ -141,7 +151,6 @@ BasicTestingSetup::BasicTestingSetup(const ChainType chainType, const std::vecto
     LogInstance().StartLogging();
     m_node.kernel = std::make_unique<kernel::Context>();
     SetupEnvironment();
-    SetupNetworking();
     ValidationCacheSizes validation_cache_sizes{};
     ApplyArgsManOptions(*m_node.args, validation_cache_sizes);
     Assert(InitSignatureCache(validation_cache_sizes.signature_cache_bytes));
