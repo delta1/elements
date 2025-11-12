@@ -10,10 +10,10 @@ ELEMENTS_UPSTREAM_REMOTE=upstream
 ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Set these to whether you want to merge from Bitcoin or Elements
-#TARGET_UPSTREAM=$BITCOIN_UPSTREAM
-#TARGET_NAME="Bitcoin"
-TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
-TARGET_NAME="Elements"
+TARGET_UPSTREAM=$BITCOIN_UPSTREAM
+TARGET_NAME="Bitcoin"
+#TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
+#TARGET_NAME="Elements"
 
 # Replace this with the location where we should put the fuzz test corpus
 BITCOIN_QA_ASSETS="${HOME}/code/bitcoin/qa-assets"
@@ -225,7 +225,7 @@ do
     # check for stoppers and halt if found
     # a stopper is normally the PR after the version has been changed
     # ie. the branch point we want to stop at for this version
-    STOPPERS=("#28210")
+    STOPPERS=("#29579")
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
