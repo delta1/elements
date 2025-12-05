@@ -10,10 +10,10 @@ ELEMENTS_UPSTREAM_REMOTE=upstream
 ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Set these to whether you want to merge from Bitcoin or Elements
-TARGET_UPSTREAM=$BITCOIN_UPSTREAM
-TARGET_NAME="Bitcoin"
-#TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
-#TARGET_NAME="Elements"
+#TARGET_UPSTREAM=$BITCOIN_UPSTREAM
+#TARGET_NAME="Bitcoin"
+TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
+TARGET_NAME="Elements"
 
 # Replace this with the location where we should put the fuzz test corpus
 BITCOIN_QA_ASSETS="${HOME}/code/bitcoin/qa-assets"
@@ -27,7 +27,7 @@ WORKTREE="/home/byron/code/elements-worktree"
 #mkdir -p "${HOME}/.tmp"
 
 PARALLEL_BUILD=23  # passed to make -j
-PARALLEL_TEST=23  # passed to test_runner.py --jobs
+PARALLEL_TEST=46  # passed to test_runner.py --jobs
 PARALLEL_FUZZ=12  # passed to test_runner.py -j when fuzzing
 
 # ccache opts
@@ -225,7 +225,7 @@ do
     # check for stoppers and halt if found
     # a stopper is normally the PR after the version has been changed
     # ie. the branch point we want to stop at for this version
-    STOPPERS=("#29579")
+    STOPPERS=()
     for STOPPER in "${STOPPERS[@]}"
     do
 	if [[ "$PR_ID" == *"$STOPPER"* ]]; then
