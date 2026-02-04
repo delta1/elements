@@ -18,17 +18,19 @@ ELEMENTS_MASTER = "upstream/master"
 MERGED_MASTER = "merged-master"
 MERGED_MASTER_REVIEWED = "merged-master-reviewed"
 
-# NOTE: We don't use /tmp/ anymore, as on many systems (incl. macOS), random
+MERGE_AUTHOR = "Trevethan"
+
+# XXX: This is not actually a good idea. On many systems (incl. macOS) random
 # files in the worktree will start to go missing a few days after its creation,
 # because of temp-directory-cleaning scripts that work on a file-by-file basis.
-WORKTREE_LOCATION = "/home/byron/code/elements-merge-review-worktree"
+WORKTREE_LOCATION = "/home/byron/code/elements-worktree"
 
 def print_startup_warning() -> None:
     print()
     print("To prepare to use this script, make sure the following things are set up:")
     print(" - The remotes 'bitcoin' and 'upstream' should point to Bitcoin Core and")
     print("   Elements upstream repos, respectively.")
-    print(f" - The latest {MERGED_MASTER_REVIEWED} branch should be checked out locally in the worktree location {WORKTREE_LOCATION}.")
+    print(f" - The latest {MERGED_MASTER_REVIEWED} branch should be checked out locally.")
     print(f" - We are currently using '{MERGED_MASTER}' as our branch to review.")
     print("   To change this, edit the constant MERGED_MASTER in the script.")
     print(" - We will reuse or create a git worktree at:")
@@ -132,13 +134,14 @@ def get_elements_commits():
 def get_merged_commits():
     """Get the list of merge commits still needing to be reviewed."""
 
-    MERGED_COMMITS_CMD=f"git log '{MERGED_MASTER}' --not '{MERGED_MASTER_REVIEWED}' --first-parent --reverse --pretty='format:%ct %cI %H Merged %s'"
+    MERGED_COMMITS_CMD=f"git log '{MERGED_MASTER}' --not '{MERGED_MASTER_REVIEWED}' --first-parent --reverse --pretty='format:%ct %cI %H Merged %s %an'"
 
     merged_commits_raw = shell(MERGED_COMMITS_CMD)
     merged_commits = []
     for line in merged_commits_raw:
-        #print(line)
         m = re.fullmatch(r"\d+ ([^ ]+) ([0-9a-f]+) Merged Merge ([0-9a-f]+) into merged_master \((.+) PR (?:pull )?((?:[-_a-zA-Z0-9]*/[-_a-zA-Z0-9]*)?)#(\d+)\)(.*)", line)
+        m2 = re.fullmatch(r"\d+ ([^ ]+) ([0-9a-f]+) Merged Merge UP TO ([0-9a-f]+) into merged_master \(UP TO (.+) PR (?:pull )?((?:[-_a-zA-Z0-9]*/[-_a-zA-Z0-9]*)?)#(\d+)\)(.*)", line)
+        m3 = re.fullmatch(r"\d+ ([^ ]+) ([0-9a-f]+) Merged Merge UP TO ([0-9a-f]+) into merged_master \(UP TO (?:pull )?((?:[-_a-zA-Z0-9]*/[-_a-zA-Z0-9]*)?)#(\d+)\)(.*)", line)
         m_secp = re.fullmatch(r"\d+ ([^ ]+) ([0-9a-f]+) Merged update libsecp256k1-zkp to ([0-9a-f]+)", line)
         m_misc = re.fullmatch(r"\d+ ([^ ]+) ([0-9a-f]+) Merged (.*)$", line)
 
@@ -147,6 +150,31 @@ def get_merged_commits():
 
         if m is not None:
             [date, cid, merged_cid, chain, repo, prno, trailing] = m.groups()
+            if chain == "Bitcoin":
+                if repo == "bitcoin-core/gui":
+                    fromgui = True
+                elif repo != "" and repo != "bitcoin/bitcoin":
+                    raise Exception(f"Merge into Bitcoin Core from unexpected repo, or commit message had unexpected format:\n   > {line}")
+            elif chain == "Elements":
+                if repo != "" and repo != "ElementsProject/elements":
+                    raise Exception(f"Merge into Elements from unexpected repo, or commit message had unexpected format:\n   > {line}")
+            else:
+                raise Exception(f"Commit message had unexpected format:\n   > {line}")
+        elif m2 is not None:
+            [date, cid, merged_cid, chain, repo, prno, trailing] = m2.groups()
+            if chain == "Bitcoin":
+                if repo == "bitcoin-core/gui":
+                    fromgui = True
+                elif repo != "" and repo != "bitcoin/bitcoin":
+                    raise Exception(f"Merge into Bitcoin Core from unexpected repo, or commit message had unexpected format:\n   > {line}")
+            elif chain == "Elements":
+                if repo != "" and repo != "ElementsProject/elements":
+                    raise Exception(f"Merge into Elements from unexpected repo, or commit message had unexpected format:\n   > {line}")
+            else:
+                raise Exception(f"Commit message had unexpected format:\n   > {line}")
+        elif m3 is not None:
+            [date, cid, merged_cid, repo, prno, trailing] = m3.groups()
+            chain = "Bitcoin"
             if chain == "Bitcoin":
                 if repo == "bitcoin-core/gui":
                     fromgui = True
@@ -189,7 +217,6 @@ def get_merged_commits():
 
 def check_commit(commit, last_reviewed, incoming_commit) -> None:
     """Verify some invariants about a commit, and fill in the full parent commid IDs."""
-
     cid = commit["cid"]
     parents = shell(f"git cat-file -p {cid} | grep '^parent'")
     if len(parents) != 2:
@@ -255,6 +282,9 @@ def main() -> None:
 
     last_reviewed = shell_oneline(f"git rev-parse {MERGED_MASTER_REVIEWED}")
 
+    print("last reviewed")
+    print(last_reviewed)
+
     unclean = shell(f"git -C {WQ} status --porcelain --untracked-files=no")
     if len("".join(unclean)) != 0:
         print("You have uncommitted changes in your working directory! Refusing to run!")
@@ -273,9 +303,6 @@ def main() -> None:
     print()
 
     SKIP_CLEAN = True
-
-    commits_total = len(merged_commits)
-    commits_done = -1
 
     for commit in merged_commits:
         REQUIRE_MANUAL_REVIEW = False
@@ -299,7 +326,6 @@ def main() -> None:
 
         check_commit(commit, last_reviewed, incoming_commit)
 
-        commits_done += 1
         print("Next commit:", commit["cid"])
 
         cid = commit["cid"]
@@ -319,6 +345,11 @@ def main() -> None:
         else:
             diffstr = "<Could not find incoming commit; no diff available>"
 
+        # skip commits not by specified author
+        if MERGE_AUTHOR not in commit["trailing"]:
+            last_reviewed = cid
+            continue
+
         if len(diffstr) == 0 and SKIP_CLEAN and (not REQUIRE_MANUAL_REVIEW):
             last_reviewed = cid
             continue
@@ -328,7 +359,7 @@ def main() -> None:
 
         print()
         print("** COMMIT WE ARE REVIEWING:")
-        os.system(f"git -C {WQ} log -1 --pretty=fuller {cid}")
+        os.system(f"git -C {WQ} log -1 --pretty=full {cid}")
         print()
 
         def diff4():
@@ -336,7 +367,7 @@ def main() -> None:
 
         if incoming_commit is not None:
             print("** UPSTREAM COMMIT MERGED THEREIN:")
-            os.system(f"git -C {WQ} log -1 --pretty=fuller {incoming_commit['cid']}")
+            os.system(f"git -C {WQ} log -1 --pretty=full {incoming_commit['cid']}")
             print()
 
             diff4()
@@ -344,7 +375,6 @@ def main() -> None:
         said = ""
         if incoming_commit is not None:
             while said != "y":
-                print(f"Have reviewed {commits_done} commits out of {commits_total} total.")
                 said = prompt_chars("Accept this commit? (If unsure, say 'N', which will exit the review script.) Or show a [d]iff, [r]edisplay commit, or [a]utoskip clean diffs [toggle]?", "yndra")
 
                 if said == "a":
@@ -355,12 +385,12 @@ def main() -> None:
                 elif said == "r":
                     print()
                     print("** COMMIT WE ARE REVIEWING:")
-                    os.system(f"git -C {WQ} log -1 --pretty=fuller {cid}")
+                    os.system(f"git -C {WQ} log -1 --pretty=full {cid}")
                     print()
 
                     if incoming_commit is not None:
                         print("** UPSTREAM COMMIT MERGED THEREIN:")
-                        os.system(f"git -C {WQ} log -1 --pretty=fuller {incoming_commit['cid']}")
+                        os.system(f"git -C {WQ} log -1 --pretty=full {incoming_commit['cid']}")
                         print()
 
                 elif said == "d":
@@ -387,13 +417,12 @@ def main() -> None:
         else:  # incoming_commit is None
             os.system(f"git -C {WQ} show {GIT_DIFF_OPTS} {cid}")
             while said != "y":
-                print(f"Have reviewed {commits_done} commits out of {commits_total} total.")
                 said = prompt_chars("Accept this commit? (If unsure, say 'N', which will exit the review script.) Or [r]edisplay commit and diff?", "ynr")
 
                 if said == "r":
                     print()
                     print("** COMMIT WE ARE REVIEWING:")
-                    os.system(f"git -C {WQ} log -1 --pretty=fuller {cid}")
+                    os.system(f"git -C {WQ} log -1 --pretty=full {cid}")
                     print()
                     os.system(f"git -C {WQ} show {GIT_DIFF_OPTS} {cid}")
                 elif said == "n":
