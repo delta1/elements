@@ -10,8 +10,8 @@ ELEMENTS_UPSTREAM_REMOTE=upstream
 ELEMENTS_UPSTREAM="${ELEMENTS_UPSTREAM_REMOTE}/master"
 
 # Set these to whether you want to merge from Bitcoin or Elements
-#TARGET_UPSTREAM=$BITCOIN_UPSTREAM
-#TARGET_NAME="Bitcoin"
+# TARGET_UPSTREAM=$BITCOIN_UPSTREAM
+# TARGET_NAME="Bitcoin"
 TARGET_UPSTREAM=$ELEMENTS_UPSTREAM
 TARGET_NAME="Elements"
 
@@ -181,13 +181,15 @@ notify () {
 echo "$COMMITS" | tac | while read -r line
 do
     ## Extract data and output what we're doing
+    # echo "line is $line"
     DATE=$(echo "$line" | cut -d ' ' -f 2)
     HASH=$(echo "$line" | cut -d ' ' -f 3)
     CHAIN=$(echo "$line" | cut -d ' ' -f 4)
-    PR_ID=$(echo "$line" | cut -d ' ' -f 6 | tr -d :)
-    #echo "PR_ID is $PR_ID"
+    # PR_ID=$(echo "$line" | cut -d ' ' -f 6 | tr -d :)
+    PR_ID=$(echo "$line" | grep -o -P "#\d+")
+    # echo "PR_ID is $PR_ID"
     PR_ID_ALT=$(echo "$line" | cut -d ' ' -f 8 | tr -d :)
-    #echo "PR_ID_ALT is $PR_ID_ALT"
+    # echo "PR_ID_ALT is $PR_ID_ALT"
 
     if [[ "$PR_ID" == "pull" ]]; then
 	PR_ID="${PR_ID_ALT}"
