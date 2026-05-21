@@ -1,0 +1,385 @@
+Legacy to Descriptor Wallet Migration Planning
+
+Bitcoin Core v30 removes the deprecated legacy wallet (BDB) format in favor of descriptor wallets.
+
+Now that Elements merging is at v29, we need a plan for migrating from legacy to descriptor wallets.
+
+The major issues here are:
+
+1. Supporting CT Descriptors
+2. Supporting Peg-in Descriptors
+3. Ensuring compatibility and a smooth migration process
+
+
+References
+
+- SLIP-0077 (https://github.com/satoshilabs/slips/blob/master/slip-0077.md) — Deterministic blinding key derivation
+- ELIP-0150 (https://github.com/ElementsProject/ELIPs/blob/main/elip-0150.mediawiki) — CT Descriptors
+- ELIP-0151 (https://github.com/ElementsProject/ELIPs/blob/main/elip-0151.mediawiki) — Deterministic Descriptor Blinding Keys
+- BIP-380 (https://github.com/bitcoin/bips/blob/master/bip-0380.mediawiki) — Output Script Descriptors
+- BIP-389 (https://github.com/bitcoin/bips/blob/master/bip-0389.mediawiki) — Multi-path descriptor key expressions
+
+
+Goals
+
+1. Full descriptor wallet support for all Elements features — CT blinding, peg-in addresses, and standard sidechain receives must all work in descriptor wallets with no legacy fallback.
+
+2. Standardised backup format — a single listdescriptors export must contain everything needed to restore a wallet: spending keys, master blinding key, and all peg-in policies. importdescriptors alone should be sufficient for full recovery.
+
+3. Address and blinding key compatibility — migrated wallets must derive exactly the same confidential addresses and blinding keys as the legacy wallet they were created from. No address reuse or key mismatch.
+
+4. No feature regression — existing RPCs (getpeginaddress, sendtomainchain, claimpegin, dumpmasterblindingkey) must continue to function, or be superseded by descriptor equivalents before removal.
+
+5. Thorough, automated testing — migration, backup, import, and derivation correctness must be covered by functional tests that run in CI.
+
+
+Current State
+
+Legacy wallets store:
+
+- An HD seed (BIP32 root xprv) from which all signing keys are derived.
+- A blinding_derivation_key — a randomly generated 32-byte secret, stored flat in the wallet database. This is the master blinding key. In Elements, it has no relationship to the HD seed.
+- A bag of scripts (cs_scripts / GetCScripts()) including claim scripts registered by AddCScript during getpeginaddress.
+- Per-address blinding key overrides (mapSpecificBlindingKeys), imported via importblindingkey.
+
+Descriptor wallets are blocked from using getpeginaddress, initpegoutwallet, and sendtomainchain via explicit legacy-only guards. There is no implemented ct() descriptor support; the stub in src/wallet/scriptpubkeyman.h is commented out. listdescriptors does not emit ct() wrappers.
+
+
+Scope of Work
+
+The migration consists of four largely independent but interacting parts:
+
+1. CT descriptor support — implement ct(slip77(...), ...) in the descriptor engine and wire it through importdescriptors / listdescriptors.
+2. Pegin descriptor support — design and implement the pegin() descriptor type with epoch-aware wallet integration.
+3. Migration tooling — extend or replace migratewallet to reconstruct descriptor equivalents from legacy wallet data, including a chain rescan for peg-in history.
+4. Testing — end-to-end functional tests for backup/restore, migration correctness, and address derivation invariants.
+
+
+Background: Blinding Key Derivation
+
+How Elements Derives Blinding Keys Today
+
+Elements does not use BIP-39 seed phrases. The master blinding key (blinding_derivation_key) is a randomly generated 32-byte value, created at wallet creation time and stored flat in the wallet database (src/wallet/walletdb.cpp). It has no derivation relationship with the HD signing seed.
+
+Per-address blinding keys are derived in GetBlindingKey (src/wallet/wallet.cpp) as:
+
+    blinding_key = HMAC-SHA256(blinding_derivation_key, scriptPubKey)
+
+This is identical to SLIP-77's per-address derivation. Elements does not implement SLIP-77 fully, which ties the master key to the HD seed.
+
+The wallet also stores per-address overrides in mapSpecificBlindingKeys (src/wallet/wallet.h), populated by importblindingkey. These take precedence over master-key derivation and have no path back to any root secret.
+
+SLIP-77
+
+ELIP-150's slip77(<64-hex>) expression embeds the master blinding key directly in the descriptor and uses the same HMAC-SHA256(master, scriptPubKey) function for per-address derivation. The <64-hex> value is the wallet's blinding_derivation_key read verbatim — no transformation is involved.
+
+This means a ct(slip77(...), ...) descriptor is a complete encoding of the existing blinding key state. Given the same slip77 value and the same xpub at the same derivation path, a descriptor wallet derives identical blinding keys and confidential addresses as the legacy wallet.
+
+
+Background: Peg-in Address Construction and the Descriptor Gap
+
+How getpeginaddress Works
+
+getpeginaddress (src/wallet/rpc/elements.cpp) constructs a peg-in address in four steps:
+
+1. Generate a claim script — a fresh P2WPKH destination on the sidechain. Its scriptPubKey (OP_0 <20-byte-keyhash>) is the user's half of the cryptographic construction.
+
+2. Fetch the federation peg script — the current fedpegscript from consensus, a k-of-n multisig of federation pubkeys.
+
+3. Tweak every federation pubkey (Pay-to-Contract) — for each 33-byte pubkey P in the fedpegscript:
+
+    tweak = HMAC-SHA256(P_bytes, claim_script_bytes)
+    P'    = P + tweak*G
+
+   The result is the fedpegscript with every key replaced by its tweaked counterpart. Emergency keys are excluded.
+
+4. Wrap into a mainchain address:
+
+    P2WSH(tweaked_fedpegscript)            # dynafed
+    P2SH(P2WSH(tweaked_fedpegscript))      # pre-dynafed
+
+The construction is a Pay-to-Contract scheme: the tweaked keys encode the claim script into the federation multisig without revealing it on-chain. Only the party that knows the claim script — and can prove it on the sidechain — can unlock the funds.
+
+Why Descriptor Wallets Are Currently Blocked
+
+The rejection is explicit (elements.cpp):
+
+    LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
+    if (!spk_man) {
+        throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
+    }
+
+The root cause is AddCScript (elements.cpp), which inserts the claim script into the legacy wallet's bag-of-scripts. This is required so that IsMine(claim_script) later returns ISMINE_SPENDABLE when peg-in inputs are processed. DescriptorScriptPubKeyMan has no bag-of-scripts — it only recognises scripts that fall out of a descriptor — and AddCScript does not exist on it.
+
+The same legacy-only guard blocks initpegoutwallet and sendtomainchain.
+
+Dynafed Epochs
+
+On Liquid mainnet, the fedpegscript changes at dynafed epoch boundaries (dynamic_epoch_length = 20160 blocks, total_valid_epochs = 2). A mainchain address generated against epoch N's fedpegscript becomes unclaimable once epoch N+2 starts. CheckPeginTx validates against all currently valid epochs by re-running calculate_contract for each.
+
+A peg-in address is the product of two components with completely different lifetimes:
+
+  Component       | Source                    | Stable?
+  ----------------|---------------------------|---------------------------
+  claim script    | derived from user's xpub  | yes — forever
+  fedpegscript    | chain consensus state     | no — changes each epoch
+
+A normal descriptor is self-contained: every address it will ever produce can be re-derived from seed and descriptor string alone. A pegin() descriptor cannot do that — the fedpegscript is chain state, not wallet state, and must be baked in verbatim. One descriptor instance is therefore needed per epoch; the wallet must retain at least total_valid_epochs simultaneously.
+
+What Cannot Be Recovered Without Chain Data
+
+dumpwallet exports the HD seed, the blinding derivation key, per-key WIF entries, and the full script bag. Claim scripts appear as raw P2WPKH hex with no annotation linking them to a fedpegscript. There is no record of which epoch's fedpegscript was paired with which claim script.
+
+Reconstructing pegin() descriptors from a legacy wallet dump therefore requires a chain rescan:
+
+1. Scan for peg-in transactions whose claim scripts match keys in the wallet's HD range. The claim script is explicit in the peg-in witness stack (pegins.cpp).
+2. For each peg-in, call GetValidFedpegScripts at that block height to identify the active epoch's fedpegscript.
+3. Group claim scripts by fedpegscript; each distinct one becomes one pegin() descriptor.
+
+One case chain scanning cannot recover: a claim script that was generated by getpeginaddress but whose Bitcoin deposit has not yet appeared on-chain. The legacy wallet's script store is the only record of these pending addresses; they are unrecoverable from chain or seed alone. The user must either note the claim_script hex before migrating or discard the old mainchain address and generate a fresh one on the descriptor wallet.
+
+
+ELIP Specifications
+
+ELIP-150: CT Descriptors
+
+ELIP-150 defines ct(<BLINDING_KEY_EXPR>, <DESCRIPTOR>) as a descriptor wrapper that associates a blinding key derivation expression with any standard output descriptor. Two blinding key expressions are defined:
+
+- slip77(<64-hex>) — the master blinding key is embedded in the descriptor. The per-address blinding key is HMAC-SHA256(master, scriptPubKey). The <64-hex> value is the wallet's blinding_derivation_key read directly, with no transformation. This is the correct fit for Elements single-sig wallets.
+
+- Bare key or xpub — a separate blinding xpub whose per-output key is K + H(K || scriptPubKey)*G (BIP-340 tagged hash with tag "CT-Blinding-Key/1.0"). Useful for multisig auditor models where signing descriptors should not grant unblinding capability.
+
+ELIP-151: Deterministic Descriptor Blinding Keys
+
+ELIP-151 defines ct(elip151, <DESCRIPTOR>) where blinding keys are derived entirely from the descriptor's own scriptPubKeys at index 2^31-1. No additional secret is required; any party with the descriptor can unblind all outputs. Best suited to multisig arrangements where unblinding capability is shared among all signers.
+
+Proposed Pegin Descriptor
+
+The pegin() descriptor is not yet part of any ELIP but is required for descriptor wallet peg-in support. The proposed form is:
+
+    pegin(<full_fedpegscript_hex>, <claim_key_expr>)
+
+Implementation would be a PeginDescriptor : public DescriptorImpl (src/script/descriptor.cpp). The descriptor framework resolves all key and sub-descriptor arguments at a given index via ExpandHelper, then calls the pure-virtual MakeScripts(pubkeys, subscripts, out) for the type-specific output. PeginDescriptor::MakeScripts would receive the expanded claim scriptPubKey from its sub-descriptor and:
+
+1. Call calculate_contract(m_fedpegscript, claim_script) to produce the tweaked federation script
+2. Return {P2WSH(tweaked), claim_script} — both the mainchain deposit script and the sidechain claim script
+
+Returning two scripts is already supported at the top level (combo() does the same); the assert(outscripts.size() == 1) in ExpandHelper applies only to scripts used as sub-descriptor arguments to other descriptors, not to top-level expansion.
+
+The dual-script output is novel for a top-level descriptor — one script lives on the mainchain, the other on the sidechain — and requires specific threading through DescriptorScriptPubKeyMan::IsMine and address-generation paths.
+
+The fedpegscript must be embedded as raw hex. A hash is useless because calculate_contract needs the actual pubkeys to tweak. A descriptor expression is also not viable: calculate_contract works by iterating raw script bytes, identifying 33-byte pushdata sequences as pubkeys, and calling MatchLiquidWatchman to detect whether to skip emergency keys after OP_ELSE. The Liquid watchman script structure (OP_DEPTH-gated dual-branch with CSV emergency path) is not expressible as any standard descriptor type, and even where a simpler fedpegscript could be so expressed, any encoding difference between the descriptor's serialization and the original chain bytes would produce a wrong tweaked script and an unclaimable mainchain address. Raw hex is the only safe and universally applicable representation.
+
+One pegin() descriptor instance is needed per epoch; the wallet retains at least total_valid_epochs simultaneously.
+
+
+Standardised Backup/Import Format
+
+Single-sig CT Wallet
+
+The backup descriptor for a single-sig Elements wallet wraps the standard output descriptor in a ct(slip77(...), ...) expression:
+
+    ct(slip77(<64-hex>), wpkh([<fingerprint>/<path>]<xpub>/<0;1>/*))[#<checksum>]
+
+The <64-hex> value comes from dumpmasterblindingkey. BIP-389 multi-path form (<0;1>) covers both receive and change branches in a single descriptor.
+
+Peg-in Descriptors
+
+Each dynafed epoch produces one descriptor. The claim key expression reuses the exact same xpub and derivation path as the wallet's standard wpkh descriptor — no new keys are introduced:
+
+    # standard sidechain receive (shared xpub)
+    wpkh([deadbeef/84'/1776'/0']xprv.../0/*)
+
+    # active epoch pegin — xpub only (federation signs on mainchain)
+    pegin(<epoch_N_fedpegscript_hex>, wpkh([deadbeef/84'/1776'/0']xpub.../0/*))
+
+    # prior epoch — inactive, retained for scanning and claim
+    pegin(<epoch_N-1_fedpegscript_hex>, wpkh([deadbeef/84'/1776'/0']xpub.../0/*))
+
+Each descriptor's timestamp is set to the block time of the epoch boundary where that fedpegscript became active, so importdescriptors rescans from the correct point.
+
+Full listdescriptors Output Shape
+
+    {
+      "wallet_name": "liquid-wallet",
+      "descriptors": [
+        {
+          "desc": "ct(slip77(<64-hex>),wpkh([deadbeef/84'/1776'/0']xprv.../<0;1>/*))",
+          "timestamp": 1700000000,
+          "active": true,
+          "range": [0, 999],
+          "next": 87
+        },
+        {
+          "desc": "pegin(<epoch_N_fedpegscript_hex>,wpkh([deadbeef/84'/1776'/0']xpub.../0/*))",
+          "timestamp": 1720000000,
+          "active": true,
+          "range": [0, 999],
+          "next": 12
+        },
+        {
+          "desc": "pegin(<epoch_N-1_fedpegscript_hex>,wpkh([deadbeef/84'/1776'/0']xpub.../0/*))",
+          "timestamp": 1700000000,
+          "active": false,
+          "range": [0, 999],
+          "next": 5
+        }
+      ]
+    }
+
+Note:
+- The active pegin descriptor uses xpub (not xprv) — mainchain signing is done by the federation; sidechain claim signing is covered by the wpkh descriptor's xprv.
+
+A wallet restored from this export derives the same confidential addresses, blinding keys, and peg-in claim scripts as the original.
+
+
+Required Changes to Elements
+
+1. Descriptor Parser (src/script/descriptor.cpp)
+
+- Implement the ct() descriptor expression. Parse ct(slip77(<hex>), <inner>), ct(elip151, <inner>), and ct(<xpub>, <inner>). Wire blinding key derivation into Expand and ExpandPrivate.
+
+- Implement the pegin() descriptor expression. The first argument is a raw script (fedpegscript); the second is any key expression producing a P2WPKH or P2WSH scriptPubKey. Expand(k) calls calculate_contract and wraps in P2WSH or P2SH(P2WSH) based on chain params.
+
+- Extend the descriptor checksum to cover ct() and pegin() expressions.
+
+2. Script PubKey Manager (src/wallet/scriptpubkeyman.cpp)
+
+- Implement DescriptorScriptPubKeyMan support for ct() descriptors. The IsMine and GetMetadata paths must retrieve the blinding key for a given script, both for generating confidential addresses and for unblinding received outputs.
+
+- Implement DescriptorScriptPubKeyMan support for pegin() descriptors, including IsMine checks against both the sidechain claim script and the mainchain deposit script. Add OutputType::PEGIN or an equivalent mechanism to distinguish peg-in managers from standard output-type managers. Inactive prior-epoch descriptors live in m_spk_managers but not in either active map, exactly like an imported watch-only descriptor today.
+
+- Remove the GetLegacyScriptPubKeyMan() guard from getpeginaddress, initpegoutwallet, and sendtomainchain. Replace the AddCScript call in getpeginaddress with descriptor-wallet address generation, which does not require explicit script registration.
+
+3. Wallet RPC (src/wallet/rpc/)
+
+- listdescriptors: emit ct(slip77(...), ...) wrappers for all descriptors in existing wallets, constructing the expression from the stored blinding_derivation_key and the existing output descriptors.
+
+- importdescriptors: parse and load ct() and pegin() descriptors. Import the slip77 master blinding key into blinding_derivation_key. Populate the correct DescriptorScriptPubKeyMan instances.
+
+- dumpmasterblindingkey / importmasterblindingkey: retain for backward compatibility until ct() descriptor export/import is fully functional, then deprecate.
+
+- getpeginaddress: after removing the legacy guard, generate from the active pegin() descriptor's next unused index. Return both the mainchain deposit address and the claim script as before.
+
+4. Wallet Core (src/wallet/wallet.cpp)
+
+- Epoch transition: on BlockConnected, detect fedpegscript changes. When an epoch boundary is crossed, construct a new pegin(new_fedpegscript, wpkh(xpub/0/*)) descriptor, create a new DescriptorScriptPubKeyMan for it, expand the lookahead, and register it as active. Retire descriptors older than total_valid_epochs epochs (mark inactive; retain for historical scanning).
+
+- IsMine for peg-ins: when evaluating peg-in inputs (wallet.cpp), iterate all active and inactive pegin() descriptors and check the claim script against derived values. Because the claim key expression is identical across epochs (same xpub), only the outer fedpegscript differs — the search is cheap.
+
+5. Migration (src/wallet/rpc/backup.cpp / new migratewallet logic)
+
+- Extend migratewallet to:
+  1. Derive the ct(slip77(...), wpkh(...)) descriptor from the legacy HD seed and blinding_derivation_key.
+  2. Perform a chain rescan to find peg-in transactions whose claim scripts match keys in the legacy wallet's key range. For each distinct fedpegscript found, construct a pegin() descriptor covering the observed index range.
+  3. Warn the user about pending peg-in addresses (claim scripts in the wallet's script store with no on-chain deposit) that cannot be recovered from chain data alone. Emit the raw claim script hex for manual import.
+  4. Warn about per-address blinding key overrides in mapSpecificBlindingKeys that are not representable in a ct(slip77(...)) descriptor.
+
+
+Address and Key Derivation Correctness
+
+Confidential Addresses
+
+A confidential address is the composition of two independent derivations:
+
+1. scriptPubKey_i = script(xpub / change / i) — from the HD key
+2. bpk_i = HMAC-SHA256(blinding_derivation_key, scriptPubKey_i) * G — from the master blinding key
+3. addr_i = blech32(bpk_i || hash(scriptPubKey_i))
+
+The ct(slip77(<64-hex>), ...) descriptor encodes both inputs. Given the same slip77 value and the same xpub at the same derivation path, steps 1-3 produce byte-for-byte identical outputs at every index. This holds for P2WPKH, P2SH-P2WPKH, and P2WSH because the HMAC input is the consensus-encoded script bytes, which are fully determined by the xpub, derivation path, and index.
+
+A correctly migrated or imported descriptor wallet generates the same set of historical confidential addresses as the legacy wallet it was derived from.
+
+Pegin Claim Scripts and Mainchain Addresses
+
+1. claim_script_k = scriptPubKey(wpkh(xpub/0/k)) — identical to the standard receive address key at the same index
+2. tweaked_k = calculate_contract(fedpegscript, claim_script_k)
+3. mainchain_addr_k = P2WSH(tweaked_k) (or P2SH(P2WSH(tweaked_k)))
+
+The pegin() descriptor embeds the fedpegscript verbatim and references the same xpub as the standard receive descriptor. Steps 1-3 reproduce the exact mainchain address for every k. A descriptor wallet can verify, scan for, and claim any peg-in deposit without retaining raw scripts in a bag-of-scripts.
+
+Per-address Blinding Key Overrides
+
+Keys in mapSpecificBlindingKeys (imported via importblindingkey) are not derivable from the master blinding key. They cannot be expressed in a ct(slip77(...)) descriptor. Migration must detect these and emit an explicit warning listing the affected scriptPubKeys. They must be preserved separately; they cannot be dropped silently. A future descriptor extension could represent them, but that is out of scope for the initial migration.
+
+
+Testing Strategy
+
+Unit Tests
+
+- Descriptor parsing: round-trip parse/serialize for ct(slip77(...), ...), ct(elip151, ...), and pegin(<hex>, ...). Verify checksum calculation. Confirm that malformed expressions are rejected with clear errors.
+
+- Blinding key derivation: given a known slip77 master key and a set of scriptPubKeys, assert that ct() descriptor expansion produces the same blinding keys as the legacy GetBlindingKey function. Use test vectors derived from existing HMAC-SHA256 blinding key derivation unit tests.
+
+- Pegin descriptor expansion: given a known fedpegscript and xpub, assert that pegin() expansion at each index produces the same mainchain address as the legacy calculate_contract + P2WSH path. Use existing pegins_tests.cpp vectors.
+
+- Descriptor checksum coverage: confirm that ct() and pegin() expressions produce correct checksums and that single-character mutations are detected.
+
+Functional Tests
+
+The following functional tests should be added to verify this functionality, in addition to ensuring all current functional tests pass with descriptor wallets:
+
+wallet_descriptor_ct.py
+
+- Create a descriptor wallet.
+- Receive funds to a confidential address, verify unblinding via getbalance / listunspent.
+- Export via listdescriptors; verify ct(slip77(...), ...) wrapper is present.
+- Create a second wallet; import the export via importdescriptors.
+- Verify the second wallet derives identical confidential addresses as the first.
+- Verify the second wallet can see and unblind the received outputs.
+- Verify spending from the second wallet produces a valid signed transaction.
+
+wallet_descriptor_pegin.py
+
+- Create a descriptor wallet on a regtest chain with dynafed enabled.
+- Call getpeginaddress; verify it succeeds (no legacy-only error).
+- Fund the returned mainchain address; call claimpegin; verify the claim is accepted and IsMine returns true.
+- Trigger an epoch transition (mine dynamic_epoch_length blocks); verify the wallet creates a new active pegin() descriptor and retires the old one.
+- Call getpeginaddress again; verify the new address uses the updated fedpegscript.
+- Claim a deposit made against the prior epoch's fedpegscript; verify it is still claimable within total_valid_epochs.
+- Export via listdescriptors; verify both active and inactive pegin() descriptors are present with correct timestamps.
+- Restore the wallet from the export via importdescriptors on a fresh wallet; verify all peg-in UTXOs are recognised as owned.
+
+wallet_legacy_migration.py
+
+- Create a legacy wallet. Generate addresses, receive funds, call getpeginaddress (to register claim scripts), call importblindingkey to introduce a per-address blinding override.
+- Run migratewallet; verify it completes without error.
+- Assert the resulting descriptor wallet has:
+  - A ct(slip77(...), ...) descriptor covering all used receive and change indices.
+  - A pegin() descriptor for each distinct fedpegscript observed in chain history, covering the used index range.
+  - A warning about the per-address blinding key override.
+- Verify the migrated wallet generates the same confidential addresses as the original legacy wallet for all historical indices.
+- Verify the migrated wallet can unblind all outputs received to the original wallet.
+- Verify the migrated wallet can sign and broadcast a transaction spending a UTXO from the original wallet.
+
+wallet_descriptor_backup_restore.py
+
+- Create a descriptor wallet; receive CT funds; generate several peg-in addresses.
+- Export with listdescriptors true (with private keys).
+- Import to a fresh wallet with importdescriptors.
+- Assert identical address derivation, balance visibility, and spending capability.
+- Repeat with a watch-only import (no private keys) and verify balances are visible but spending is rejected.
+
+wallet_pegin_pending_migration.py
+
+- Create a legacy wallet; call getpeginaddress but do not fund the returned address.
+- Run migratewallet.
+- Assert the migration emits a warning listing the unfunded claim script hex.
+- Verify the legacy claim_script can be used to re-derive the peg-in address on the new wallet after manual importdescriptors.
+
+Regression and Compatibility Tests
+
+- All existing peg-in functional tests (feature_fedpeg.py, feature_dynafed.py) must continue to pass.
+- All unit and functional tests must pass.
+
+
+Migration Edge Cases and Risks
+
+  Risk                                                          | Mitigation
+  --------------------------------------------------------------|--------------------------------------------------------------
+  Per-address blinding key overrides lost in migration          | Detect and warn; require manual export via importblindingkey before migrating
+  Pending peg-in addresses with no on-chain trace               | Warn with claim script hex; provide manual import path
+  Epoch transition during migration                             | Lock wallet during migratewallet; rescan from genesis to capture all epochs
+  scriptPubKey byte mismatch between legacy and descriptor      | Unit test with known vectors from existing legacy wallet; assert byte-for-byte identity
+  importdescriptors rescan horizon too late                     | Set timestamp on each descriptor to epoch boundary block time, not wallet creation time
+  total_valid_epochs changes after migration                    | Inactive pegin descriptors are retained indefinitely; only those expired beyond validity are pruned
