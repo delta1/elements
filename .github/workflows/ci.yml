@@ -371,15 +371,15 @@ jobs:
           key: depends-built-fuzzer-${{ hashFiles('depends/**', 'ci/test/00_setup_env_native_fuzz.sh') }}
 
   # -------------------------------------------------------------------------
-  # No wallet + libbitcoinkernel
+  # No wallet
   # Image: ubuntu:bionic
   # -------------------------------------------------------------------------
-  no-wallet-libbitcoinkernel:
-    name: '[no wallet, libbitcoinkernel] [bionic]'
+  no-wallet:
+    name: '[no wallet] [bionic]'
     runs-on: ${{ github.repository == 'ElementsProject/elements' && fromJSON('["self-hosted","linux","x64"]') || 'ubuntu-latest' }}
     timeout-minutes: 120
     env:
-      FILE_ENV: "./ci/test/00_setup_env_native_nowallet_libbitcoinkernel.sh"
+      FILE_ENV: "./ci/test/00_setup_env_native_nowallet.sh"
       TEST_RUNNER_EXTRA: "--exclude feature_proxy.py,rpc_bind.py"
     steps:
       - name: Checkout
@@ -396,7 +396,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: depends/built
-          key: depends-built-no-wallet-${{ hashFiles('depends/**') }}-${{ hashFiles('ci/test/00_setup_env_native_nowallet_libbitcoinkernel.sh') }}
+          key: depends-built-no-wallet-${{ hashFiles('depends/**') }}-${{ hashFiles('ci/test/00_setup_env_native_nowallet.sh') }}
           restore-keys: depends-built-no-wallet-${{ hashFiles('depends/**') }}-
 
       - name: Run CI
@@ -414,7 +414,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: depends/built
-          key: depends-built-no-wallet-${{ hashFiles('depends/**') }}-${{ hashFiles('ci/test/00_setup_env_native_nowallet_libbitcoinkernel.sh') }}
+          key: depends-built-no-wallet-${{ hashFiles('depends/**') }}-${{ hashFiles('ci/test/00_setup_env_native_nowallet.sh') }}
 
   # -------------------------------------------------------------------------
   # macOS 10.15 cross-compile (gui, no tests)
