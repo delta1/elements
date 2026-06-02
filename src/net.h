@@ -313,6 +313,8 @@ public:
  */
 class TransportDeserializer {
 public:
+    // returns true if the current deserialization is empty
+    virtual bool IsEmpty() const = 0;
     // returns true if the current deserialization is complete
     virtual bool Complete() const = 0;
     // set the serialization context version
@@ -363,6 +365,10 @@ public:
         Reset();
     }
 
+    bool IsEmpty() const override
+    {
+        return (nHdrPos == 0);
+    }
     bool Complete() const override
     {
         if (!in_data)
@@ -1071,7 +1077,7 @@ private:
 
     bool AttemptToEvictConnection();
     CNode* ConnectNode(CAddress addrConnect, const char *pszDest, bool fCountFailure, ConnectionType conn_type);
-    void AddWhitelistPermissionFlags(NetPermissionFlags& flags, const CNetAddr &addr) const;
+    void AddWhitelistPermissionFlags(NetPermissionFlags& flags, std::optional<CNetAddr> addr) const;
 
     void DeleteNode(CNode* pnode);
 
