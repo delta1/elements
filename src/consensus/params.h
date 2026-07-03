@@ -193,6 +193,8 @@ struct Params {
     size_t total_valid_epochs = 1;
     bool elements_mode = false;
     bool start_p2wsh_script = false;
+    // Blocks to reconsider automatically on startup
+    std::vector<uint256> reconsider_block_hashes;
 };
 
 } // namespace Consensus

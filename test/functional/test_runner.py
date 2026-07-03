@@ -115,6 +115,7 @@ BASE_SCRIPTS = [
     'feature_assetsdir.py --legacy-wallet',
     'feature_initial_reissuance_token.py --legacy-wallet',
     'feature_progress.py',
+    'feature_reconsider_block_hashes.py',
     'rpc_getnewblockhex.py',
     'wallet_elements_regression_1172.py --legacy-wallet',
     'wallet_elements_regression_1259.py --legacy-wallet',
@@ -365,7 +366,7 @@ BASE_SCRIPTS = [
     #'wallet_upgradewallet.py --legacy-wallet',
     'wallet_crosschain.py',
     'mining_basic.py',
-    # ELEMENTS: PoW test set-up disabled. 
+    # ELEMENTS: PoW test set-up disabled.
     # 'mining_mainnet.py',
     'feature_signet.py',
     'p2p_mutated_blocks.py',

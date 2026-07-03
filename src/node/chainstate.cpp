@@ -126,6 +126,21 @@ static ChainstateLoadResult CompleteChainstateInitialization(
         }
     }
 
+    // ELEMENTS: automatically reconsider specified hard-forking blocks
+    bool reconsidered_any_block = false;
+    for (const uint256& hash : chainman.GetConsensus().reconsider_block_hashes) {
+        CBlockIndex* pindex = chainman.m_blockman.LookupBlockIndex(hash);
+        if (pindex && (pindex->nStatus & BLOCK_FAILED_MASK)) {
+            LogPrintf("Reconsidering block %s previously marked invalid (known hard-fork exception)\n",
+                      hash.ToString());
+            chainman.ActiveChainstate().ResetBlockFailureFlags(pindex);
+            reconsidered_any_block = true;
+        }
+    }
+    if (reconsidered_any_block) {
+        chainman.RecalculateBestHeader();
+    }
+
     auto chainstates{chainman.GetAll()};
     if (std::any_of(chainstates.begin(), chainstates.end(),
                     [](const Chainstate* cs) EXCLUSIVE_LOCKS_REQUIRED(cs_main) { return cs->NeedsRedownload(); })) {

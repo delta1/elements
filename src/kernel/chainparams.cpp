@@ -538,7 +538,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_SIMPLICITY].nStartTime = Consensus::BIP9Deployment::NEVER_ACTIVE;
         consensus.vDeployments[Consensus::DEPLOYMENT_SIMPLICITY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
         consensus.vDeployments[Consensus::DEPLOYMENT_SIMPLICITY].min_activation_height = 0; // No activation delay
-        
+
         consensus.nMinimumChainWork = uint256{"0000000000000000000000000000000000000000000001d6dce8651b6094e4c1"};
         consensus.defaultAssumeValid = uint256{"0000000000003ed4f08dbdf6f7d6b271a6bcffce25675cb40aa9fa43179a89f3"}; // 72600
 
@@ -1049,6 +1049,9 @@ protected:
 
         consensus.nMinimumChainWork = uint256S(args.GetArg("-con_nminimumchainwork", "0x0"));
         consensus.defaultAssumeValid = uint256S(args.GetArg("-con_defaultassumevalid", "0x00"));
+        for (const std::string& hash_str : args.GetArgs("-con_reconsiderblockhashes")) {
+            consensus.reconsider_block_hashes.push_back(uint256S(hash_str));
+        }
         // TODO: Embed in genesis block in nTime field with new genesis block type
         consensus.dynamic_epoch_length = args.GetIntArg("-dynamic_epoch_length", consensus.dynamic_epoch_length);
         // Default junk keys for testing
@@ -1332,6 +1335,13 @@ public:
 
         consensus.nMinimumChainWork = uint256();
         consensus.defaultAssumeValid = uint256();
+
+        // ELIP-203 activation block, with a greater than 21 million unblinded asset issuance.
+        // https://blockstream.info/liquid/block/00b06268d2b1bb517e9d2902f8289bfa6b6fe9198700de7e001ac5bc432b5b58
+        // Automatically reconsidered at startup if found in a failed state.
+        consensus.reconsider_block_hashes = {
+            uint256S("00b06268d2b1bb517e9d2902f8289bfa6b6fe9198700de7e001ac5bc432b5b58"),
+        };
 
         nPruneAfterHeight = 1000;
         fDefaultConsistencyChecks = false;
