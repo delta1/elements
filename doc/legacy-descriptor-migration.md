@@ -29,7 +29,8 @@ The major issues here are:
 2. **Standardised backup format** — a single `listdescriptors` export must
    contain everything needed to restore a wallet: spending keys, master blinding
    key, and all peg-in policies. `importdescriptors` alone should be sufficient
-   for full recovery.
+   for full recovery. Third-party output secrets (see below) are not
+   descriptor-derivable and need their own export/import path alongside it.
 
 3. **Address and blinding key compatibility** — migrated wallets must derive
    exactly the same confidential addresses and blinding keys as the legacy wallet
@@ -56,6 +57,13 @@ Legacy wallets store:
   registered by `AddCScript` during `getpeginaddress`.
 - Per-address blinding key overrides (`mapSpecificBlindingKeys`), imported via
   `importblindingkey`.
+- Third-party output secrets — for outputs the wallet does not own but blinded
+  itself (recipients of `sendtoaddress`/`sendmany`), the plaintext value,
+  asset, and blinding factors are cached per-transaction in
+  `CWalletTx::mapValue["blindingdata"]` (`CWalletTx::SetBlindingData`,
+  `src/wallet/wallet.cpp:3564`), and surfaced via `gettransaction` /
+  `listtransactions` as `amount`/`asset`/`amountblinder`/`assetblinder`
+  (`src/wallet/rpc/transactions.cpp:390-444`).
 
 Descriptor wallets are blocked from using `getpeginaddress`, `initpegoutwallet`,
 and `sendtomainchain` via explicit legacy-only guards. There is no implemented
@@ -522,6 +530,11 @@ blinding keys, and peg-in claim scripts as the original.
      data alone. Emit the raw claim script hex for manual import.
   4. Warn about per-address blinding key overrides in `mapSpecificBlindingKeys`
      that are not representable in a `ct(slip77(...))` descriptor.
+  5. Export every transaction's `mapValue["blindingdata"]` (third-party output
+     secrets — see
+     [Third-Party Output Secrets](#third-party-output-secrets-blindingdata-cache))
+     via a new `dumptxoutsecrets`-style RPC, and re-import into the migrated
+     wallet's transaction records with a corresponding `importtxoutsecrets`.
 
 ---
 
@@ -565,6 +578,60 @@ derivable from the master blinding key. They cannot be expressed in a
 warning listing the affected scriptPubKeys. They must be preserved separately;
 they cannot be dropped silently. A future descriptor extension could represent
 them, but that is out of scope for the initial migration.
+
+### Third-Party Output Secrets (`blindingdata` Cache)
+
+When the wallet interface builds a transaction (`sendtoaddress`, `sendmany`,
+and similar RPCs), it blinds every output — including the ones paying third
+parties — and so is the only party that knows those outputs' value, asset, and
+blinding factors at that moment. Rather than lose this once the transaction is
+signed, `CWalletTx::SetBlindingData` (`src/wallet/wallet.cpp:3564`) caches it
+per-transaction in `mapValue["blindingdata"]`, keyed by output index. It is
+later surfaced through `gettransaction`/`listtransactions` as
+`amount`/`asset`/`amountblinder`/`assetblinder`
+(`src/wallet/rpc/transactions.cpp:390-444`). This is relied on in production
+today — e.g. AMP0 issuer tooling uses it to recover the txoutsecrets of outputs
+it sent, for lack of any better mechanism at the time.
+
+This data is fundamentally different from everything else in this document:
+it is not a key or a derivation path, it is the sender's own ephemeral
+randomness chosen for *someone else's* output. There is no master secret or
+HD path to rederive it from, and no `ct(slip77(...))` descriptor or chain
+rescan can recover it — a rescan can only unblind outputs the wallet owns
+(via its own blinding key), not outputs it merely constructed for someone
+else. If it isn't captured explicitly, it is gone.
+
+It is also inconsistently populated, and deliberately so — confirmed in code,
+not just by omission. `SetBlindingData` is only called from
+`CWallet::CommitTransaction` (`src/wallet/wallet.cpp:2283-2305`), gated on a
+non-null `BlindDetails*`. Only two call sites construct one: `SendMoney`
+(`src/wallet/rpc/spend.cpp:68-93`, whose own comment says "This function is
+only used by sendtoaddress and sendmany") and `issueasset`/`reissueasset`
+(`src/wallet/rpc/elements.cpp:1479-1488`). `walletcreatefundedpsbt` and
+`walletprocesspsbt` never call `CommitTransaction` and never construct a
+`BlindDetails` at all, so the PSBT path never persists this data.
+
+It doesn't just fail to persist it — it can't even return it. `rawblindrawtransaction`
+(`src/rpc/rawtransaction.cpp:2701-2872`) computes fresh output value/asset
+blinding factors internally (via `BlindTransaction`), but its RPC result is
+only `EncodeHexTx(...)` — the blinds are local variables, discarded on
+return. And the PSBT format has nowhere to put them: `PSBTOutput`
+(`src/psbt.h:1188-1191`) carries `m_blinding_pubkey` plus proof blobs
+(`m_blind_value_proof`, `m_blind_asset_proof`) for verification, but no
+plaintext value/asset/blinding-factor fields. Once an output is blinded via
+`createrawtransaction`/`rawblindrawtransaction` or the PSBT flow, the
+third-party secrets are simply gone — not recoverable by anyone, sender
+included, unless captured through the `sendtoaddress`/`sendmany`/
+`issueasset`/`reissueasset` path described above.
+
+Migration must treat this the same way as `mapSpecificBlindingKeys`: it cannot
+be reconstructed, so it must be enumerated per-transaction from the legacy
+wallet's `mapValue["blindingdata"]` and exported as an explicit, separate
+artifact (not folded into the `ct()`/`pegin()` descriptor set), then
+re-imported into the migrated wallet's own transaction records. A new
+RPC pair (e.g. `dumptxoutsecrets`/`importtxoutsecrets`, keyed by txid+vout) is
+likely needed, since nothing in `listdescriptors`/`importdescriptors` has a
+slot for per-transaction, non-owned output data.
 
 ---
 
@@ -625,7 +692,8 @@ The following functional tests should be added to verify this functionality, in 
 
 - Create a legacy wallet. Generate addresses, receive funds, call
   `getpeginaddress` (to register claim scripts), call `importblindingkey` to
-  introduce a per-address blinding override.
+  introduce a per-address blinding override, and `sendtoaddress` to a
+  third-party confidential address (to populate `mapValue["blindingdata"]`).
 - Run `migratewallet`; verify it completes without error.
 - Assert the resulting descriptor wallet has:
   - A `ct(slip77(...), ...)` descriptor covering all used receive and change
@@ -639,6 +707,9 @@ The following functional tests should be added to verify this functionality, in 
   wallet.
 - Verify the migrated wallet can sign and broadcast a transaction spending a UTXO
   from the original wallet.
+- Verify `gettransaction` on the migrated wallet returns the same
+  `amount`/`asset`/`amountblinder`/`assetblinder` for the third-party send as
+  the original legacy wallet did.
 
 #### `wallet_descriptor_backup_restore.py`
 
@@ -677,3 +748,4 @@ The following functional tests should be added to verify this functionality, in 
 | `importdescriptors` rescan horizon too late | Set `timestamp` on each descriptor to epoch boundary block time, not wallet creation time |
 | `total_valid_epochs` changes after migration | Inactive pegin descriptors are retained indefinitely; only those expired beyond validity are pruned |
 | Migrated wallets use hardened chain/index (`m/0'/{0,1}'/k'`), so their reconstructed descriptors need `xprv`, not `xpub` — no watch-only wildcard export is possible, unlike a freshly created descriptor wallet | Document the limitation; migrated wallets can only offer a finite, already-derived leaf-key watch-only export, not an open `range`/`next` one. Consider having `migratewallet` also provision a fresh non-hardened descriptor for new addresses going forward |
+| Third-party output secrets in `mapValue["blindingdata"]` (values/blinders for outputs sent to others via `sendtoaddress`/`sendmany`) are not derivable and used in production (e.g. AMP0 issuer tooling) | Enumerate and export per-transaction from the legacy wallet; add a dedicated import path (e.g. `dumptxoutsecrets`/`importtxoutsecrets`) instead of folding into `listdescriptors` |
