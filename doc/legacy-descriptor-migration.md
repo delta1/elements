@@ -117,6 +117,38 @@ the same xpub at the same derivation path, a descriptor wallet derives
 identical blinding keys and confidential
 addresses as the legacy wallet.
 
+### SLIP-77's Master Key Derivation (Not Used by Elements Today)
+
+SLIP-77 also specifies how the master blinding key itself should be derived
+from the wallet's seed, so that it never needs to be stored or backed up as an
+independent secret:
+
+```
+root                = HMAC-SHA512(key="Symmetric key seed", msg=seed)
+node                = HMAC-SHA512(key=root[0:32], msg=0x00 || "SLIP-0077")
+master_blinding_key = node[32:64]
+```
+
+Elements' `blinding_derivation_key` only reuses the second half of SLIP-77 (the
+per-address `HMAC-SHA256(master, scriptPubKey)` step). The master key itself is
+generated randomly at wallet creation
+(`CKey::MakeNewKey` in `LoadWallet`/`walletdb.cpp`), not derived via the formula
+above, which is why it has "no relationship to the HD seed" as noted earlier.
+
+This distinction matters differently for the two paths in this migration:
+
+- **Existing legacy wallets**: the master key is already a random, independent
+  secret baked into the wallet. Migration must carry it forward verbatim via
+  `dumpmasterblindingkey` → `slip77(<hex>)`. Seed-derivation cannot be applied
+  retroactively — the stored key and a seed-derived key are unrelated values.
+- **Newly created descriptor wallets**: wallet creation should adopt full
+  SLIP-77 seed-derivation instead of a random key. A fresh wallet's master
+  blinding key is then derived from the same seed as its signing keys — nothing
+  extra to lose or back up separately — and `listdescriptors` would emit the
+  seed-derived value in the same `slip77(<hex>)` form (the descriptor
+  expression itself is unchanged; only how wallet creation populates it
+  differs).
+
 ---
 
 ## Background: Peg-in Address Construction and the Descriptor Gap
