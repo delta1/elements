@@ -334,28 +334,61 @@ The backup descriptor for a single-sig Elements wallet wraps the standard output
 descriptor in a `ct(slip77(...), ...)` expression:
 
 ```
-ct(slip77(<64-hex>), wpkh([<fingerprint>/<path>]<xpub>/<0;1>/*))[#<checksum>]
+ct(slip77(<64-hex>), wpkh([<fingerprint>/0'/<0';1'>]<xprv>/*'))[#<checksum>]
 ```
 
 The `<64-hex>` value comes from `dumpmasterblindingkey`. BIP-389 multi-path form
-(`<0;1>`) covers both receive and change branches in a single descriptor.
+(`<0';1'>`) covers both receive and change branches in a single descriptor.
+
+**The chain and index steps must be hardened**, matching the legacy wallet's
+actual derivation. `LegacyScriptPubKeyMan::DeriveNewChildKey`
+(`src/wallet/scriptpubkeyman.cpp:1097-1139`) derives every key via the fixed
+path `m/0'/0'/k'` (external) or `m/0'/1'/k'` (internal) — every level hardened,
+per the comment "for now we use a fixed keypath scheme of m/0'/0'/k". The
+Blockstream LWK project independently reconstructs this same path when
+importing a legacy `dumpwallet` export
+([`elements_wallet.rs`](https://github.com/Blockstream/lwk/blob/master/lwk_wollet/src/elements_wallet.rs):
+`format!("0h/{chain}h/{index}h")`).
+
+Because hardened child keys cannot be derived from a parent **public** key, an
+`xpub`-only wildcard descriptor cannot expand this path at all — expansion at
+every index requires the account-level private key. A migrated single-sig
+descriptor therefore must carry `xprv`, not `xpub`, and a true watch-only
+export of a migrated wallet is only possible as a finite, already-derived leaf
+list (one non-wildcard key per historically used index, as LWK's
+`from_dumpwallet` does), not as an open `range`/`next` wildcard descriptor.
+This is a real regression versus a freshly created descriptor wallet, which
+uses non-hardened chain/index steps (`.../0/*`) and so does support
+xpub-only watch-only wildcards — see the peg-in caveat below, and the note on
+watch-only limits in [Migration Edge Cases and Risks](#migration-edge-cases-and-risks).
 
 ### Peg-in Descriptors
 
 Each dynafed epoch produces one descriptor. The claim key expression reuses the
-exact same xpub and derivation path as the wallet's standard `wpkh` descriptor —
+exact same key and derivation path as the wallet's standard `wpkh` descriptor —
 no new keys are introduced:
 
 ```
-# standard sidechain receive (shared xpub)
-wpkh([deadbeef/84'/1776'/0']xprv.../0/*)
+# standard sidechain receive (shared xprv, hardened chain/index — see above)
+wpkh([deadbeef/0']xprv.../0'/*')
 
-# active epoch pegin — xpub only (federation signs on mainchain)
-pegin(<epoch_N_fedpegscript_hex>, wpkh([deadbeef/84'/1776'/0']xpub.../0/*))
+# active epoch pegin — federation signs on mainchain, so the claim side
+# only ever needs to expand a scriptPubKey, never sign; however since
+# 0'/*' is hardened, expansion still requires the xprv, not an xpub
+pegin(<epoch_N_fedpegscript_hex>, wpkh([deadbeef/0']xprv.../0'/*'))
 
 # prior epoch — inactive, retained for scanning and claim
-pegin(<epoch_N-1_fedpegscript_hex>, wpkh([deadbeef/84'/1776'/0']xpub.../0/*))
+pegin(<epoch_N-1_fedpegscript_hex>, wpkh([deadbeef/0']xprv.../0'/*'))
 ```
+
+Unlike a freshly created descriptor wallet — where the claim key could use a
+standard non-hardened path and let the `pegin()` descriptor hold only an
+`xpub` (since the federation, not the wallet, signs the mainchain leg) — a
+migrated wallet's claim key is hardened at the point of interest, so the
+`pegin()` descriptor must also carry the `xprv` here. There is no way to hand
+a "federation-safe, spend-safe" xpub-only claim descriptor to anything for a
+migrated wallet; the private key is required just to compute the claim
+scriptPubKey at each index.
 
 Each descriptor's `timestamp` is set to the block time of the epoch boundary
 where that fedpegscript became active, so `importdescriptors` rescans from the
@@ -368,21 +401,21 @@ correct point.
   "wallet_name": "liquid-wallet",
   "descriptors": [
     {
-      "desc": "ct(slip77(<64-hex>),wpkh([deadbeef/84'/1776'/0']xprv.../<0;1>/*))",
+      "desc": "ct(slip77(<64-hex>),wpkh([deadbeef/0']xprv.../<0';1'>/*'))",
       "timestamp": 1700000000,
       "active": true,
       "range": [0, 999],
       "next": 87
     },
     {
-      "desc": "pegin(<epoch_N_fedpegscript_hex>,wpkh([deadbeef/84'/1776'/0']xpub.../0/*))",
+      "desc": "pegin(<epoch_N_fedpegscript_hex>,wpkh([deadbeef/0']xprv.../0'/*'))",
       "timestamp": 1720000000,
       "active": true,
       "range": [0, 999],
       "next": 12
     },
     {
-      "desc": "pegin(<epoch_N-1_fedpegscript_hex>,wpkh([deadbeef/84'/1776'/0']xpub.../0/*))",
+      "desc": "pegin(<epoch_N-1_fedpegscript_hex>,wpkh([deadbeef/0']xprv.../0'/*'))",
       "timestamp": 1700000000,
       "active": false,
       "range": [0, 999],
@@ -393,9 +426,17 @@ correct point.
 ```
 
 Note:
-- The active pegin descriptor uses `xpub` (not `xprv`) — mainchain signing is
-  done by the federation; sidechain claim signing is covered by the `wpkh`
-  descriptor's `xprv`.
+- Every path here is hardened (`0'`/`1'`/`*'`), matching the legacy wallet's
+  actual `m/0'/{0,1}'/k'` derivation, so **all three descriptors require
+  `xprv`, including both `pegin()` entries**. This differs from a freshly
+  created descriptor wallet, where the claim key could use a non-hardened
+  path and the `pegin()` descriptor could hold only an `xpub` — the
+  federation signs the mainchain leg, so no signing key is needed there, only
+  the ability to expand the scriptPubKey at each index, which non-hardened
+  derivation permits from a public key alone. A migrated wallet does not have
+  that option: expanding `range`/`next` beyond already-derived indices needs
+  the private key at every step, for both the single-sig and pegin
+  descriptors.
 
 A wallet restored from this export derives the same confidential addresses,
 blinding keys, and peg-in claim scripts as the original.
@@ -635,3 +676,4 @@ The following functional tests should be added to verify this functionality, in 
 | scriptPubKey byte mismatch between legacy and descriptor derivation | Unit test with known vectors from existing legacy wallet; assert byte-for-byte identity |
 | `importdescriptors` rescan horizon too late | Set `timestamp` on each descriptor to epoch boundary block time, not wallet creation time |
 | `total_valid_epochs` changes after migration | Inactive pegin descriptors are retained indefinitely; only those expired beyond validity are pruned |
+| Migrated wallets use hardened chain/index (`m/0'/{0,1}'/k'`), so their reconstructed descriptors need `xprv`, not `xpub` — no watch-only wildcard export is possible, unlike a freshly created descriptor wallet | Document the limitation; migrated wallets can only offer a finite, already-derived leaf-key watch-only export, not an open `range`/`next` one. Consider having `migratewallet` also provision a fresh non-hardened descriptor for new addresses going forward |
