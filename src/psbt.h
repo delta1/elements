@@ -160,11 +160,11 @@ void SerializeToVector(Stream& s, const X&... args)
 
 // Takes a stream and multiple arguments and unserializes them first as a vector then each object individually in the order provided in the arguments
 template<typename Stream, typename... X>
-void UnserializeFromVector(Stream& s, X&&... args)
+bool UnserializeFromVector(Stream& s, X&&... args)
 {
     size_t expected_size = ReadCompactSize(s);
     if (!expected_size) {
-        return; /* Zero size = no data to read */
+        return false; /* Zero size = no data to read */
     }
     size_t remaining_before = s.size();
     UnserializeMany(s, args...);
@@ -172,6 +172,7 @@ void UnserializeFromVector(Stream& s, X&&... args)
     if (remaining_after + expected_size != remaining_before) {
         throw std::ios_base::failure("Size of value was not the stated size");
     }
+    return true;
 }
 
 // Deserialize bytes of given length from the stream as a KeyOriginInfo
@@ -717,7 +718,9 @@ struct PSBTInput
                         throw std::ios_base::failure("Sighash type key is more than one byte type");
                     }
                     int sighash;
-                    UnserializeFromVector(s, sighash);
+                    if (!UnserializeFromVector(s, sighash)) {
+                        throw std::ios_base::failure("Input sighash type value is empty");
+                    }
                     sighash_type = sighash;
                     break;
                 case PSBT_IN_REDEEMSCRIPT:
