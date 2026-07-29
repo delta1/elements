@@ -251,6 +251,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "importmulti", 1, "rescan" },
     { "importdescriptors", 0, "requests" },
     { "listdescriptors", 0, "private" },
+    { "listdescriptors", 1, "include_blinding_key" },
     { "verifychain", 0, "checklevel" },
     { "verifychain", 1, "nblocks" },
     { "getblockstats", 0, "hash_or_height" },

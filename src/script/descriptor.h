@@ -5,10 +5,12 @@
 #ifndef BITCOIN_SCRIPT_DESCRIPTOR_H
 #define BITCOIN_SCRIPT_DESCRIPTOR_H
 
+#include <key.h>
 #include <outputtype.h>
 #include <script/script.h>
 #include <script/sign.h>
 #include <script/signingprovider.h>
+#include <uint256.h>
 
 #include <optional>
 #include <vector>
@@ -165,7 +167,26 @@ struct Descriptor {
      * @param[out] ext_pubs Any extended public keys
      */
     virtual void GetPubKeys(std::set<CPubKey>& pubkeys, std::set<CExtPubKey>& ext_pubs) const = 0;
+
+    // ELEMENTS: Confidential Transaction (CT) descriptor support.
+    //
+    /** Whether this descriptor is a ct(...) wrapper carrying blinding key information. */
+    virtual bool IsBlinded() const { return false; }
+
+    /** If this is a ct(slip77(<hex>), ...) descriptor, return the 32-byte master
+     *  blinding key. Returns nullopt for non-blinded descriptors or blinding key
+     *  expressions that are not slip77 (e.g. xpub or elip151). */
+    virtual std::optional<uint256> GetMasterBlindingKey() const { return std::nullopt; }
+
+    /** Derive the private blinding key for a given scriptPubKey produced by this
+     *  descriptor. Returns an invalid CKey if this descriptor carries no blinding
+     *  information or the key cannot be derived. */
+    virtual CKey GetBlindingKey(const CScript& script) const { return CKey(); }
 };
+
+/** ELEMENTS: derive a per-output blinding key from a slip77 master key, matching
+ *  the legacy wallet's HMAC-SHA256(master, scriptPubKey) derivation. */
+CKey SLIP77DeriveBlindingKey(const uint256& master, const CScript& script);
 
 /** Parse a `descriptor` string. Included private keys are put in `out`.
  *

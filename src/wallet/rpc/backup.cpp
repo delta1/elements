@@ -1512,7 +1512,7 @@ static UniValue ProcessDescriptorImport(CWallet& wallet, const UniValue& data, c
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Descriptor not found.");
         }
 
-        const std::string& descriptor = data["desc"].get_str();
+        std::string descriptor = data["desc"].get_str();
         const bool active = data.exists("active") ? data["active"].get_bool() : false;
         const std::string label{LabelFromValue(data["label"])};
 
@@ -1522,6 +1522,61 @@ static UniValue ProcessDescriptorImport(CWallet& wallet, const UniValue& data, c
         auto parsed_descs = Parse(descriptor, keys, error, /* require_checksum = */ true);
         if (parsed_descs.empty()) {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, error);
+        }
+
+        // ELEMENTS: if this is a ct(slip77(<master>), INNER) descriptor, import the
+        // master blinding key into the wallet and unwrap to the inner descriptor.
+        // The inner descriptor is stored/managed exactly like a normal descriptor;
+        // blinding is derived from blinding_derivation_key which we set here.
+        if (parsed_descs.at(0)->IsBlinded()) {
+            std::optional<uint256> master = parsed_descs.at(0)->GetMasterBlindingKey();
+            if (!master.has_value()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, "Only ct(slip77(...), ...) descriptors are supported for import");
+            }
+            // Adopt the imported master blinding key if the wallet does not yet
+            // have one that it has used. A wallet with no descriptors yet (e.g. a
+            // blank wallet being restored) may adopt it, overwriting the random key
+            // generated at wallet creation. If the wallet already has its own
+            // established (different) key, we cannot honor two master keys at once:
+            // import the inner descriptor anyway so the HD keys/scripts register,
+            // but warn that blinding for these scripts will use the wallet's own key.
+            const bool has_descriptors = !wallet.GetAllScriptPubKeyMans().empty();
+            if (wallet.blinding_derivation_key != *master) {
+                if (has_descriptors && !wallet.blinding_derivation_key.IsNull()) {
+                    warnings.push_back("Imported ct() descriptor carries a different master blinding key than this wallet; the wallet's existing master blinding key is retained and confidential addresses for the imported descriptor may not match the source wallet.");
+                } else {
+                    if (!wallet.SetMasterBlindingKey(*master)) {
+                        throw JSONRPCError(RPC_WALLET_ERROR, "Failed to import master blinding key from ct() descriptor");
+                    }
+                }
+            }
+            // Unwrap ct(slip77(<hex>), INNER) -> INNER (strip outer wrapper + checksum).
+            std::string body = descriptor;
+            const size_t hash_pos = body.rfind('#');
+            if (hash_pos != std::string::npos) body = body.substr(0, hash_pos);
+            const size_t first_comma = body.find(',');
+            // Require the structure "ct(<blinding>,<inner>)": a leading "ct(", a
+            // top-level comma, a trailing ')', and a non-empty inner segment
+            // between the comma and the closing paren.
+            if (body.rfind("ct(", 0) != 0 || first_comma == std::string::npos ||
+                body.empty() || body.back() != ')' || first_comma + 2 > body.size()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, "Malformed ct() descriptor");
+            }
+            std::string inner = body.substr(first_comma + 1, body.size() - first_comma - 2);
+            if (inner.empty()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, "Malformed ct() descriptor: empty inner descriptor");
+            }
+            std::string checksum = GetDescriptorChecksum(inner);
+            if (checksum.empty()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, "Failed to compute checksum for inner descriptor");
+            }
+            descriptor = inner + "#" + checksum;
+
+            keys = FlatSigningProvider();
+            parsed_descs = Parse(descriptor, keys, error, /* require_checksum = */ true);
+            if (parsed_descs.empty()) {
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, error);
+            }
         }
         std::optional<bool> internal;
         if (data.exists("internal")) {
@@ -1833,7 +1888,10 @@ RPCHelpMan listdescriptors()
         "listdescriptors",
         "\nList descriptors imported into a descriptor-enabled wallet.\n",
         {
-            {"private", RPCArg::Type::BOOL, RPCArg::Default{false}, "Show private descriptors."}
+            {"private", RPCArg::Type::BOOL, RPCArg::Default{false}, "Show private descriptors."},
+            {"include_blinding_key", RPCArg::Type::BOOL, RPCArg::Default{false}, "ELEMENTS: wrap descriptors in ct(slip77(<master blinding key>), ...). "
+             "The master blinding key is a secret that grants the ability to unblind the wallet's outputs, so it is only included in the private export "
+             "('private'=true) by default. Set this to true to also include it in a public export; this requires the wallet to be unlocked."},
         },
         RPCResult{RPCResult::Type::OBJ, "", "", {
             {RPCResult::Type::STR, "wallet_name", "Name of wallet this operation was performed on"},
@@ -1856,6 +1914,7 @@ RPCHelpMan listdescriptors()
         RPCExamples{
             HelpExampleCli("listdescriptors", "") + HelpExampleRpc("listdescriptors", "")
             + HelpExampleCli("listdescriptors", "true") + HelpExampleRpc("listdescriptors", "true")
+            + HelpExampleCli("listdescriptors", "false true") + HelpExampleRpc("listdescriptors", "false, true")
         },
         [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
 {
@@ -1867,7 +1926,10 @@ RPCHelpMan listdescriptors()
     }
 
     const bool priv = !request.params[0].isNull() && request.params[0].get_bool();
-    if (priv) {
+    // ELEMENTS: the master blinding key embedded by ct(slip77(...)) is a secret.
+    // Emit it in the private export, or when explicitly requested for a public one.
+    const bool include_blinding_key = priv || (!request.params[1].isNull() && request.params[1].get_bool());
+    if (priv || include_blinding_key) {
         EnsureWalletIsUnlocked(*wallet);
     }
 
@@ -1895,6 +1957,27 @@ RPCHelpMan listdescriptors()
         std::string descriptor;
         if (!desc_spk_man->GetDescriptorString(descriptor, priv)) {
             throw JSONRPCError(RPC_WALLET_ERROR, "Can't get descriptor string.");
+        }
+        // ELEMENTS: wrap standard descriptors in a ct(slip77(<master>), ...)
+        // expression so the export is a complete confidential-transaction backup.
+        // The wallet stores plain descriptors internally and derives blinding keys
+        // from blinding_derivation_key; that master key is emitted verbatim here.
+        //
+        // slip77() embeds the master blinding key, which is a secret that grants the
+        // ability to unblind the wallet's outputs. Only emit it in the private
+        // export (priv=true), or when a public export explicitly opts in via
+        // include_blinding_key. Otherwise a public export leaves descriptors
+        // unwrapped so no secret is disclosed, mirroring xprv/xpub handling.
+        if (include_blinding_key && !wallet->blinding_derivation_key.IsNull() && descriptor.rfind("ct(", 0) != 0) {
+            // Strip any existing checksum before wrapping.
+            const size_t hash_pos = descriptor.rfind('#');
+            std::string inner = (hash_pos != std::string::npos) ? descriptor.substr(0, hash_pos) : descriptor;
+            std::string ct = "ct(slip77(" + HexStr(wallet->blinding_derivation_key) + ")," + inner + ")";
+            std::string checksum = GetDescriptorChecksum(ct);
+            if (checksum.empty()) {
+                throw JSONRPCError(RPC_WALLET_ERROR, "Can't compute ct() descriptor checksum.");
+            }
+            descriptor = ct + "#" + checksum;
         }
         const bool is_range = wallet_descriptor.descriptor->IsRange();
         wallet_descriptors.push_back({

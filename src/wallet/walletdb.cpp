@@ -1357,6 +1357,12 @@ DBErrors WalletBatch::LoadWallet(CWallet* pwallet)
     }
 
     // ELEMENTS
+    // Ensure every wallet has a master blinding key. For legacy wallets and any
+    // wallet loaded from disk without one, a random key is generated here. Freshly
+    // created descriptor wallets overwrite this with a SLIP-0077 seed-derived key
+    // in SetupOwnDescriptorScriptPubKeyMans; migrated wallets carry their legacy
+    // key forward. Note: wallet flags are not yet set on first-run creation, so we
+    // cannot reliably distinguish a fresh descriptor wallet here.
     if (pwallet->blinding_derivation_key.IsNull()) {
         CKey key;
         key.MakeNewKey(true);

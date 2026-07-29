@@ -89,6 +89,7 @@ struct KeyOriginInfo;
 #include <blind.h>
 #include <issuance.h>
 #include <crypto/hmac_sha256.h>
+#include <crypto/hmac_sha512.h>
 using common::AmountErrMsg;
 using common::AmountHighWarn;
 using common::PSBTError;
@@ -4361,6 +4362,35 @@ void CWallet::SetupDescriptorScriptPubKeyMans(WalletBatch& batch, const CExtKey&
     }
 }
 
+// ELEMENTS: Derive the master blinding key from a wallet seed per SLIP-0077.
+//   root                = HMAC-SHA512(key="Symmetric key seed", msg=seed)
+//   node                = HMAC-SHA512(key=root[0:32], msg=0x00 || "SLIP-0077")
+//   master_blinding_key = node[32:64]
+static uint256 SLIP77MasterBlindingKeyFromSeed(Span<const unsigned char> seed)
+{
+    static const std::string SEED_KEY = "Symmetric key seed";
+    static const std::string LABEL = "SLIP-0077";
+
+    unsigned char root[64];
+    CHMAC_SHA512((const unsigned char*)SEED_KEY.data(), SEED_KEY.size())
+        .Write(seed.data(), seed.size())
+        .Finalize(root);
+
+    std::vector<unsigned char> msg;
+    msg.reserve(1 + LABEL.size());
+    msg.push_back(0x00);
+    msg.insert(msg.end(), LABEL.begin(), LABEL.end());
+
+    unsigned char node[64];
+    CHMAC_SHA512(&root[0], 32)
+        .Write(msg.data(), msg.size())
+        .Finalize(node);
+
+    uint256 master;
+    memcpy(master.begin(), &node[32], 32);
+    return master;
+}
+
 void CWallet::SetupOwnDescriptorScriptPubKeyMans(WalletBatch& batch)
 {
     AssertLockHeld(cs_wallet);
@@ -4373,6 +4403,23 @@ void CWallet::SetupOwnDescriptorScriptPubKeyMans(WalletBatch& batch)
     // Get the extended key
     CExtKey master_key;
     master_key.SetSeed(seed_key);
+
+    // ELEMENTS: For freshly created descriptor wallets, derive the master
+    // blinding key from the same seed via SLIP-0077 rather than using the random
+    // key that walletdb pre-populates at load time. This overwrite is authoritative
+    // for the fresh-creation path. Migrated wallets that carry a legacy master key
+    // never reach this function (they use SetupDescriptorScriptPubKeyMans with the
+    // legacy master key directly), so their blinding key is preserved.
+    //
+    // Write via the caller-provided batch: we are already inside a DB transaction,
+    // so opening a new WalletBatch (as SetMasterBlindingKey does) would deadlock.
+    {
+        uint256 master_blinding = SLIP77MasterBlindingKeyFromSeed(Span<const unsigned char>(UCharCast(seed_key.data()), seed_key.size()));
+        if (!batch.WriteBlindingDerivationKey(master_blinding)) {
+            throw std::runtime_error(std::string(__func__) + ": Could not write SLIP-0077 master blinding key");
+        }
+        blinding_derivation_key = master_blinding;
+    }
 
     SetupDescriptorScriptPubKeyMans(batch, master_key);
 }
@@ -4771,9 +4818,10 @@ CKey CWallet::GetBlindingKey(const CScript* script) const {
     }
 
     if (script != nullptr && !blinding_derivation_key.IsNull()) {
-        unsigned char vch[32];
-        CHMAC_SHA256(blinding_derivation_key.begin(), blinding_derivation_key.size()).Write(&((*script)[0]), script->size()).Finalize(vch);
-        key.Set(&vch[0], &vch[32], true);
+        // Single source of truth for slip77 per-output derivation (shared with the
+        // ct() descriptor implementation) to avoid drift between wallet and
+        // descriptor blinding keys.
+        key = SLIP77DeriveBlindingKey(blinding_derivation_key, *script);
         if (key.IsValid()) {
             return key;
         }

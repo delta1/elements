@@ -758,7 +758,23 @@ class ImportDescriptorsTest(BitcoinTestFramework):
         for _ in range(0, 10):
             assert_equal(w_multipath.getnewaddress(address_type="bech32"), w_multisplit.getnewaddress(address_type="bech32"))
             assert_equal(w_multipath.getrawchangeaddress(address_type="bech32"), w_multisplit.getrawchangeaddress(address_type="bech32"))
-        assert_equal(sorted(w_multipath.listdescriptors()["descriptors"], key=lambda x: x["desc"]), sorted(w_multisplit.listdescriptors()["descriptors"], key=lambda x: x["desc"]))
+        # ELEMENTS: listdescriptors wraps in ct(slip77(<master>), ...). These two
+        # blank wallets each have their own random master blinding key, so compare
+        # the inner (unwrapped) descriptors and remaining fields, ignoring the
+        # per-wallet slip77 key.
+        def strip_ct(descs):
+            out = []
+            for d in descs:
+                d = dict(d)
+                desc = d["desc"]
+                if desc.startswith("ct(slip77("):
+                    body = desc.rsplit("#", 1)[0]
+                    inner = body[body.index(",") + 1:-1]
+                    d["desc"] = inner
+                out.append(d)
+            return out
+        assert_equal(sorted(strip_ct(w_multipath.listdescriptors()["descriptors"]), key=lambda x: x["desc"]),
+                     sorted(strip_ct(w_multisplit.listdescriptors()["descriptors"]), key=lambda x: x["desc"]))
 
 if __name__ == '__main__':
     ImportDescriptorsTest(__file__).main()

@@ -37,10 +37,21 @@ class WalletCreateDescriptorTest(BitcoinTestFramework):
         xpub_info = def_wallet.gethdkeys(private=True)
         xpub = xpub_info[0]["xpub"]
         xprv = xpub_info[0]["xprv"]
+        # ELEMENTS: listdescriptors wraps standard descriptors in ct(slip77(...), ...).
+        # createwalletdescriptor returns the inner (unwrapped) descriptor, so compare
+        # against the unwrapped form.
+        def unwrap_ct(desc):
+            if desc.startswith("ct(slip77("):
+                body = desc.rsplit("#", 1)[0]
+                return body[body.index(",") + 1:-1]
+            return desc
         expected_descs = []
         for desc in def_wallet.listdescriptors()["descriptors"]:
-            if desc["desc"].startswith("wpkh("):
-                expected_descs.append(desc["desc"])
+            inner = unwrap_ct(desc["desc"])
+            if inner.startswith("wpkh("):
+                # createwalletdescriptor returns descriptors without checksum stripped
+                # differently; normalize by comparing checksum-less inner strings.
+                expected_descs.append(inner)
 
         assert_raises_rpc_error(-5, "Unable to determine which HD key to use from active descriptors. Please specify with 'hdkey'", wallet.createwalletdescriptor, "bech32")
         assert_raises_rpc_error(-5, f"Private key for {xpub} is not known", wallet.createwalletdescriptor, type="bech32", hdkey=xpub)
@@ -54,26 +65,29 @@ class WalletCreateDescriptorTest(BitcoinTestFramework):
         new_descs = wallet.createwalletdescriptor("bech32")["descs"]
         assert_equal(len(new_descs), 2)
         assert_equal(len(wallet.gethdkeys()), 1)
-        assert_equal(new_descs, expected_descs)
+        # Compare checksum-less inner descriptors.
+        def strip_sum(d):
+            return d.rsplit("#", 1)[0]
+        assert_equal([strip_sum(d) for d in new_descs], [strip_sum(d) for d in expected_descs])
 
         self.log.info("Test descriptor creation options")
-        old_descs = set([(d["desc"], d["active"], d["internal"]) for d in wallet.listdescriptors(private=True)["descriptors"]])
+        old_descs = set([(unwrap_ct(d["desc"]), d["active"], d["internal"]) for d in wallet.listdescriptors(private=True)["descriptors"]])
         wallet.createwalletdescriptor(type="bech32m", internal=False)
-        curr_descs = set([(d["desc"], d["active"], d["internal"]) for d in wallet.listdescriptors(private=True)["descriptors"]])
+        curr_descs = set([(unwrap_ct(d["desc"]), d["active"], d["internal"]) for d in wallet.listdescriptors(private=True)["descriptors"]])
         new_descs = list(curr_descs - old_descs)
         assert_equal(len(new_descs), 1)
         assert_equal(len(wallet.gethdkeys()), 1)
-        assert_equal(new_descs[0][0], descsum_create(f"tr({xprv}/86h/1h/0h/0/*)"))
+        assert_equal(strip_sum(new_descs[0][0]), strip_sum(descsum_create(f"tr({xprv}/86h/1h/0h/0/*)")))
         assert_equal(new_descs[0][1], True)
         assert_equal(new_descs[0][2], False)
 
         old_descs = curr_descs
         wallet.createwalletdescriptor(type="bech32m", internal=True)
-        curr_descs = set([(d["desc"], d["active"], d["internal"]) for d in wallet.listdescriptors(private=True)["descriptors"]])
+        curr_descs = set([(unwrap_ct(d["desc"]), d["active"], d["internal"]) for d in wallet.listdescriptors(private=True)["descriptors"]])
         new_descs = list(curr_descs - old_descs)
         assert_equal(len(new_descs), 1)
         assert_equal(len(wallet.gethdkeys()), 1)
-        assert_equal(new_descs[0][0], descsum_create(f"tr({xprv}/86h/1h/0h/1/*)"))
+        assert_equal(strip_sum(new_descs[0][0]), strip_sum(descsum_create(f"tr({xprv}/86h/1h/0h/1/*)")))
         assert_equal(new_descs[0][1], True)
         assert_equal(new_descs[0][2], True)
 

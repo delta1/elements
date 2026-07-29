@@ -2,10 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <crypto/hmac_sha256.h>
+#include <key.h>
 #include <pubkey.h>
 #include <script/descriptor.h>
 #include <script/sign.h>
 #include <test/util/setup_common.h>
+#include <uint256.h>
 #include <util/strencodings.h>
 #include <util/string.h>
 
@@ -1072,6 +1075,127 @@ BOOST_AUTO_TEST_CASE(descriptor_test)
     CheckInferDescriptor("76a914a31725c74421fadc50d35520ab8751ed120af80588ac", "pkh(04c56fe4a92d401bcbf1b3dfbe4ac3dac5602ca155a3681497f02c1b9a733b92d704e2da6ec4162e4846af9236ef4171069ac8b7f8234a8405b6cadd96f34f5a31)", {}, {{"04c56fe4a92d401bcbf1b3dfbe4ac3dac5602ca155a3681497f02c1b9a733b92d704e2da6ec4162e4846af9236ef4171069ac8b7f8234a8405b6cadd96f34f5a31", ""}});
     // Infer pk() from p2pk with uncompressed key
     CheckInferDescriptor("4104032540df1d3c7070a8ab3a9cdd304dfc7fd1e6541369c53c4c3310b2537d91059afc8b8e7673eb812a32978dabb78c40f2e423f7757dca61d11838c7aeeb5220ac", "pk(04032540df1d3c7070a8ab3a9cdd304dfc7fd1e6541369c53c4c3310b2537d91059afc8b8e7673eb812a32978dabb78c40f2e423f7757dca61d11838c7aeeb5220)", {}, {{"04032540df1d3c7070a8ab3a9cdd304dfc7fd1e6541369c53c4c3310b2537d91059afc8b8e7673eb812a32978dabb78c40f2e423f7757dca61d11838c7aeeb5220", ""}});
+}
+
+// ELEMENTS: reference HMAC-SHA256(master, script) blinding key, matching CWallet::GetBlindingKey.
+static CKey RefSlip77(const uint256& master, const CScript& script)
+{
+    unsigned char vch[32];
+    CHMAC_SHA256(master.begin(), master.size()).Write(script.data(), script.size()).Finalize(vch);
+    CKey key;
+    key.Set(&vch[0], &vch[32], true);
+    return key;
+}
+
+BOOST_AUTO_TEST_CASE(ct_descriptor_test)
+{
+    const std::string kMaster = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20";
+    uint256 master(Span<const unsigned char>(ParseHex<unsigned char>(kMaster).data(), 32));
+
+    const std::string inner_prv = "wpkh([ffffffff/13h]xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt/1/2/*)";
+    const std::string inner = "wpkh([ffffffff/13h]xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH/1/2/*)";
+    const std::string desc_prv = "ct(slip77(" + kMaster + ")," + inner_prv + ")";
+    const std::string desc_str = "ct(slip77(" + kMaster + ")," + inner + ")";
+
+    FlatSigningProvider keys;
+    std::string error;
+    auto ctdescs = Parse(desc_prv, keys, error);
+    BOOST_CHECK_MESSAGE(!ctdescs.empty(), "ct() parse failed: " + error);
+    if (ctdescs.empty()) return;
+    auto& ctdesc = ctdescs[0];
+
+    // Public ToString converts xprv->xpub, matching the public form.
+    std::string round = ctdesc->ToString();
+    BOOST_CHECK(EqualDescriptor(round, desc_str));
+    // Private round-trip preserves the xprv.
+    std::string priv_round;
+    BOOST_CHECK(ctdesc->ToPrivateString(keys, priv_round));
+    BOOST_CHECK(EqualDescriptor(priv_round, desc_prv));
+    // Checksum present and valid.
+    BOOST_CHECK(!GetDescriptorChecksum(round).empty());
+
+    // Blinded flag and master key exposed verbatim.
+    BOOST_CHECK(ctdesc->IsBlinded());
+    BOOST_CHECK(ctdesc->GetMasterBlindingKey().has_value());
+    BOOST_CHECK(*ctdesc->GetMasterBlindingKey() == master);
+
+    // The ct() descriptor produces the same scripts as the inner descriptor.
+    FlatSigningProvider inner_keys, ct_keys;
+    std::string ierr;
+    auto inner_descs = Parse(inner, inner_keys, ierr);
+    BOOST_CHECK_MESSAGE(!inner_descs.empty(), "inner parse failed: " + ierr);
+    if (inner_descs.empty()) return;
+
+    for (int pos : {0, 1, 5, 42}) {
+        std::vector<CScript> ct_scripts, in_scripts;
+        FlatSigningProvider a, b;
+        BOOST_CHECK(ctdesc->Expand(pos, keys, ct_scripts, a));
+        BOOST_CHECK(inner_descs[0]->Expand(pos, inner_keys, in_scripts, b));
+        BOOST_CHECK(ct_scripts == in_scripts);
+        BOOST_CHECK_EQUAL(ct_scripts.size(), 1U);
+        if (!ct_scripts.empty()) {
+            // slip77 blinding key matches the legacy HMAC derivation.
+            CKey bk = ctdesc->GetBlindingKey(ct_scripts[0]);
+            CKey ref = RefSlip77(master, ct_scripts[0]);
+            BOOST_CHECK(bk.IsValid());
+            BOOST_CHECK(bk == ref);
+        }
+    }
+
+    // Multipath ct() expands to one ct() per path (BIP-389).
+    {
+        FlatSigningProvider k; std::string e;
+        std::string multi = "ct(slip77(" + kMaster + "),wpkh([ffffffff/13h]xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt/<0;1>/*))";
+        auto p = Parse(multi, k, e, /*require_checksum=*/false);
+        BOOST_CHECK_MESSAGE(p.size() == 2, "multipath ct() should expand to 2 descriptors: " + e);
+        for (auto& d : p) {
+            BOOST_CHECK(d->IsBlinded());
+            BOOST_CHECK(*d->GetMasterBlindingKey() == master);
+        }
+    }
+
+    // elip151 parses and round-trips.
+    {
+        FlatSigningProvider k; std::string e;
+        std::string d = "ct(elip151," + inner + ")";
+        auto p = Parse(d, k, e);
+        BOOST_CHECK_MESSAGE(!p.empty(), "ct(elip151) parse failed: " + e);
+        if (!p.empty()) {
+            BOOST_CHECK(p[0]->IsBlinded());
+            BOOST_CHECK(!p[0]->GetMasterBlindingKey().has_value());
+            BOOST_CHECK(EqualDescriptor(p[0]->ToString(), d));
+        }
+    }
+
+    // Malformed: bad slip77 length.
+    {
+        FlatSigningProvider k; std::string e;
+        auto p = Parse("ct(slip77(00)," + inner + ")", k, e);
+        BOOST_CHECK(p.empty());
+    }
+    // Malformed: missing inner descriptor.
+    {
+        FlatSigningProvider k; std::string e;
+        auto p = Parse("ct(slip77(" + kMaster + "))", k, e);
+        BOOST_CHECK(p.empty());
+    }
+    // Malformed: nested ct().
+    {
+        FlatSigningProvider k; std::string e;
+        auto p = Parse("ct(slip77(" + kMaster + "),ct(slip77(" + kMaster + ")," + inner + "))", k, e);
+        BOOST_CHECK(p.empty());
+    }
+    // Checksum mutation is detected: flip one char in the checksum.
+    {
+        std::string with_sum = ctdesc->ToString();
+        BOOST_CHECK(with_sum.size() > 9 && with_sum[with_sum.size() - 9] == '#');
+        std::string mutated = with_sum;
+        char& c = mutated[mutated.size() - 1];
+        c = (c == 'q') ? 'p' : 'q';
+        FlatSigningProvider k; std::string e;
+        auto p = Parse(mutated, k, e, /*require_checksum=*/true);
+        BOOST_CHECK(p.empty());
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

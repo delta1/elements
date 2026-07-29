@@ -32,6 +32,14 @@ class ListDescriptorsTest(BitcoinTestFramework):
     def init_wallet(self, *, node):
         return
 
+    # ELEMENTS: wrap an inner descriptor (with or without checksum) in
+    # ct(slip77(<master>), ...) and recompute the checksum, matching how the
+    # Elements listdescriptors RPC now emits confidential-transaction descriptors.
+    @staticmethod
+    def ct_wrap(inner_desc, master):
+        inner = inner_desc.rsplit('#', 1)[0]
+        return descsum_create('ct(slip77(' + master + '),' + inner + ')')
+
     def run_test(self):
         node = self.nodes[0]
         assert_raises_rpc_error(-18, 'No wallet is loaded.', node.listdescriptors)
@@ -47,16 +55,24 @@ class ListDescriptorsTest(BitcoinTestFramework):
 
         self.log.info('Test the command for a default descriptors wallet.')
         node.createwallet(wallet_name='w3', descriptors=True)
-        result = node.get_wallet_rpc('w3').listdescriptors()
+        w3 = node.get_wallet_rpc('w3')
+        result = w3.listdescriptors()
         assert_equal("w3", result['wallet_name'])
         assert_equal(8, len(result['descriptors']))
         assert_equal(8, len([d for d in result['descriptors'] if d['active']]))
         assert_equal(4, len([d for d in result['descriptors'] if d['internal']]))
         for item in result['descriptors']:
             assert item['desc'] != ''
+            # ELEMENTS: public export is NOT ct-wrapped (no secret disclosed).
+            assert not item['desc'].startswith('ct(slip77('), item['desc']
             assert item['next_index'] == 0
             assert item['range'] == [0, 0]
             assert item['timestamp'] is not None
+
+        # ELEMENTS: private export IS wrapped in ct(slip77(...), ...).
+        priv_result = w3.listdescriptors(True)
+        for item in priv_result['descriptors']:
+            assert item['desc'].startswith('ct(slip77('), item['desc']
 
         self.log.info('Test that descriptor strings are returned in lexicographically sorted order.')
         descriptor_strings = [descriptor['desc'] for descriptor in result['descriptors']]
@@ -71,6 +87,8 @@ class ListDescriptorsTest(BitcoinTestFramework):
             'desc': descsum_create('wpkh(' + xprv + hardened_path + '/0/*)'),
             'timestamp': TIME_GENESIS_BLOCK,
         }])
+        w2_master = wallet.dumpmasterblindingkey()
+        # ELEMENTS: public export is unwrapped (no secret embedded).
         expected = {
             'wallet_name': 'w2',
             'descriptors': [
@@ -84,12 +102,25 @@ class ListDescriptorsTest(BitcoinTestFramework):
         }
         assert_equal(expected, wallet.listdescriptors())
         assert_equal(expected, wallet.listdescriptors(False))
+        # With include_blinding_key, the public export is ct-wrapped.
+        expected_blinded_pub = {
+            'wallet_name': 'w2',
+            'descriptors': [
+                {'desc': self.ct_wrap('wpkh([80002067' + hardened_path + ']' + xpub_acc + '/0/*)', w2_master),
+                 'timestamp': TIME_GENESIS_BLOCK,
+                 'active': False,
+                 'range': [0, 0],
+                 'next': 0,
+                 'next_index': 0},
+            ],
+        }
+        assert_equal(expected_blinded_pub, wallet.listdescriptors(False, True))
 
         self.log.info('Test list private descriptors')
         expected_private = {
             'wallet_name': 'w2',
             'descriptors': [
-                {'desc': descsum_create('wpkh(' + xprv + hardened_path + '/0/*)'),
+                {'desc': self.ct_wrap('wpkh(' + xprv + hardened_path + '/0/*)', w2_master),
                  'timestamp': TIME_GENESIS_BLOCK,
                  'active': False,
                  'range': [0, 0],
@@ -124,6 +155,8 @@ class ListDescriptorsTest(BitcoinTestFramework):
             'desc': descsum_create('combo(' + node.get_deterministic_priv_key().key + ')'),
             'timestamp': TIME_GENESIS_BLOCK,
         }])
+        w4_master = wallet.dumpmasterblindingkey()
+        # Public export is unwrapped (no secret).
         expected = {
             'wallet_name': 'w4',
             'descriptors': [
@@ -133,6 +166,17 @@ class ListDescriptorsTest(BitcoinTestFramework):
             ]
         }
         assert_equal(expected, wallet.listdescriptors())
+
+        self.log.info('ELEMENTS: Test include_blinding_key opt-in wraps public export in ct(slip77(...))')
+        expected_blinded = {
+            'wallet_name': 'w4',
+            'descriptors': [
+                {'active': False,
+                 'desc': self.ct_wrap('combo(03ba4a2b1f401eb59e1e6b104f8043ce41b38b65bd24c10edb3df8863b0241e5af)', w4_master),
+                 'timestamp': TIME_GENESIS_BLOCK},
+            ]
+        }
+        assert_equal(expected_blinded, wallet.listdescriptors(False, True))
 
 
 if __name__ == '__main__':

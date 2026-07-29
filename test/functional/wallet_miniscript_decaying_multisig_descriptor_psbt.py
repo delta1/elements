@@ -34,10 +34,17 @@ class WalletMiniscriptDecayingMultisigDescriptorPSBTTest(BitcoinTestFramework):
     @staticmethod
     def _get_xpub(wallet, internal):
         """Extract the wallet's xpubs using `listdescriptors` and pick the one from the `pkh` descriptor since it's least likely to be accidentally reused (legacy addresses)."""
-        pkh_descriptor = next(filter(lambda d: d["desc"].startswith("pkh(") and d["internal"] == internal, wallet.listdescriptors()["descriptors"]))
+        # ELEMENTS: descriptors are wrapped in ct(slip77(...), ...); match the
+        # inner pkh() descriptor accordingly.
+        def inner(desc):
+            if desc.startswith("ct(slip77("):
+                body = desc.rsplit("#", 1)[0]
+                return body[body.index(",") + 1:-1]
+            return desc
+        pkh_descriptor = next(filter(lambda d: inner(d["desc"]).startswith("pkh(") and d["internal"] == internal, wallet.listdescriptors()["descriptors"]))
         # keep all key origin information (master key fingerprint and all derivation steps) for proper support of hardware devices
         # see section 'Key origin identification' in 'doc/descriptors.md' for more details...
-        return pkh_descriptor["desc"].split("pkh(")[1].split(")")[0]
+        return inner(pkh_descriptor["desc"]).split("pkh(")[1].split(")")[0]
 
     def create_multisig(self, external_xpubs, internal_xpubs):
         """The multisig is created by importing the following descriptors. The resulting wallet is watch-only and every signer can do this."""

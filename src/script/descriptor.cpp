@@ -4,6 +4,7 @@
 
 #include <script/descriptor.h>
 
+#include <crypto/hmac_sha256.h>
 #include <hash.h>
 #include <key_io.h>
 #include <pubkey.h>
@@ -1392,6 +1393,91 @@ public:
     }
 };
 
+// ELEMENTS: Confidential Transaction (CT) descriptors (ELIP-150).
+//
+/** The kind of blinding key expression used inside a ct(...) descriptor. */
+enum class BlindingKind {
+    SLIP77,  //!< ct(slip77(<64-hex>), ...): master blinding key embedded verbatim.
+    ELIP151, //!< ct(elip151, ...): blinding keys derived from the descriptor.
+    XPUB,    //!< ct(<xpub-or-key>, ...): separate blinding key expression.
+};
+
+/** Derive the per-output blinding private key from a slip77 master key. This
+ *  matches CWallet::GetBlindingKey: HMAC-SHA256(master, scriptPubKey). */
+static CKey SLIP77Derive(const uint256& master, const CScript& script)
+{
+    CKey key;
+    if (master.IsNull() || script.empty()) return key;
+    unsigned char vch[32];
+    CHMAC_SHA256(master.begin(), master.size()).Write(script.data(), script.size()).Finalize(vch);
+    key.Set(&vch[0], &vch[32], true);
+    // The HMAC output is not guaranteed to be a valid EC private key. Return an
+    // invalid CKey on the (negligible-probability) failure so callers, which all
+    // check IsValid(), do not proceed with an out-of-range key.
+    if (!key.IsValid()) return CKey();
+    return key;
+}
+
+/** A parsed ct(BLINDING, INNER) descriptor (ELIP-150).
+ *
+ *  This is a transparent wrapper: it produces exactly the same scriptPubKeys as
+ *  its inner descriptor, but additionally carries the blinding key information
+ *  needed to construct confidential addresses and unblind received outputs.
+ */
+class CTDescriptor final : public DescriptorImpl
+{
+    const BlindingKind m_kind;
+    //! For SLIP77: the master blinding key. Null otherwise.
+    const uint256 m_slip77_key;
+    //! For XPUB: the textual blinding key expression, preserved for round-trip.
+    const std::string m_blinding_expr;
+protected:
+    std::vector<CScript> MakeScripts(const std::vector<CPubKey>&, Span<const CScript> scripts, FlatSigningProvider&) const override
+    {
+        // Pass through the inner descriptor's script(s) unchanged.
+        return std::vector<CScript>(scripts.begin(), scripts.end());
+    }
+    std::string ToStringExtra() const override
+    {
+        switch (m_kind) {
+            case BlindingKind::SLIP77: return "slip77(" + HexStr(m_slip77_key) + ")";
+            case BlindingKind::ELIP151: return "elip151";
+            case BlindingKind::XPUB: return m_blinding_expr;
+        }
+        assert(false);
+    }
+public:
+    CTDescriptor(BlindingKind kind, const uint256& slip77_key, const std::string& blinding_expr, std::unique_ptr<DescriptorImpl> inner)
+        : DescriptorImpl({}, std::move(inner), "ct"), m_kind(kind), m_slip77_key(slip77_key), m_blinding_expr(blinding_expr) {}
+
+    bool IsSingleType() const final { return m_subdescriptor_args[0]->IsSingleType(); }
+    std::optional<OutputType> GetOutputType() const override { return m_subdescriptor_args[0]->GetOutputType(); }
+    std::optional<int64_t> ScriptSize() const override { return m_subdescriptor_args[0]->ScriptSize(); }
+    std::optional<int64_t> MaxSatSize(bool use_max_sig) const override { return m_subdescriptor_args[0]->MaxSatSize(use_max_sig); }
+    std::optional<int64_t> MaxSatisfactionWeight(bool use_max_sig) const override { return m_subdescriptor_args[0]->MaxSatisfactionWeight(use_max_sig); }
+    std::optional<int64_t> MaxSatisfactionElems() const override { return m_subdescriptor_args[0]->MaxSatisfactionElems(); }
+
+    bool IsBlinded() const override { return true; }
+
+    std::optional<uint256> GetMasterBlindingKey() const override
+    {
+        if (m_kind == BlindingKind::SLIP77) return m_slip77_key;
+        return std::nullopt;
+    }
+
+    CKey GetBlindingKey(const CScript& script) const override
+    {
+        if (m_kind == BlindingKind::SLIP77) return SLIP77Derive(m_slip77_key, script);
+        // XPUB and ELIP151 blinding derivation is not wired into the wallet yet.
+        return CKey();
+    }
+
+    std::unique_ptr<DescriptorImpl> Clone() const override
+    {
+        return std::make_unique<CTDescriptor>(m_kind, m_slip77_key, m_blinding_expr, m_subdescriptor_args.at(0)->Clone());
+    }
+};
+
 ////////////////////////////////////////////////////////////////////////////
 // Parser                                                                 //
 ////////////////////////////////////////////////////////////////////////////
@@ -1757,6 +1843,52 @@ std::vector<std::unique_ptr<DescriptorImpl>> ParseScript(uint32_t& key_exp_index
     Assume(ctx == ParseScriptContext::TOP || ctx == ParseScriptContext::P2SH || ctx == ParseScriptContext::P2WSH || ctx == ParseScriptContext::P2TR);
     std::vector<std::unique_ptr<DescriptorImpl>> ret;
     auto expr = Expr(sp);
+    // ELEMENTS: ct(BLINDING, INNER) confidential transaction descriptor (ELIP-150).
+    if (ctx == ParseScriptContext::TOP && Func("ct", expr)) {
+        // First argument: the blinding key expression.
+        auto blinding_arg = Expr(expr);
+        BlindingKind kind;
+        uint256 slip77_key;
+        std::string blinding_expr_str(blinding_arg.begin(), blinding_arg.end());
+        if (Func("slip77", blinding_arg)) {
+            auto hex = std::string(blinding_arg.begin(), blinding_arg.end());
+            if (!IsHex(hex) || hex.size() != 64) {
+                error = "ct(): slip77() key must be exactly 64 hex characters";
+                return {};
+            }
+            auto bytes = ParseHex<unsigned char>(hex);
+            slip77_key = uint256(Span<const unsigned char>(bytes.data(), bytes.size()));
+            kind = BlindingKind::SLIP77;
+        } else if (blinding_expr_str == "elip151") {
+            kind = BlindingKind::ELIP151;
+        } else {
+            // Treat anything else as an opaque blinding key expression (xpub/key).
+            kind = BlindingKind::XPUB;
+        }
+        if (expr.size() == 0 || expr[0] != ',') {
+            error = "ct(): expected a second (script) argument";
+            return {};
+        }
+        expr = expr.subspan(1); // skip the comma
+        auto descs = ParseScript(key_exp_index, expr, ParseScriptContext::TOP, out, error);
+        if (descs.empty() || expr.size()) {
+            if (error.empty()) error = "ct(): invalid inner descriptor";
+            return {};
+        }
+        // The inner descriptor may be multipath (BIP-389), producing one entry per
+        // path. Wrap each in its own ct() so the export/import round-trips.
+        for (auto& d : descs) {
+            if (d->IsBlinded()) {
+                error = "ct(): cannot nest ct() descriptors";
+                return {};
+            }
+            ret.emplace_back(std::make_unique<CTDescriptor>(kind, slip77_key, blinding_expr_str, std::move(d)));
+        }
+        return ret;
+    } else if (Func("ct", expr)) {
+        error = "Can only have ct() at top level";
+        return {};
+    }
     if (Func("pk", expr)) {
         auto pubkeys = ParsePubkey(key_exp_index, expr, ctx, out, error);
         if (pubkeys.empty()) {
@@ -2319,6 +2451,12 @@ std::unique_ptr<DescriptorImpl> InferScript(const CScript& script, ParseScriptCo
 
 
 } // namespace
+
+// ELEMENTS
+CKey SLIP77DeriveBlindingKey(const uint256& master, const CScript& script)
+{
+    return SLIP77Derive(master, script);
+}
 
 /** Check a descriptor checksum, and update desc to be the checksum-less part. */
 bool CheckChecksum(Span<const char>& sp, bool require_checksum, std::string& error, std::string* out_checksum = nullptr)

@@ -110,10 +110,21 @@ BASE_SCRIPTS = [
     'feature_txwitness.py',
     'rpc_tweakfedpeg.py --legacy-wallet',
     'feature_issuance.py --legacy-wallet',
+    # TODO(descriptor-migration): feature_issuance.py --descriptors needs the
+    # importaddress (watch-only) flow reworked for descriptor wallets.
     'feature_confidential_transactions.py --legacy-wallet',
+    # TODO(descriptor-migration): feature_confidential_transactions.py --descriptors
+    # needs the dumpwallet/sethdseed/importmasterblindingkey recovery flow reworked
+    # to use listdescriptors/importdescriptors, and addmultisigaddress replaced.
     'feature_default_asset_name.py --legacy-wallet',
+    'feature_default_asset_name.py --descriptors',
     'feature_assetsdir.py --legacy-wallet',
+    'feature_assetsdir.py --descriptors',
     'feature_initial_reissuance_token.py --legacy-wallet',
+    'feature_initial_reissuance_token.py --descriptors',
+    # TODO(descriptor-migration): feature_sighash_rangeproof.py --descriptors needs
+    # its key-extraction (dumpprivkey on a descriptor address) reworked.
+    'wallet_descriptor_ct.py --descriptors',
     'feature_progress.py',
     'rpc_getnewblockhex.py',
     'wallet_elements_regression_1172.py --legacy-wallet',
