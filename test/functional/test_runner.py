@@ -101,6 +101,7 @@ BASE_SCRIPTS = [
     'feature_mandatory_coinbase.py',
     'feature_dynafed.py --legacy-wallet',
     'feature_sighash_rangeproof.py --legacy-wallet',
+    'feature_sighash_rangeproof.py --descriptors',
     'feature_block_subsidy.py',
     'feature_connect_genesis_outputs.py --legacy-wallet',
     'feature_block_v4.py',
@@ -110,8 +111,7 @@ BASE_SCRIPTS = [
     'feature_txwitness.py',
     'rpc_tweakfedpeg.py --legacy-wallet',
     'feature_issuance.py --legacy-wallet',
-    # TODO(descriptor-migration): feature_issuance.py --descriptors needs the
-    # importaddress (watch-only) flow reworked for descriptor wallets.
+    'feature_issuance.py --descriptors',
     'feature_confidential_transactions.py --legacy-wallet',
     'feature_confidential_transactions.py --descriptors',
     'feature_default_asset_name.py --legacy-wallet',
@@ -120,8 +120,6 @@ BASE_SCRIPTS = [
     'feature_assetsdir.py --descriptors',
     'feature_initial_reissuance_token.py --legacy-wallet',
     'feature_initial_reissuance_token.py --descriptors',
-    # TODO(descriptor-migration): feature_sighash_rangeproof.py --descriptors needs
-    # its key-extraction (dumpprivkey on a descriptor address) reworked.
     'wallet_descriptor_ct.py --descriptors',
     'feature_progress.py',
     'rpc_getnewblockhex.py',

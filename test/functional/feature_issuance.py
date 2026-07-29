@@ -10,6 +10,40 @@ from decimal import Decimal
 
 " Tests issued assets functionality including (re)issuance, and de-issuance "
 
+# Build a single-index private-key descriptor for `addr` owned by descriptor wallet
+# `node`, so it can be imported into another descriptor wallet. This replaces the
+# legacy `importaddress`/`dumpprivkey` flow which is unavailable on descriptor
+# wallets. We look up the address' HD keypath, find the matching active private
+# descriptor via `listdescriptors(True)`, and substitute the wildcard with the
+# address' child index.
+def get_privkey_desc_for_address(node, addr):
+    from test_framework.descriptors import descsum_create
+    info = node.getaddressinfo(addr)
+    # e.g. "m/84h/1h/0h/0/0"
+    keypath = info["hdkeypath"]
+    if keypath.startswith("m/"):
+        keypath = keypath[2:]
+    child_index = keypath.split("/")[-1]
+    prefix = "/".join(keypath.split("/")[:-1])  # e.g. "84h/1h/0h/0"
+    for d in node.listdescriptors(True)["descriptors"]:
+        desc = d["desc"]
+        # Only consider single-key HD descriptors with a wildcard.
+        if "/*" not in desc:
+            continue
+        # Strip the CT/slip77 wrapper if present to get a plain scriptPubKey descriptor.
+        inner = desc.split("#")[0]
+        if inner.startswith("ct(") and inner.endswith(")"):
+            # ct(slip77(<key>),<inner_desc>)
+            after_comma = inner[inner.index(",") + 1:]
+            inner = after_comma[:-1]  # drop trailing ')'
+        # The inner descriptor must contain the account/change path prefix.
+        if ("/" + prefix + "/*") not in inner:
+            continue
+        # Substitute the wildcard with the concrete child index.
+        concrete = inner.replace("/" + prefix + "/*", "/" + prefix + "/" + child_index)
+        return descsum_create(concrete)
+    raise AssertionError("Could not find private descriptor for address {}".format(addr))
+
 # Creates a raw issuance transaction based on the passed in list, checking important details after
 def process_raw_issuance(test, node, issuance_list):
     if len(issuance_list) > 5:
@@ -198,7 +232,19 @@ class IssuanceTest(BitcoinTestFramework):
         # Node 2 will send node 1 a reissuance token, both will generate assets
         self.nodes[2].sendtoaddress(self.nodes[1].getnewaddress(), Decimal('0.00000001'), "", "", False, False, 1, "UNSET", False, issuancedata["token"])
         # node 1 needs to know about a (re)issuance to reissue itself
-        self.nodes[1].importaddress(self.nodes[2].gettransaction(issuancedata["txid"])["details"][0]["address"])
+        issuance_addr = self.nodes[2].gettransaction(issuancedata["txid"])["details"][0]["address"]
+        if self.options.descriptors:
+            # On descriptor wallets, `importaddress` is unavailable and importing a
+            # watch-only `addr(...)` descriptor into a wallet with private keys is
+            # rejected. Instead, hand node 1 the private descriptor for the issuance
+            # output (derived from node 2's wallet) via `importdescriptors`, so node 1
+            # learns about the original issuance transaction (and its entropy) needed
+            # to reissue.
+            desc = get_privkey_desc_for_address(self.nodes[2], issuance_addr)
+            res = self.nodes[1].importdescriptors([{"desc": desc, "timestamp": 0}])
+            assert_equal(res[0]["success"], True)
+        else:
+            self.nodes[1].importaddress(issuance_addr)
         # also send some bitcoin
         self.generate(self.nodes[2], 1)
         self.sync_all()
@@ -229,9 +275,19 @@ class IssuanceTest(BitcoinTestFramework):
         addr3 = txdet3[len(txdet3)-1]["address"]
 
         assert_equal(len(self.nodes[0].listissuances()), 5)
-        self.nodes[0].importaddress(addr1)
-        self.nodes[0].importaddress(addr2)
-        self.nodes[0].importaddress(addr3)
+        if self.options.descriptors:
+            # Descriptor wallets do not support watch-only `importaddress`. Import the
+            # private descriptors for the issuance output addresses (derived from their
+            # owning nodes) via `importdescriptors` so node 0 learns about these
+            # issuance transactions for auditing.
+            for owner, addr in ((self.nodes[1], addr1), (self.nodes[2], addr2), (self.nodes[2], addr3)):
+                desc = get_privkey_desc_for_address(owner, addr)
+                res = self.nodes[0].importdescriptors([{"desc": desc, "timestamp": 0}])
+                assert_equal(res[0]["success"], True)
+        else:
+            self.nodes[0].importaddress(addr1)
+            self.nodes[0].importaddress(addr2)
+            self.nodes[0].importaddress(addr3)
 
         issuances = self.nodes[0].listissuances()
         assert_equal(len(issuances), 8)
@@ -413,12 +469,33 @@ class IssuanceTest(BitcoinTestFramework):
         assert_equal(self.nodes[0].gettransaction(tx_id)["confirmations"], 1)
 
         # Now send reissuance token to blinded multisig, then reissue
-        addrs = []
-        for i in range(3):
-            addrs.append(self.nodes[0].getaddressinfo(self.nodes[0].getnewaddress())["pubkey"])
+        if self.options.descriptors:
+            # Descriptor wallets cannot add a spendable multisig via
+            # `addmultisigaddress` (the framework helper only imports a watch-only
+            # `sh(multi(...))`). Instead, build a spendable `wsh(multi(...))`
+            # descriptor from private single-index keys derived from node 0's own
+            # wallet and import it with `importdescriptors`.
+            from test_framework.descriptors import descsum_create
+            inner_keys = []
+            for i in range(3):
+                addr = self.nodes[0].getnewaddress("", "bech32")
+                priv_desc = get_privkey_desc_for_address(self.nodes[0], addr)
+                # priv_desc is like "wpkh(<xprv>/...)#cksum"; extract the key expr.
+                key_expr = priv_desc.split("#")[0]
+                assert key_expr.startswith("wpkh(") and key_expr.endswith(")")
+                inner_keys.append(key_expr[len("wpkh("):-1])
+            ms_desc = descsum_create("wsh(multi(2,{}))".format(",".join(inner_keys)))
+            res = self.nodes[0].importdescriptors([{"desc": ms_desc, "timestamp": "now"}])
+            assert_equal(res[0]["success"], True)
+            # Derive the multisig address (use the private descriptor, since Elements
+            # requires keys to derive the confidential script).
+            multisig_addr = {"address": self.nodes[0].deriveaddresses(ms_desc)[0]}
+        else:
+            addrs = []
+            for i in range(3):
+                addrs.append(self.nodes[0].getaddressinfo(self.nodes[0].getnewaddress())["pubkey"])
 
-
-        multisig_addr = self.nodes[0].addmultisigaddress(2,addrs)
+            multisig_addr = self.nodes[0].addmultisigaddress(2,addrs)
         blinded_addr = self.nodes[0].getnewaddress()
         blinding_pubkey = self.nodes[0].validateaddress(blinded_addr)["confidential_key"]
         blinding_privkey = self.nodes[0].dumpblindingkey(blinded_addr)

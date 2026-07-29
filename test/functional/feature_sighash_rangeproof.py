@@ -9,7 +9,8 @@ Test the post-dynafed elements-only SIGHASH_RANGEPROOF sighash flag.
 
 import struct
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.address import base58_to_byte
+from test_framework.address import base58_to_byte, byte_to_base58
+from test_framework.descriptors import descsum_create
 from test_framework.script import (
     hash160,
     LegacySignatureHash,
@@ -65,6 +66,43 @@ class SighashRangeproofTest(BitcoinTestFramework):
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
 
+    def get_slip77_master(self, node):
+        # Extract the slip77 master blinding key from a descriptor wallet's active
+        # `ct(slip77(<master>),...)` descriptors.
+        for d in node.listdescriptors(True)["descriptors"]:
+            desc = d["desc"]
+            if desc.startswith("ct(slip77("):
+                inner = desc[len("ct(slip77("):]
+                return inner[:inner.index(")")]
+        raise AssertionError("No slip77 master found in wallet descriptors")
+
+    def make_owned_key_address(self, node, address_type):
+        # Descriptor-wallet compatible replacement for the legacy
+        # `getnewaddress` + `dumpprivkey` flow. We generate a key in the test,
+        # import a confidential (ct/slip77) descriptor for it into `node` (so the
+        # wallet owns it, can blind, list, and sign), and return both the
+        # confidential address and the raw ECKey so we can re-sign in Python.
+        privkey = ECKey()
+        privkey.generate(compressed=True)
+        wif = byte_to_base58(privkey.get_bytes() + b"\x01", 239)
+        slip77 = self.get_slip77_master(node)
+        if address_type == "legacy":
+            inner = "pkh({})".format(wif)
+        elif address_type == "blech32":
+            inner = "wpkh({})".format(wif)
+        elif address_type == "p2sh-segwit":
+            inner = "sh(wpkh({}))".format(wif)
+        else:
+            assert False
+        desc = descsum_create("ct(slip77({}),{})".format(slip77, inner))
+        res = node.importdescriptors([{"desc": desc, "timestamp": "now"}])
+        assert_equal(res[0]["success"], True)
+        # `deriveaddresses` returns the unconfidential address; get the confidential
+        # form (the wallet owns the blinding key via slip77) for a blinded output.
+        unconf = node.deriveaddresses(desc)[0]
+        addr = node.getaddressinfo(unconf)["confidential"]
+        return addr, privkey
+
     def prepare_tx_signed_with_sighash(self, address_type, sighash_rangeproof_aware, attach_issuance):
         # Create a tx that is signed with a specific version of the sighash
         # method.
@@ -72,7 +110,13 @@ class SighashRangeproofTest(BitcoinTestFramework):
         # true, the sighash will contain the rangeproofs if SIGHASH_RANGEPROOF is set
         # false, the sighash will NOT contain the rangeproofs if SIGHASH_RANGEPROOF is set
 
-        addr = self.nodes[1].getnewaddress("", address_type)
+        if self.options.descriptors:
+            # `dumpprivkey` is legacy-only, so generate the key in the test and
+            # import an owned confidential descriptor for it (see helper).
+            addr, test_privkey = self.make_owned_key_address(self.nodes[1], address_type)
+        else:
+            addr = self.nodes[1].getnewaddress("", address_type)
+            test_privkey = None
         assert len(self.nodes[1].getaddressinfo(addr)["confidential_key"]) > 0
         self.nodes[0].sendtoaddress(addr, 1.0)
         self.generate(self.nodes[0], 1)
@@ -111,10 +155,14 @@ class SighashRangeproofTest(BitcoinTestFramework):
         assert test_accept["allowed"], "not accepted: {}".format(test_accept["reject-reason"])
 
         # Prepare the keypair we need to re-sign the tx.
-        wif = self.nodes[1].dumpprivkey(addr)
-        (b, v) = base58_to_byte(wif)
-        privkey = ECKey()
-        privkey.set(b[0:32], len(b) == 33)
+        if self.options.descriptors:
+            # Use the key we generated and imported for this address.
+            privkey = test_privkey
+        else:
+            wif = self.nodes[1].dumpprivkey(addr)
+            (b, v) = base58_to_byte(wif)
+            privkey = ECKey()
+            privkey.set(b[0:32], len(b) == 33)
         pubkey = privkey.get_pubkey()
 
         # Now we need to replace the signature with an equivalent one with the new sighash set,
