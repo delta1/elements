@@ -31,6 +31,7 @@ from test_framework.liquid_addr import (
     encode,
     decode,
 )
+from test_framework.descriptors import descsum_create
 
 class CTTest (BitcoinTestFramework):
 
@@ -55,6 +56,102 @@ class CTTest (BitcoinTestFramework):
         self.skip_if_no_wallet()
 
     def test_wallet_recovery(self):
+        if self.options.descriptors:
+            self.test_wallet_recovery_descriptors()
+        else:
+            self.test_wallet_recovery_legacy()
+
+    def test_wallet_recovery_descriptors(self):
+        # Descriptor wallets back up and recover both the HD keys and the master
+        # blinding key through the ct(slip77(<master>), <inner>) descriptor export.
+        # listdescriptors(True) returns the private, ct-wrapped descriptors, and
+        # importdescriptors reconstructs an identical confidential wallet, without
+        # needing the legacy dumpwallet/sethdseed/importmasterblindingkey flow.
+        src = self.nodes[0].get_wallet_rpc(self.default_wallet_name)
+        blind_addr = src.getnewaddress()
+        blind_info_src = src.getaddressinfo(blind_addr)
+        assert "pubkey" in blind_info_src
+        assert_equal(blind_info_src["ismine"], True)
+
+        master_blind = src.dumpmasterblindingkey()
+        assert_equal(len(master_blind), 64)
+
+        # The private export must embed the master blinding key via ct(slip77(...)).
+        exported = src.listdescriptors(True)["descriptors"]
+        assert len(exported) > 0
+        for d in exported:
+            assert d["desc"].startswith("ct(slip77(%s)," % master_blind), d["desc"]
+
+        # The public export must NOT embed the master blinding key (it is a secret).
+        public = src.listdescriptors()["descriptors"]
+        for d in public:
+            assert not d["desc"].startswith("ct(slip77("), d["desc"]
+
+        # Snapshot the source wallet's next derivation index for its active
+        # external descriptor so we can prove the recovered wallet derives the
+        # same subsequent confidential addresses.
+        def active_external_next(descs):
+            d = next(x for x in descs
+                     if x.get("active") and not x.get("internal", False)
+                     and self._inner_desc(x["desc"]).startswith(("wpkh(", "pkh(", "sh(", "combo(", "tr(")))
+            return d.get("next_index", d.get("next", 0))
+
+        # Create a fresh blank descriptor wallet and confirm it does not yet know
+        # about the address.
+        self.nodes[0].createwallet(wallet_name="recover", descriptors=True, blank=True)
+        rec = self.nodes[0].get_wallet_rpc("recover")
+        wrong_info = rec.getaddressinfo(blind_addr)
+        assert "pubkey" not in wrong_info
+        assert_equal(wrong_info["ismine"], False)
+
+        # Import the ct() descriptors into the fresh wallet, preserving activeness,
+        # ranges, internal flags and next index so derivation matches the source
+        # wallet exactly.
+        import_reqs = []
+        for d in exported:
+            req = {
+                "desc": d["desc"],
+                "timestamp": "now",
+                "active": d.get("active", False),
+            }
+            next_index = d.get("next_index", d.get("next"))
+            if "range" in d:
+                rng = list(d["range"])
+                # importdescriptors requires next_index to fall within range; the
+                # source export can report a next_index just past the generated
+                # keypool, so widen the end to accommodate it.
+                if next_index is not None and next_index > rng[1]:
+                    rng[1] = next_index
+                req["range"] = rng
+            if "internal" in d:
+                req["internal"] = d["internal"]
+            if next_index is not None and "range" in d:
+                req["next_index"] = next_index
+            import_reqs.append(req)
+        res = rec.importdescriptors(import_reqs)
+        for r in res:
+            assert r["success"], (r, import_reqs)
+
+        # The recovered wallet must have adopted the same master blinding key,
+        # recognise the original confidential address as its own, and be able to
+        # reconstruct the same confidential form from the unconfidential address.
+        assert_equal(rec.dumpmasterblindingkey(), master_blind)
+        blind_info = rec.getaddressinfo(blind_addr)
+        assert "pubkey" in blind_info
+        assert_equal(blind_info["ismine"], True)
+        assert_equal(rec.getaddressinfo(blind_info["unconfidential"])["confidential"], blind_addr)
+
+        # The recovered wallet derives the same fresh confidential addresses as the
+        # source wallet, proving both HD and blinding key material were restored.
+        # Both wallets start from the same active external next index.
+        assert_equal(active_external_next(rec.listdescriptors()["descriptors"]),
+                     active_external_next(exported))
+        for _ in range(3):
+            assert_equal(rec.getnewaddress(), src.getnewaddress())
+
+        self.nodes[0].unloadwallet("recover")
+
+    def test_wallet_recovery_legacy(self):
         file_path = os.path.join(tempfile.gettempdir(), "blind_details")
         try:
             os.remove(file_path)
@@ -108,6 +205,130 @@ class CTTest (BitcoinTestFramework):
 
         # clean up blind_details
         os.remove(file_path)
+
+    def setup_auditor(self, address2):
+        # Return a wallet handle that watches address2 for auditing. For legacy
+        # wallets node1 can directly importaddress a foreign address. For
+        # descriptor wallets a private-key wallet cannot hold a watch-only script,
+        # so create a dedicated disable_private_keys wallet on node1 and import the
+        # address' descriptor (inferred, keyless) into it.
+        # After this point node1 may host more than one wallet, so resolve an
+        # explicit handle to node1's default wallet for callers to use instead of
+        # the ambiguous root RPC.
+        self.n1 = self.nodes[1].get_wallet_rpc(self.default_wallet_name)
+        if not self.options.descriptors:
+            self.nodes[1].importaddress(address2)
+            self.auditor = self.nodes[1]
+            return self.auditor
+
+        # Get a keyless descriptor for address2 from its owner (node2).
+        desc = self.nodes[2].getaddressinfo(address2)["desc"]
+        self.nodes[1].createwallet(wallet_name="auditor", descriptors=True,
+                                   disable_private_keys=True, blank=True)
+        self.auditor = self.nodes[1].get_wallet_rpc("auditor")
+        res = self.auditor.importdescriptors([{
+            "desc": desc,
+            "timestamp": 0,
+        }])
+        assert res[0]["success"], res
+        return self.auditor
+
+    def sync_auditor(self):
+        # A watch-only descriptor auditor wallet does not automatically follow the
+        # mempool/relay the way the always-on node1 default wallet does; make sure
+        # it has scanned up to the current tip before we query it.
+        if self.options.descriptors:
+            self.auditor.rescanblockchain()
+
+    @staticmethod
+    def _inner_desc(desc):
+        # Strip a ct(slip77(<hex>), INNER) wrapper (and any checksum) down to INNER.
+        if desc.startswith("ct(slip77("):
+            body = desc.rsplit("#", 1)[0]
+            return body[body.index(",") + 1:-1]
+        return desc.rsplit("#", 1)[0]
+
+    def _signer_keys(self, wallet):
+        # Extract matching public and private key expressions (with key origin) for
+        # the external `pkh` branch of a single-sig descriptor wallet. The pkh branch
+        # is used because it is least likely to be reused elsewhere.
+        def pick(descs):
+            d = next(x for x in descs if self._inner_desc(x["desc"]).startswith("pkh(") and not x.get("internal", False))
+            inner = self._inner_desc(d["desc"])
+            return inner[len("pkh("):-1]  # e.g. [fp/44h/...]xpub.../0/*  (or xprv for private)
+        pub = pick(wallet.listdescriptors()["descriptors"])
+        priv = pick(wallet.listdescriptors(True)["descriptors"])
+        return pub, priv
+
+    def setup_descriptor_multisig(self):
+        # Descriptor-wallet replacement for addmultisigaddress + importaddress +
+        # createblindedaddress/importblindingkey. We build a confidential 2-of-2
+        # sh(wsh(multi(...))) via ct(slip77(<master>), ...) and import it into node0
+        # and node1 so each holds one private key for its slot and can partially
+        # sign raw transactions. Both derive the identical multisig *script* (so the
+        # unconfidential P2SH address matches); each blinds with its own wallet
+        # master blinding key, which is irrelevant to signing the P2SH input.
+        # Use explicit default-wallet handles: node1 already hosts the auditor
+        # wallet, so the ambiguous root RPC cannot be used for wallet operations.
+        node0 = self.nodes[0].get_wallet_rpc(self.default_wallet_name)
+        node1 = self.n1
+
+        # Each participant produces a signer wallet to source one key each.
+        self.nodes[0].createwallet(wallet_name="ms_signer0", descriptors=True)
+        self.nodes[1].createwallet(wallet_name="ms_signer1", descriptors=True)
+        signer0 = self.nodes[0].get_wallet_rpc("ms_signer0")
+        signer1 = self.nodes[1].get_wallet_rpc("ms_signer1")
+        pub0, priv0 = self._signer_keys(signer0)
+        pub1, priv1 = self._signer_keys(signer1)
+
+        # Share a single master blinding key so both wallets blind the multisig
+        # identically (use node0's default-wallet master blinding key).
+        master_blind = node0.dumpmasterblindingkey()
+
+        # Same script for both nodes; each imports its own private key + peer pubkey.
+        # Use sh(wsh(multi(...))) so the descriptor is P2SH_SEGWIT, a different
+        # output type from the default bech32 wpkh descriptor. Importing it as the
+        # active P2SH_SEGWIT descriptor therefore does not disturb plain
+        # getnewaddress()/getrawchangeaddress() used elsewhere in the test.
+        def ct_multi(a, b):
+            inner = "sh(wsh(multi(2,%s,%s)))" % (a, b)
+            ct = "ct(slip77(%s),%s)" % (master_blind, inner)
+            # descsum_create appends a checksum without stripping the private keys
+            # (getdescriptorinfo would normalise tprv -> tpub, losing signing keys).
+            return descsum_create(ct)
+
+        desc_node0 = ct_multi(priv0, pub1)
+        desc_node1 = ct_multi(pub0, priv1)
+
+        # Import into node0 and node1's *default* wallets (used by the raw-tx flow).
+        for node, desc in ((node0, desc_node0), (node1, desc_node1)):
+            res = node.importdescriptors([{
+                "desc": desc,
+                "active": True,
+                "internal": False,
+                "timestamp": "now",
+            }])
+            assert res[0]["success"], (res, desc)
+
+        self.nodes[0].unloadwallet("ms_signer0")
+        self.nodes[1].unloadwallet("ms_signer1")
+
+        # The multisig receiving address is confidential; both nodes derive the same
+        # one. Use it directly as the blinded multisig address, and its
+        # unconfidential form for listunspent filtering.
+        blinded_multisig_addr = node0.getnewaddress("", "p2sh-segwit")
+        info0 = node0.getaddressinfo(blinded_multisig_addr)
+        assert_equal(info0["ismine"], True)
+        assert_equal(info0["confidential"], blinded_multisig_addr)
+        unconfidential_addr = info0["unconfidential"]
+        # node1 must recognise the same multisig script (identical unconfidential
+        # address) so it can co-sign; the confidential form differs because each
+        # node blinds with its own master blinding key, which does not matter for
+        # signing the P2SH multisig input.
+        info1 = node1.getaddressinfo(unconfidential_addr)
+        assert_equal(info1["ismine"], True)
+        assert info1["solvable"], info1
+        return unconfidential_addr, blinded_multisig_addr
 
     def test_no_surj(self):
         self.generate(self.nodes[0], 1)
@@ -312,13 +533,15 @@ class CTTest (BitcoinTestFramework):
         assert_equal(sorted([(ele['address'], ele['amount']) for ele in received_by_address], key=lambda t: t[0]),
                 sorted(validate_by_address, key = lambda t: t[0]))
 
-        # Give an auditor (node 1) a blinding key to allow her to look at
-        # transaction values
-        self.nodes[1].importaddress(address2)
-        received_by_address = self.nodes[1].listreceivedbyaddress(1, False, True)
+        # Give an auditor a blinding key to allow her to look at transaction
+        # values. With legacy wallets node1 itself can watch a foreign address via
+        # importaddress; with descriptor wallets that watch-only import is not
+        # available on a private-key wallet, so use a dedicated watch-only wallet.
+        auditor = self.setup_auditor(address2)
+        received_by_address = auditor.listreceivedbyaddress(1, False, True)
         #Node sees nothing unless it understands the values
         assert_equal(len(received_by_address), 0)
-        assert_equal(len(self.nodes[1].listunspent(1, 9999999, [], True, {"asset": "bitcoin"})), 0)
+        assert_equal(len(auditor.listunspent(1, 9999999, [], True, {"asset": "bitcoin"})), 0)
 
         # Import the blinding key
         blindingkey = self.nodes[2].dumpblindingkey(address2)
@@ -327,25 +550,25 @@ class CTTest (BitcoinTestFramework):
         blindingkey2 = self.nodes[2].dumpblindingkey(unconfidential_address2)
         assert_equal(blindingkey, blindingkey2)
 
-        self.nodes[1].importblindingkey(address2, blindingkey)
+        auditor.importblindingkey(address2, blindingkey)
         # Check the auditor's gettransaction and listreceivedbyaddress
         # Needs rescan to update wallet txns
-        conf_tx = self.nodes[1].gettransaction(confidential_tx_id, True)
+        conf_tx = auditor.gettransaction(confidential_tx_id, True)
         assert_equal(conf_tx['amount']["bitcoin"], value1)
 
         # Make sure wallet can now deblind part of transaction
-        deblinded_tx = self.nodes[1].unblindrawtransaction(conf_tx['hex'])['hex']
-        for output in self.nodes[1].decoderawtransaction(deblinded_tx)["vout"]:
+        deblinded_tx = auditor.unblindrawtransaction(conf_tx['hex'])['hex']
+        for output in auditor.decoderawtransaction(deblinded_tx)["vout"]:
             if "value" in output and output["scriptPubKey"]["type"] != "fee":
-                assert_equal(output["scriptPubKey"]["address"], self.nodes[1].validateaddress(address2)['unconfidential'])
+                assert_equal(output["scriptPubKey"]["address"], auditor.validateaddress(address2)['unconfidential'])
                 found_unblinded = True
         assert found_unblinded
 
-        assert_equal(self.nodes[1].gettransaction(raw_tx_id, True)['amount']["bitcoin"], value3)
-        assert_equal(self.nodes[1].gettransaction(raw_tx_id, True, False, "bitcoin")['amount'], value3)
-        list_unspent = self.nodes[1].listunspent(1, 9999999, [], True, {"asset": "bitcoin"})
+        assert_equal(auditor.gettransaction(raw_tx_id, True)['amount']["bitcoin"], value3)
+        assert_equal(auditor.gettransaction(raw_tx_id, True, False, "bitcoin")['amount'], value3)
+        list_unspent = auditor.listunspent(1, 9999999, [], True, {"asset": "bitcoin"})
         assert_equal(list_unspent[0]['amount']+list_unspent[1]['amount'], value1+value3)
-        received_by_address = self.nodes[1].listreceivedbyaddress(1, False, True)
+        received_by_address = auditor.listreceivedbyaddress(1, False, True)
         assert_equal(len(received_by_address), 1)
         assert_equal((received_by_address[0]['address'], received_by_address[0]['amount']['bitcoin']),
                      (unconfidential_address2, value1 + value3))
@@ -395,7 +618,7 @@ class CTTest (BitcoinTestFramework):
         node0 -= value4
         node2 += value4
         assert_equal(self.nodes[0].getbalance()["bitcoin"], node0)
-        assert_equal(self.nodes[1].getbalance("*", 1, False, False, "bitcoin"), node1)
+        assert_equal(self.n1.getbalance("*", 1, False, False, "bitcoin"), node1)
         assert_equal(self.nodes[2].getbalance()["bitcoin"], node2)
 
         # Testing wallet's ability to deblind its own outputs
@@ -442,14 +665,14 @@ class CTTest (BitcoinTestFramework):
         validated_addr = self.nodes[0].validateaddress(blinded_addr)
         blinding_pubkey = self.nodes[0].validateaddress(blinded_addr)["confidential_key"]
         blinding_key = self.nodes[0].dumpblindingkey(blinded_addr)
-        assert_equal(blinded_addr, self.nodes[1].createblindedaddress(validated_addr["unconfidential"], blinding_pubkey))
+        assert_equal(blinded_addr, self.n1.createblindedaddress(validated_addr["unconfidential"], blinding_pubkey))
 
         # If a blinding key is over-ridden by a newly imported one, funds may be unaccounted for
         new_addr = self.nodes[0].getnewaddress()
         new_validated = self.nodes[0].validateaddress(new_addr)
         self.nodes[2].sendtoaddress(new_addr, 1)
         self.sync_all()
-        diff_blind = self.nodes[1].createblindedaddress(new_validated["unconfidential"], blinding_pubkey)
+        diff_blind = self.n1.createblindedaddress(new_validated["unconfidential"], blinding_pubkey)
         assert_equal(len(self.nodes[0].listunspent(0, 0, [new_validated["unconfidential"]])), 1)
         self.nodes[0].importblindingkey(diff_blind, blinding_key)
         # CT values for this wallet transaction  have been cached via importblindingkey
@@ -480,7 +703,7 @@ class CTTest (BitcoinTestFramework):
         issued2 = self.nodes[0].issueasset(2, 1)
         test_asset = issued2["asset"]
         assert_equal(self.nodes[0].getwalletinfo()['balance'][test_asset], Decimal(2))
-        assert test_asset not in self.nodes[1].getwalletinfo()['balance']
+        assert test_asset not in self.n1.getwalletinfo()['balance']
 
         # Assets balance checking, note that accounts are completely ignored because
         # balance queries with accounts are horrifically broken upstream
@@ -509,7 +732,7 @@ class CTTest (BitcoinTestFramework):
         # Now craft a blinded transaction via raw api
         rawaddrs = []
         for i in range(2):
-            rawaddrs.append(self.nodes[1].getnewaddress())
+            rawaddrs.append(self.n1.getnewaddress())
         raw_assets = self.nodes[2].createrawtransaction(
                 [
                     {"txid":b_utxos[0]['txid'], "vout":b_utxos[0]['vout'], "nValue":b_utxos[0]['amount']},
@@ -534,17 +757,46 @@ class CTTest (BitcoinTestFramework):
         self.generate(self.nodes[2], 101)
         self.sync_all()
 
-        issuancedata = self.nodes[2].issueasset(0, Decimal('0.00000006')) #0 of asset, 6 reissuance token
+        if self.options.descriptors:
+            # A descriptor wallet can only reissue an asset whose *issuance
+            # transaction* is in its own wallet (GetReissuanceTokenTypes scans the
+            # wallet's own txns for issuance inputs); it cannot watch a foreign
+            # issuance address the way a legacy wallet does via importaddress.
+            # So issue the reissuance tokens directly to both node1 and node2 with
+            # rawissueasset, which lands the issuance tx in both wallets.
+            # token_amount must be sent as a JSON number (rawissueasset checks
+            # isNum); the framework serialises Decimal as a string, so use a plain
+            # int here. One whole reissuance-token unit is plenty for both nodes.
+            n1_token_addr = self.n1.validateaddress(self.n1.getnewaddress())["unconfidential"]
+            funded = self.nodes[2].fundrawtransaction(self.nodes[2].createrawtransaction([], [{self.nodes[2].getnewaddress(): Decimal('1')}], 0, False))
+            issue_pair = self.nodes[2].rawissueasset(funded['hex'], [{
+                "token_amount": 1,
+                "token_address": n1_token_addr,
+                "blind": False,
+            }])[0]
+            issuancedata = {"asset": issue_pair["asset"], "token": issue_pair["token"], "txid": None}
+            blinded = self.nodes[2].blindrawtransaction(issue_pair['hex'], True, [], False)
+            signed = self.nodes[2].signrawtransactionwithwallet(blinded)
+            self.nodes[2].sendrawtransaction(signed['hex'])
+            self.generate(self.nodes[2], 1)
+            self.sync_all()
+            # node2 created the issuance tx, so it knows the entropy; give it some
+            # of the reissuance tokens (from node1) so it can also reissue. Sync the
+            # send into node2's mempool before it is mined below.
+            self.n1.sendtoaddress(self.nodes[2].getnewaddress(), Decimal('0.00000003'), "", "", False, False, 1, "UNSET", False, issuancedata["token"])
+            self.sync_all()
+        else:
+            issuancedata = self.nodes[2].issueasset(0, Decimal('0.00000006')) #0 of asset, 6 reissuance token
 
-        # Node 2 will send node 1 a reissuance token, both will generate assets
-        self.nodes[2].sendtoaddress(self.nodes[1].getnewaddress(), Decimal('0.00000001'), "", "", False, False, 1, "UNSET", False, issuancedata["token"])
-        # node 1 needs to know about a (re)issuance to reissue itself
-        self.nodes[1].importaddress(self.nodes[2].gettransaction(issuancedata["txid"])["details"][0]["address"])
+            # Node 2 will send node 1 a reissuance token, both will generate assets
+            self.nodes[2].sendtoaddress(self.n1.getnewaddress(), Decimal('0.00000001'), "", "", False, False, 1, "UNSET", False, issuancedata["token"])
+            # node 1 needs to know about a (re)issuance to reissue itself
+            self.n1.importaddress(self.nodes[2].gettransaction(issuancedata["txid"])["details"][0]["address"])
         # also send some bitcoin
         self.generate(self.nodes[2], 1)
         self.sync_all()
 
-        self.nodes[1].reissueasset(issuancedata["asset"], Decimal('0.05'))
+        self.n1.reissueasset(issuancedata["asset"], Decimal('0.05'))
         self.nodes[2].reissueasset(issuancedata["asset"], Decimal('0.025'))
         self.generate(self.nodes[1], 1)
         self.sync_all()
@@ -565,30 +817,34 @@ class CTTest (BitcoinTestFramework):
         self.nodes[0].sendtoaddress(unconfidential_address2, Decimal('0.00000002'), "", "", False, False, 1, "UNSET", False, test_asset)
         self.generate(self.nodes[0], 1)
         self.sync_all()
-        received_by_address = self.nodes[1].listreceivedbyaddress(0, False, True)
+        self.sync_auditor()
+        received_by_address = self.auditor.listreceivedbyaddress(0, False, True)
         multi_asset_amount = [x for x in received_by_address if x['address'] == unconfidential_address2][0]['amount']
         assert_equal(multi_asset_amount['bitcoin'], value1 + value3)
         assert_equal(multi_asset_amount[test_asset], Decimal('0.00000003'))
 
         # Check blinded multisig functionality and partial blinding functionality
 
-        # Get two pubkeys
-        blinded_addr = self.nodes[0].getnewaddress()
-        pubkey = self.nodes[0].getaddressinfo(blinded_addr)["pubkey"]
-        blinded_addr2 = self.nodes[1].getnewaddress()
-        pubkey2 = self.nodes[1].getaddressinfo(blinded_addr2)["pubkey"]
-        pubkeys = [pubkey, pubkey2]
-        # Add multisig address
-        unconfidential_addr = self.nodes[0].addmultisigaddress(2, pubkeys)["address"]
-        self.nodes[1].addmultisigaddress(2, pubkeys)
-        self.nodes[0].importaddress(unconfidential_addr)
-        self.nodes[1].importaddress(unconfidential_addr)
-        # Use blinding key from node 0's original getnewaddress call
-        blinding_pubkey = self.nodes[0].getaddressinfo(blinded_addr)["confidential_key"]
-        blinding_key = self.nodes[0].dumpblindingkey(blinded_addr)
-        # Create blinded address from p2sh address and import corresponding privkey
-        blinded_multisig_addr = self.nodes[0].createblindedaddress(unconfidential_addr, blinding_pubkey)
-        self.nodes[0].importblindingkey(blinded_multisig_addr, blinding_key)
+        if self.options.descriptors:
+            unconfidential_addr, blinded_multisig_addr = self.setup_descriptor_multisig()
+        else:
+            # Get two pubkeys
+            blinded_addr = self.nodes[0].getnewaddress()
+            pubkey = self.nodes[0].getaddressinfo(blinded_addr)["pubkey"]
+            blinded_addr2 = self.n1.getnewaddress()
+            pubkey2 = self.n1.getaddressinfo(blinded_addr2)["pubkey"]
+            pubkeys = [pubkey, pubkey2]
+            # Add multisig address
+            unconfidential_addr = self.nodes[0].addmultisigaddress(2, pubkeys)["address"]
+            self.n1.addmultisigaddress(2, pubkeys)
+            self.nodes[0].importaddress(unconfidential_addr)
+            self.n1.importaddress(unconfidential_addr)
+            # Use blinding key from node 0's original getnewaddress call
+            blinding_pubkey = self.nodes[0].getaddressinfo(blinded_addr)["confidential_key"]
+            blinding_key = self.nodes[0].dumpblindingkey(blinded_addr)
+            # Create blinded address from p2sh address and import corresponding privkey
+            blinded_multisig_addr = self.nodes[0].createblindedaddress(unconfidential_addr, blinding_pubkey)
+            self.nodes[0].importblindingkey(blinded_multisig_addr, blinding_key)
 
         # Issue new asset, to use different assets in one transaction when doing
         # partial blinding. Just to make these tests a bit more elaborate :-)
@@ -617,15 +873,15 @@ class CTTest (BitcoinTestFramework):
         assert_equal(len(unspent), 1)
 
         # Create new UTXO on node1 to be used in our partially-blinded transaction
-        blinded_addr2 = self.nodes[1].getnewaddress()
-        addr2 = self.nodes[1].validateaddress(blinded_addr2)["unconfidential"]
-        self.nodes[1].sendtoaddress(blinded_addr2, 0.11)
-        unspent2 = self.nodes[1].listunspent(0, 0, [addr2])
+        blinded_addr2 = self.n1.getnewaddress()
+        addr2 = self.n1.validateaddress(blinded_addr2)["unconfidential"]
+        self.n1.sendtoaddress(blinded_addr2, 0.11)
+        unspent2 = self.n1.listunspent(0, 0, [addr2])
         assert_equal(len(unspent2), 1)
 
         # The transaction will have three non-fee outputs
         dst_addr = self.nodes[0].getnewaddress()
-        dst_addr2 = self.nodes[1].getnewaddress()
+        dst_addr2 = self.n1.getnewaddress()
         dst_addr3 = self.nodes[2].getnewaddress()
 
         # Inputs are selected up front
@@ -649,7 +905,7 @@ class CTTest (BitcoinTestFramework):
         # Blind the first part of the transaction - we need to supply the
         # assetcommmitments for all of the inputs, for the surjectionproof
         # to be valid after we combine the transactions
-        blindtx = self.nodes[1].blindrawtransaction(
+        blindtx = self.n1.blindrawtransaction(
             rawtx, True, [
                 unspent2[0]['assetcommitment'],
                 unspent[0]['assetcommitment'],
@@ -699,7 +955,7 @@ class CTTest (BitcoinTestFramework):
                 unspent2[0]['assetcommitment']
             ])
 
-        stx2 = self.nodes[1].signrawtransactionwithwallet(blindtx)
+        stx2 = self.n1.signrawtransactionwithwallet(blindtx)
         stx = self.nodes[0].signrawtransactionwithwallet(stx2['hex'])
         self.sync_all()
 
@@ -713,7 +969,7 @@ class CTTest (BitcoinTestFramework):
                 unspent_asset[0]['assetcommitment']
             ])
 
-        stx2 = self.nodes[1].signrawtransactionwithwallet(blindtx)
+        stx2 = self.n1.signrawtransactionwithwallet(blindtx)
         stx = self.nodes[0].signrawtransactionwithwallet(stx2['hex'])
         txid = self.nodes[2].sendrawtransaction(stx['hex'])
         self.generate(self.nodes[2], 1)

@@ -113,9 +113,7 @@ BASE_SCRIPTS = [
     # TODO(descriptor-migration): feature_issuance.py --descriptors needs the
     # importaddress (watch-only) flow reworked for descriptor wallets.
     'feature_confidential_transactions.py --legacy-wallet',
-    # TODO(descriptor-migration): feature_confidential_transactions.py --descriptors
-    # needs the dumpwallet/sethdseed/importmasterblindingkey recovery flow reworked
-    # to use listdescriptors/importdescriptors, and addmultisigaddress replaced.
+    'feature_confidential_transactions.py --descriptors',
     'feature_default_asset_name.py --legacy-wallet',
     'feature_default_asset_name.py --descriptors',
     'feature_assetsdir.py --legacy-wallet',
