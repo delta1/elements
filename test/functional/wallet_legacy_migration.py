@@ -52,6 +52,27 @@ class WalletLegacyMigrationTest(BitcoinTestFramework):
         master_blind = legacy.dumpmasterblindingkey()
         assert master_blind != "00" * 32
 
+        self.log.info("Snapshot derivation invariants across address types")
+        # Generate several addresses of each type and record their scriptPubKey
+        # and blinding pubkey. After migration these must be byte-identical, which
+        # proves the descriptor derivation matches the legacy derivation for both
+        # the script and the CT blinding key.
+        def snapshot(wallet, addrs):
+            snap = {}
+            for a in addrs:
+                info = wallet.getaddressinfo(a)
+                snap[a] = (info["scriptPubKey"], info.get("confidential_key"), info["confidential"])
+            return snap
+
+        invariant_addrs = []
+        for addr_type in ("legacy", "p2sh-segwit", "bech32"):
+            for _ in range(3):
+                invariant_addrs.append(legacy.getnewaddress("", addr_type))
+        legacy_snapshot = snapshot(legacy, invariant_addrs)
+        # Every address must be IsMine on the legacy wallet.
+        for a in invariant_addrs:
+            assert_equal(legacy.getaddressinfo(a)["ismine"], True)
+
         # Receive to a confidential address.
         recv_addr = legacy.getnewaddress()
         recv_info = legacy.getaddressinfo(recv_addr)
@@ -93,6 +114,12 @@ class WalletLegacyMigrationTest(BitcoinTestFramework):
         assert len(ct_descs) > 0, "migrated wallet did not export ct(slip77(...)) descriptors"
         for d in ct_descs:
             assert ("slip77(" + master_blind + ")") in d, d
+
+        self.log.info("Derivation invariants hold: byte-identical scriptPubKey + blinding pubkey")
+        migrated_snapshot = snapshot(migrated, invariant_addrs)
+        assert_equal(migrated_snapshot, legacy_snapshot)
+        for a in invariant_addrs:
+            assert_equal(migrated.getaddressinfo(a)["ismine"], True)
 
         self.log.info("Confidential balance survives and stays unblindable")
         assert_equal(migrated.getbalance()["bitcoin"], 12)

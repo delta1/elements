@@ -109,6 +109,14 @@ class WalletPeginMigrationTest(BitcoinTestFramework):
         claim_addr = self.claim_address(legacy, claim_script)
         assert_equal(legacy.getaddressinfo(claim_addr)["ismine"], True)
 
+        # A second peg-in address that will remain *pending* (no deposit) until
+        # after migration, to prove a truly-pending claim is not lost.
+        pending = legacy.getpeginaddress()
+        pending_mainchain = pending["mainchain_address"]
+        pending_claim_script = pending["claim_script"]
+        pending_claim_addr = self.claim_address(legacy, pending_claim_script)
+        assert_equal(legacy.getaddressinfo(pending_claim_addr)["ismine"], True)
+
         self.log.info("Deposit on the parent chain (peg-in pending on the legacy wallet)")
         txid = parent.sendtoaddress(mainchain_address, 24)
         find_vout_for_address(parent, txid, mainchain_address)
@@ -121,10 +129,11 @@ class WalletPeginMigrationTest(BitcoinTestFramework):
         migrated = sidechain.get_wallet_rpc("legacy")
         assert_equal(migrated.getwalletinfo()["descriptors"], True)
 
-        self.log.info("Migrated wallet still owns the peg-in claim script")
+        self.log.info("Migrated wallet still owns both peg-in claim scripts")
         assert_equal(migrated.getaddressinfo(claim_addr)["ismine"], True)
+        assert_equal(migrated.getaddressinfo(pending_claim_addr)["ismine"], True)
 
-        self.log.info("Migrated (descriptor) wallet can claim and spend the peg-in")
+        self.log.info("Migrated (descriptor) wallet can claim and spend the deposited peg-in")
         pegin_txid = migrated.claimpegin(raw, proof, claim_script)
         self.generate(sidechain, 1, sync_fun=self.no_op)
         assert_equal(migrated.gettransaction(pegin_txid)["confirmations"], 1)
@@ -134,6 +143,16 @@ class WalletPeginMigrationTest(BitcoinTestFramework):
         spend_txid = migrated.sendtoaddress(dest, 10)
         self.generate(sidechain, 1, sync_fun=self.no_op)
         assert_equal(migrated.gettransaction(spend_txid)["confirmations"], 1)
+
+        self.log.info("A peg-in deposited to the *pending* pre-migration address is still claimable")
+        pending_txid = parent.sendtoaddress(pending_mainchain, 15)
+        find_vout_for_address(parent, pending_txid, pending_mainchain)
+        self.generate(parent, 12, sync_fun=self.no_op)
+        pending_proof = parent.gettxoutproof([pending_txid])
+        pending_raw = parent.gettransaction(pending_txid)["hex"]
+        pending_pegin_txid = migrated.claimpegin(pending_raw, pending_proof, pending_claim_script)
+        self.generate(sidechain, 1, sync_fun=self.no_op)
+        assert_equal(migrated.gettransaction(pending_pegin_txid)["confirmations"], 1)
 
     @staticmethod
     def claim_address(wallet, claim_script):
