@@ -126,6 +126,7 @@ BASE_SCRIPTS = [
     'feature_initial_reissuance_token.py --descriptors',
     'wallet_descriptor_ct.py --descriptors',
     'wallet_descriptor_pegin.py --descriptors',
+    'wallet_descriptor_backup_restore.py --descriptors',
     'feature_progress.py',
     'rpc_getnewblockhex.py',
     'wallet_elements_regression_1172.py --legacy-wallet',
@@ -473,6 +474,8 @@ BASE_SCRIPTS = [
     'feature_help.py',
     'feature_shutdown.py',
     'wallet_migration.py',
+    'wallet_legacy_migration.py',
+    'wallet_pegin_migration.py',
     'p2p_ibd_txrelay.py',
     'p2p_seednode.py',
     # Don't append tests at the end to avoid merge conflicts
