@@ -112,6 +112,7 @@ BASE_SCRIPTS = [
     'feature_pak.py --legacy-wallet',
     'feature_pak.py --descriptors',
     'feature_blocksign.py --legacy-wallet',
+    'feature_blocksign.py --descriptors',
     'rpc_calcfastmerkleroot.py',
     'feature_txwitness.py',
     'rpc_tweakfedpeg.py --legacy-wallet',

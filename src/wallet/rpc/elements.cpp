@@ -166,10 +166,14 @@ RPCHelpMan signblock()
         provider = spk_man;
     } else {
         // Descriptor wallet: assemble a signing provider for the signblockscript.
-        // The signblockscript is a native segwit scriptPubKey: either a wpkh
-        // (single-sig; empty witnessScript) or a P2WSH whose inner script is the
-        // supplied witnessScript. Gather keys for the signblockscript and, when a
-        // witnessScript is given, for the pubkeys/keyhashes referenced by it.
+        // The signblockscript can be:
+        //  - pre-dynafed: the block challenge script directly, typically a bare
+        //    k-of-n multisig or a single pubkey;
+        //  - post-dynafed: a native segwit scriptPubKey (wpkh single-sig, or a
+        //    P2WSH whose inner script is the supplied witnessScript).
+        // Descriptor SPKMs track standard scriptPubKeys (wpkh/pkh), not bare
+        // multisig/pubkey scripts, so for those we resolve keys per embedded
+        // pubkey by mapping each to its p2wpkh and p2pkh scriptPubKeys.
         LOCK(pwallet->cs_wallet);
 
         auto merge_for = [&](const CScript& script) {
@@ -182,28 +186,37 @@ RPCHelpMan signblock()
             }
         };
 
-        merge_for(sign_script);
+        auto merge_for_pubkey = [&](const CPubKey& pubkey) {
+            if (!pubkey.IsValid()) return;
+            merge_for(GetScriptForDestination(WitnessV0KeyHash(pubkey.GetID())));
+            merge_for(GetScriptForDestination(PKHash(pubkey.GetID())));
+            merged_provider.pubkeys.emplace(pubkey.GetID(), pubkey);
+        };
 
+        // Resolve keys for a script directly and, if it is a bare multisig or
+        // pubkey script, for each embedded pubkey.
+        auto resolve_script = [&](const CScript& script) {
+            merge_for(script);
+            std::vector<std::vector<unsigned char>> solutions;
+            TxoutType typ = Solver(script, solutions);
+            if (typ == TxoutType::MULTISIG) {
+                for (size_t i = 1; i + 1 < solutions.size(); ++i) {
+                    merge_for_pubkey(CPubKey(solutions[i]));
+                }
+            } else if (typ == TxoutType::PUBKEY) {
+                merge_for_pubkey(CPubKey(solutions[0]));
+            }
+        };
+
+        // Pre-dynafed: the challenge script itself is what we must satisfy.
+        resolve_script(sign_script);
+
+        // Post-dynafed: the signblockscript is P2WSH; provide the inner
+        // witnessScript and resolve keys for the pubkeys it references.
         if (!witness_bytes.empty()) {
             CScript witnessScript(witness_bytes.begin(), witness_bytes.end());
             merged_provider.scripts.emplace(CScriptID(witnessScript), witnessScript);
-            // Pull keys for any pubkeys embedded in the witnessScript by mapping
-            // each to its p2wpkh scriptPubKey (the form descriptor SPKMs track).
-            std::vector<std::vector<unsigned char>> solutions;
-            TxoutType typ = Solver(witnessScript, solutions);
-            if (typ == TxoutType::MULTISIG) {
-                for (size_t i = 1; i + 1 < solutions.size(); ++i) {
-                    CPubKey pubkey(solutions[i]);
-                    if (pubkey.IsValid()) {
-                        merge_for(GetScriptForDestination(WitnessV0KeyHash(pubkey.GetID())));
-                    }
-                }
-            } else if (typ == TxoutType::PUBKEY) {
-                CPubKey pubkey(solutions[0]);
-                if (pubkey.IsValid()) {
-                    merge_for(GetScriptForDestination(WitnessV0KeyHash(pubkey.GetID())));
-                }
-            }
+            resolve_script(witnessScript);
         }
         provider = &merged_provider;
     }
