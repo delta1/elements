@@ -22,7 +22,8 @@ class RegressionTest(BitcoinTestFramework):
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
-        self.skip_if_no_bdb()
+        if not self.options.descriptors:
+            self.skip_if_no_bdb()
 
     def run_test(self):
         self.log.info("Start in Bitcoin regtest mode")
