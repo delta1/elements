@@ -8,6 +8,7 @@
 #include <node/types.h>
 #include <outputtype.h>
 #include <script/descriptor.h>
+#include <script/pegins.h>
 #include <script/script.h>
 #include <script/sign.h>
 #include <script/solver.h>
@@ -2547,6 +2548,21 @@ bool DescriptorScriptPubKeyMan::SignTransaction(CMutableTransaction& tx, const s
             continue;
         }
         keys->Merge(std::move(*coin_keys));
+    }
+
+    // ELEMENTS: peg-in inputs have no entry in `coins` because their prevout is
+    // on the parent chain. The output being spent is the claim script embedded in
+    // the peg-in witness (a wpkh over one of this wallet's keys). Add a signing
+    // provider for each such claim script so descriptor wallets can sign peg-ins,
+    // matching the legacy key manager which always signs with the full keystore.
+    for (size_t i = 0; i < tx.vin.size(); ++i) {
+        if (!tx.vin[i].m_is_pegin) continue;
+        if (i >= tx.witness.vtxinwit.size()) continue;
+        CTxOut pegin_output = GetPeginOutputFromWitness(tx.witness.vtxinwit[i].m_pegin_witness);
+        if (pegin_output.scriptPubKey.empty()) continue;
+        std::unique_ptr<FlatSigningProvider> pegin_keys = GetSigningProvider(pegin_output.scriptPubKey, true);
+        if (!pegin_keys) continue;
+        keys->Merge(std::move(*pegin_keys));
     }
 
     return ::SignTransaction(tx, keys.get(), coins, sighash, Params().HashGenesisBlock(), input_errors);

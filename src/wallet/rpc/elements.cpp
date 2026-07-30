@@ -179,16 +179,14 @@ RPCHelpMan getpeginaddress()
         throw JSONRPCError(RPC_WALLET_ERROR, "This action cannot be completed during initial sync or reindexing.");
     }
 
-    LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
-    if (!spk_man) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
-    }
-
     if (!pwallet->IsLocked()) {
         pwallet->TopUpKeyPool();
     }
 
-    // Use native witness destination
+    // Use native witness destination. For descriptor wallets this address is
+    // owned by the wallet's active wpkh descriptor, so the eventual peg-in claim
+    // output is IsMine without any pegin-specific bookkeeping. For legacy wallets
+    // we additionally register the raw script below.
     auto dest = pwallet->GetNewDestination(OutputType::BECH32, "");
     if (!dest) {
         throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, util::ErrorString(dest).original);
@@ -196,8 +194,13 @@ RPCHelpMan getpeginaddress()
 
     CScript dest_script = GetScriptForDestination(*dest);
 
-    // Also add raw scripts to index to recognize later.
-    spk_man->AddCScript(dest_script);
+    // Legacy wallets track the claim script via the legacy key manager's raw
+    // script store so the claim output is recognized later. Descriptor wallets
+    // do not have (or need) this: the bech32 output is already covered by the
+    // active wpkh descriptor.
+    if (LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan()) {
+        spk_man->AddCScript(dest_script);
+    }
 
     // Get P2CH deposit address on mainchain from most recent fedpegscript.
     const CChainParams& chainparams = Params();

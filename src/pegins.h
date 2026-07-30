@@ -12,12 +12,13 @@
 #include <primitives/bitcoin/merkleblock.h>
 #include <primitives/transaction.h>
 #include <script/script.h>
+#include <script/pegins.h>
 #include <chain.h>
 
 #include <variant>
 
-/** Calculates script necessary for p2ch peg-in transactions */
-CScript calculate_contract(const CScript& federationRedeemScript, const CScript& witnessProgram);
+// calculate_contract() lives in script/pegins.h (common library) so the descriptor
+// engine can reach it; re-exported here via the include above.
 bool GetAmountFromParentChainPegin(CAmount& amount, const Sidechain::Bitcoin::CTransaction& txBTC, unsigned int nOut);
 bool GetAmountFromParentChainPegin(CAmount& amount, const CTransaction& txBTC, unsigned int nOut);
 /** Check whether a parent chain block hash satisfies the proof-of-work requirement specified by nBits */
@@ -25,14 +26,7 @@ bool CheckParentProofOfWork(uint256 hash, unsigned int nBits, const Consensus::P
 /** Checks pegin witness for validity */
 bool IsValidPeginWitness(const CScriptWitness& pegin_witness, const std::vector<std::pair<CScript, CScript>>& fedpegscripts, const COutPoint& prevout, std::string& err_msg, bool check_depth, bool* depth_failed = nullptr);
 
-/* Consensus-critical. Matching against telescoped multisig used on Liquid v1:
- * Pseudo-structure:
- * Check number of elements on stack
- * If enough for federation multisig, push all multisig args onto stack except OP_CMS
- * If not, check CSV timeout, then if successful, push emergency key multisig args on
- * stack except OP_CMS. End if, then push OP_CMS.
- */
-bool MatchLiquidWatchman(const CScript& script);
+// MatchLiquidWatchman() also lives in script/pegins.h (re-exported via include above).
 
 /** Get full fedpegscripts from two previous epoch starts based on given index
  * nextblock_validation is false when doing block validation, true for mempool

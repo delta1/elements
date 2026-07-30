@@ -121,6 +121,7 @@ BASE_SCRIPTS = [
     'feature_initial_reissuance_token.py --legacy-wallet',
     'feature_initial_reissuance_token.py --descriptors',
     'wallet_descriptor_ct.py --descriptors',
+    'wallet_descriptor_pegin.py --descriptors',
     'feature_progress.py',
     'rpc_getnewblockhex.py',
     'wallet_elements_regression_1172.py --legacy-wallet',

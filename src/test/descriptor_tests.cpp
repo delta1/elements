@@ -2,11 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <addresstype.h>
 #include <crypto/hmac_sha256.h>
 #include <key.h>
 #include <pubkey.h>
 #include <script/descriptor.h>
+#include <script/pegins.h>
 #include <script/sign.h>
+#include <script/script.h>
 #include <test/util/setup_common.h>
 #include <uint256.h>
 #include <util/strencodings.h>
@@ -1188,6 +1191,109 @@ BOOST_AUTO_TEST_CASE(ct_descriptor_test)
     // Checksum mutation is detected: flip one char in the checksum.
     {
         std::string with_sum = ctdesc->ToString();
+        BOOST_CHECK(with_sum.size() > 9 && with_sum[with_sum.size() - 9] == '#');
+        std::string mutated = with_sum;
+        char& c = mutated[mutated.size() - 1];
+        c = (c == 'q') ? 'p' : 'q';
+        FlatSigningProvider k; std::string e;
+        auto p = Parse(mutated, k, e, /*require_checksum=*/true);
+        BOOST_CHECK(p.empty());
+    }
+}
+
+BOOST_AUTO_TEST_CASE(pegin_descriptor_test)
+{
+    // A real fedpegscript vector (same as pegin_witness_tests.cpp): a 1-of-1 CMS.
+    const std::string kFedpeg = "512103dff4923d778550cc13ce0d887d737553b4b58f4e8e886507fc39f5e447b2186451ae";
+    auto fedpeg_bytes = ParseHex<unsigned char>(kFedpeg);
+    CScript fedpegscript(fedpeg_bytes.begin(), fedpeg_bytes.end());
+
+    // A ranged claim key. wpkh() requires a compressed key; xpub derivation yields
+    // compressed keys.
+    const std::string claim_prv = "[ffffffff/13h]xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt/0/*";
+    const std::string claim_pub = "[ffffffff/13h]xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH/0/*";
+    const std::string desc_prv = "pegin(" + kFedpeg + "," + claim_prv + ")";
+    const std::string desc_pub = "pegin(" + kFedpeg + "," + claim_pub + ")";
+
+    FlatSigningProvider keys; std::string error;
+    auto descs = Parse(desc_prv, keys, error);
+    BOOST_CHECK_MESSAGE(!descs.empty(), "pegin() parse failed: " + error);
+    if (descs.empty()) return;
+    auto& desc = descs[0];
+
+    // Flags and fedpegscript exposure.
+    BOOST_CHECK(desc->IsPegin());
+    BOOST_CHECK(desc->GetPeginFedpegScript() == fedpegscript);
+    BOOST_CHECK(!desc->IsSingleType());
+
+    // Round-trips: public form drops xprv->xpub; private form preserves xprv.
+    std::string round = desc->ToString();
+    BOOST_CHECK(EqualDescriptor(round, desc_pub));
+    std::string priv_round;
+    BOOST_CHECK(desc->ToPrivateString(keys, priv_round));
+    BOOST_CHECK(EqualDescriptor(priv_round, desc_prv));
+    BOOST_CHECK(!GetDescriptorChecksum(round).empty());
+
+    // Expansion produces three scripts and they match calculate_contract exactly.
+    // Independently derive the expected claim key at each index via a wpkh()
+    // descriptor over the same key, then cross-check the contract math.
+    FlatSigningProvider wpkh_keys; std::string werr;
+    auto wpkh = Parse("wpkh(" + claim_prv + ")", wpkh_keys, werr);
+    BOOST_CHECK_MESSAGE(!wpkh.empty(), "wpkh parse failed: " + werr);
+    if (wpkh.empty()) return;
+
+    for (int pos : {0, 1, 7, 100}) {
+        std::vector<CScript> scripts; FlatSigningProvider a;
+        BOOST_CHECK(desc->Expand(pos, keys, scripts, a));
+        BOOST_CHECK_EQUAL(scripts.size(), 3U);
+        if (scripts.size() != 3U) continue;
+
+        std::vector<CScript> claim_only; FlatSigningProvider b;
+        BOOST_CHECK(wpkh[0]->Expand(pos, wpkh_keys, claim_only, b));
+        BOOST_CHECK_EQUAL(claim_only.size(), 1U);
+        const CScript& claim_script = claim_only[0];
+
+        // scripts[0] is the sidechain claim script (== wpkh(claim key)).
+        BOOST_CHECK(scripts[0] == claim_script);
+
+        // scripts[1] is P2WSH(calculate_contract(fedpegscript, claim_script)).
+        CScript contract = calculate_contract(fedpegscript, claim_script);
+        CScript p2wsh = GetScriptForDestination(WitnessV0ScriptHash(contract));
+        BOOST_CHECK(scripts[1] == p2wsh);
+
+        // scripts[2] is the P2SH-wrapped form for legacy/non-dynafed chains.
+        CScript p2sh_p2wsh = GetScriptForDestination(ScriptHash(p2wsh));
+        BOOST_CHECK(scripts[2] == p2sh_p2wsh);
+    }
+
+    // Malformed: non-hex fedpegscript.
+    {
+        FlatSigningProvider k; std::string e;
+        auto p = Parse("pegin(nothex," + claim_pub + ")", k, e);
+        BOOST_CHECK(p.empty());
+    }
+    // Malformed: missing claim key.
+    {
+        FlatSigningProvider k; std::string e;
+        auto p = Parse("pegin(" + kFedpeg + ")", k, e);
+        BOOST_CHECK(p.empty());
+    }
+    // Malformed: uncompressed claim key is rejected (wpkh needs compressed).
+    {
+        FlatSigningProvider k; std::string e;
+        const std::string uncompressed = "04c56fe4a92d401bcbf1b3dfbe4ac3dac5602ca155a3681497f02c1b9a733b92d704e2da6ec4162e4846af9236ef4171069ac8b7f8234a8405b6cadd96f34f5a31";
+        auto p = Parse("pegin(" + kFedpeg + "," + uncompressed + ")", k, e);
+        BOOST_CHECK(p.empty());
+    }
+    // pegin() cannot be nested inside sh().
+    {
+        FlatSigningProvider k; std::string e;
+        auto p = Parse("sh(pegin(" + kFedpeg + "," + claim_pub + "))", k, e);
+        BOOST_CHECK(p.empty());
+    }
+    // Checksum mutation is detected.
+    {
+        std::string with_sum = desc->ToString();
         BOOST_CHECK(with_sum.size() > 9 && with_sum[with_sum.size() - 9] == '#');
         std::string mutated = with_sum;
         char& c = mutated[mutated.size() - 1];

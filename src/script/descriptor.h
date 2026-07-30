@@ -182,6 +182,15 @@ struct Descriptor {
      *  descriptor. Returns an invalid CKey if this descriptor carries no blinding
      *  information or the key cannot be derived. */
     virtual CKey GetBlindingKey(const CScript& script) const { return CKey(); }
+
+    // ELEMENTS: peg-in descriptor support.
+    //
+    /** Whether this descriptor is a pegin(<fedpegscript>, <claim_key>) wrapper. */
+    virtual bool IsPegin() const { return false; }
+
+    /** For a pegin() descriptor, return the raw federation peg script (the inner
+     *  witnessScript, not the P2WSH/P2SH program). Empty for non-pegin descriptors. */
+    virtual CScript GetPeginFedpegScript() const { return CScript(); }
 };
 
 /** ELEMENTS: derive a per-output blinding key from a slip77 master key, matching

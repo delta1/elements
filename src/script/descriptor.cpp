@@ -4,12 +4,14 @@
 
 #include <script/descriptor.h>
 
+#include <addresstype.h>
 #include <crypto/hmac_sha256.h>
 #include <hash.h>
 #include <key_io.h>
 #include <pubkey.h>
 #include <script/miniscript.h>
 #include <script/parsing.h>
+#include <script/pegins.h>
 #include <script/script.h>
 #include <script/signingprovider.h>
 #include <script/solver.h>
@@ -1478,6 +1480,74 @@ public:
     }
 };
 
+// ELEMENTS: Peg-in descriptors.
+//
+/** A parsed pegin(FEDPEGSCRIPT, CLAIM_KEY) descriptor.
+ *
+ *  The single pubkey argument is the peg-in claim key. The sidechain-side "claim
+ *  script" is a native v0 witness program over that key (wpkh), exactly matching
+ *  getpeginaddress which uses OutputType::BECH32. The mainchain deposit address is
+ *  P2WSH(calculate_contract(fedpegscript, claim_script)); for legacy/non-dynafed
+ *  chains this is additionally P2SH-wrapped.
+ *
+ *  Unlike ordinary descriptors this produces multiple top-level scripts (like
+ *  combo): the sidechain claim script plus the mainchain deposit script(s). This
+ *  lets the wallet recognize both a peg-in deposit output and the eventual claim.
+ *  Only the raw fedpegscript hex is stored; the outer program is derived.
+ */
+class PeginDescriptor final : public DescriptorImpl
+{
+    const CScript m_fedpegscript;
+protected:
+    std::string ToStringExtra() const override { return HexStr(m_fedpegscript); }
+
+    std::vector<CScript> MakeScripts(const std::vector<CPubKey>& keys, Span<const CScript>, FlatSigningProvider& out) const override
+    {
+        std::vector<CScript> ret;
+        if (keys.empty()) return ret;
+        const CPubKey& key = keys[0];
+        CKeyID id = key.GetID();
+        out.pubkeys.emplace(id, key);
+
+        // Sidechain claim script: native v0 wpkh over the claim key. This is the
+        // "claim_script" committed to by the mainchain deposit address.
+        CScript claim_script = GetScriptForDestination(WitnessV0KeyHash(id));
+        out.scripts.emplace(CScriptID(claim_script), claim_script);
+
+        // Mainchain deposit: P2WSH(contract) and P2SH(P2WSH(contract)). We emit
+        // both wrapping forms because the descriptor stores only the raw
+        // fedpegscript and the actual on-chain form depends on chain params
+        // (dynafed activation). Consensus (CheckPeginTx) accepts either, so
+        // recognizing both keeps IsMine correct across chain configurations.
+        CScript contract = calculate_contract(m_fedpegscript, claim_script);
+        CScript p2wsh = GetScriptForDestination(WitnessV0ScriptHash(contract));
+        CScript p2sh_p2wsh = GetScriptForDestination(ScriptHash(p2wsh));
+        out.scripts.emplace(CScriptID(contract), contract);
+        out.scripts.emplace(CScriptID(p2wsh), p2wsh);
+
+        // Order: claim script first (the address getpeginaddress returns as
+        // claim_script), then mainchain deposit forms.
+        ret.emplace_back(std::move(claim_script));
+        ret.emplace_back(std::move(p2wsh));
+        ret.emplace_back(std::move(p2sh_p2wsh));
+        return ret;
+    }
+public:
+    PeginDescriptor(std::unique_ptr<PubkeyProvider> claim_key, CScript fedpegscript)
+        : DescriptorImpl(Vector(std::move(claim_key)), "pegin"), m_fedpegscript(std::move(fedpegscript)) {}
+
+    bool IsSingleType() const final { return false; }
+    std::optional<OutputType> GetOutputType() const override { return std::nullopt; }
+
+    bool IsPegin() const override { return true; }
+    CScript GetPeginFedpegScript() const override { return m_fedpegscript; }
+
+    std::unique_ptr<DescriptorImpl> Clone() const override
+    {
+        return std::make_unique<PeginDescriptor>(m_pubkey_args.at(0)->Clone(), m_fedpegscript);
+    }
+};
+
 ////////////////////////////////////////////////////////////////////////////
 // Parser                                                                 //
 ////////////////////////////////////////////////////////////////////////////
@@ -1887,6 +1957,36 @@ std::vector<std::unique_ptr<DescriptorImpl>> ParseScript(uint32_t& key_exp_index
         return ret;
     } else if (Func("ct", expr)) {
         error = "Can only have ct() at top level";
+        return {};
+    }
+    // ELEMENTS: pegin(FEDPEGSCRIPT, CLAIM_KEY) peg-in descriptor.
+    if (ctx == ParseScriptContext::TOP && Func("pegin", expr)) {
+        // First argument: the raw federation peg script, as hex.
+        auto fedpeg_arg = Expr(expr);
+        std::string fedpeg_hex(fedpeg_arg.begin(), fedpeg_arg.end());
+        if (!IsHex(fedpeg_hex) || fedpeg_hex.empty()) {
+            error = "pegin(): first argument must be a non-empty hex fedpegscript";
+            return {};
+        }
+        auto fedpeg_bytes = ParseHex<unsigned char>(fedpeg_hex);
+        CScript fedpegscript(fedpeg_bytes.begin(), fedpeg_bytes.end());
+        if (expr.size() == 0 || expr[0] != ',') {
+            error = "pegin(): expected a second (claim key) argument";
+            return {};
+        }
+        expr = expr.subspan(1); // skip the comma
+        auto pubkeys = ParsePubkey(key_exp_index, expr, ParseScriptContext::P2WPKH, out, error);
+        if (pubkeys.empty()) {
+            error = strprintf("pegin(): %s", error);
+            return {};
+        }
+        ++key_exp_index;
+        for (auto& pubkey : pubkeys) {
+            ret.emplace_back(std::make_unique<PeginDescriptor>(std::move(pubkey), fedpegscript));
+        }
+        return ret;
+    } else if (Func("pegin", expr)) {
+        error = "Can only have pegin() at top level";
         return {};
     }
     if (Func("pk", expr)) {
