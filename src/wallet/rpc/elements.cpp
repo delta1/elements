@@ -53,6 +53,30 @@ static CSecp256k1Init instance_of_csecp256k1;
 }
 
 namespace wallet {
+
+// ELEMENTS: Retrieve the private key for a wallet-owned pubkey, for both legacy
+// and descriptor wallets. Descriptor per-address keys are derived on demand and
+// are not present in CWallet::GetKey's map, so we resolve them through the
+// descriptor signing provider for the pubkey's p2wpkh script. Returns false if
+// the key is unavailable (e.g. locked or not owned).
+static bool GetWalletPrivKeyForPubKey(CWallet& wallet, const CPubKey& pubkey, CKey& key_out) EXCLUSIVE_LOCKS_REQUIRED(wallet.cs_wallet)
+{
+    if (LegacyScriptPubKeyMan* legacy = wallet.GetLegacyScriptPubKeyMan()) {
+        return legacy->GetKey(pubkey.GetID(), key_out);
+    }
+    // Descriptor wallet: find the SPKM that owns the pubkey's wpkh script and ask
+    // it for a signing provider that includes private keys.
+    const CScript spk = GetScriptForDestination(WitnessV0KeyHash(pubkey.GetID()));
+    for (auto* spkm : wallet.GetScriptPubKeyMans(spk)) {
+        if (auto* desc = dynamic_cast<DescriptorScriptPubKeyMan*>(spkm)) {
+            if (auto prov = desc->GetScriptSigningProvider(spk, /*include_private=*/true)) {
+                if (prov->GetKey(pubkey.GetID(), key_out)) return true;
+            }
+        }
+    }
+    return false;
+}
+
 RPCHelpMan signblock()
 {
     return RPCHelpMan{"signblock",
@@ -88,10 +112,11 @@ RPCHelpMan signblock()
     if (!DecodeHexBlk(block, request.params[0].get_str()))
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
 
+    // Legacy wallets sign via their FillableSigningProvider (and need the
+    // signblock witnessScript added to the script store). Descriptor wallets do
+    // not have a legacy key manager; for them we assemble a signing provider from
+    // the wallet's solving providers plus the supplied witnessScript.
     LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
-    if (!spk_man) {
-        throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
-    }
 
     {
         LOCK(cs_main);
@@ -113,21 +138,82 @@ RPCHelpMan signblock()
         }
     }
 
-    // Expose SignatureData internals in return value in lieu of "Partially Signed Bitcoin Blocks"
-    SignatureData block_sigs;
-    if (block.m_dynafed_params.IsNull()) {
-        GenericSignScript(*spk_man, block.GetBlockHeader(), block.proof.challenge, block_sigs, SCRIPT_NO_SIGHASH_BYTE /* additional_flags */);
-    } else {
+    // Build a signing provider for the script we need to satisfy. For legacy
+    // wallets this is the legacy key manager directly; for descriptor wallets we
+    // merge the wallet's solving provider for the relevant script(s) with the
+    // caller-provided witnessScript.
+    const CScript& sign_script = block.m_dynafed_params.IsNull()
+        ? block.proof.challenge
+        : block.m_dynafed_params.m_current.m_signblockscript;
+
+    FlatSigningProvider merged_provider;
+    const SigningProvider* provider = nullptr;
+
+    std::vector<unsigned char> witness_bytes;
+    if (!block.m_dynafed_params.IsNull()) {
         if (request.params[1].isNull()) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Signing dynamic blocks requires the witnessScript argument");
         }
-        std::vector<unsigned char> witness_bytes(ParseHex(request.params[1].get_str()));
-        // Note that we're adding the signblockscript to the wallet so it can actually
-        // satisfy witness program scriptpubkeys
+        witness_bytes = ParseHex(request.params[1].get_str());
+    }
+
+    if (spk_man) {
+        // Note that we're adding the signblockscript to the wallet so it can
+        // actually satisfy witness program scriptpubkeys.
         if (!witness_bytes.empty()) {
             spk_man->AddCScript(CScript(witness_bytes.begin(), witness_bytes.end()));
         }
-        GenericSignScript(*spk_man, block.GetBlockHeader(), block.m_dynafed_params.m_current.m_signblockscript, block_sigs, SCRIPT_VERIFY_NONE /* additional_flags */);
+        provider = spk_man;
+    } else {
+        // Descriptor wallet: assemble a signing provider for the signblockscript.
+        // The signblockscript is a native segwit scriptPubKey: either a wpkh
+        // (single-sig; empty witnessScript) or a P2WSH whose inner script is the
+        // supplied witnessScript. Gather keys for the signblockscript and, when a
+        // witnessScript is given, for the pubkeys/keyhashes referenced by it.
+        LOCK(pwallet->cs_wallet);
+
+        auto merge_for = [&](const CScript& script) {
+            for (const auto& spkm : pwallet->GetScriptPubKeyMans(script)) {
+                if (auto* desc_spkm = dynamic_cast<DescriptorScriptPubKeyMan*>(spkm)) {
+                    if (auto keys = desc_spkm->GetScriptSigningProvider(script, /*include_private=*/true)) {
+                        merged_provider.Merge(std::move(*keys));
+                    }
+                }
+            }
+        };
+
+        merge_for(sign_script);
+
+        if (!witness_bytes.empty()) {
+            CScript witnessScript(witness_bytes.begin(), witness_bytes.end());
+            merged_provider.scripts.emplace(CScriptID(witnessScript), witnessScript);
+            // Pull keys for any pubkeys embedded in the witnessScript by mapping
+            // each to its p2wpkh scriptPubKey (the form descriptor SPKMs track).
+            std::vector<std::vector<unsigned char>> solutions;
+            TxoutType typ = Solver(witnessScript, solutions);
+            if (typ == TxoutType::MULTISIG) {
+                for (size_t i = 1; i + 1 < solutions.size(); ++i) {
+                    CPubKey pubkey(solutions[i]);
+                    if (pubkey.IsValid()) {
+                        merge_for(GetScriptForDestination(WitnessV0KeyHash(pubkey.GetID())));
+                    }
+                }
+            } else if (typ == TxoutType::PUBKEY) {
+                CPubKey pubkey(solutions[0]);
+                if (pubkey.IsValid()) {
+                    merge_for(GetScriptForDestination(WitnessV0KeyHash(pubkey.GetID())));
+                }
+            }
+        }
+        provider = &merged_provider;
+    }
+
+    // Expose SignatureData internals in return value in lieu of "Partially Signed Bitcoin Blocks"
+    SignatureData block_sigs;
+    if (block.m_dynafed_params.IsNull()) {
+        GenericSignScript(*provider, block.GetBlockHeader(), block.proof.challenge, block_sigs, SCRIPT_NO_SIGHASH_BYTE /* additional_flags */);
+    } else {
+        GenericSignScript(*provider, block.GetBlockHeader(), block.m_dynafed_params.m_current.m_signblockscript, block_sigs, SCRIPT_VERIFY_NONE /* additional_flags */);
     }
 
     // Error if sig data didn't "grow"
@@ -313,8 +399,9 @@ RPCHelpMan initpegoutwallet()
 
     LOCK(pwallet->cs_wallet);
 
+    const bool is_descriptor = pwallet->IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS);
     LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
-    if (!spk_man) {
+    if (!spk_man && !is_descriptor) {
         throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
     }
 
@@ -329,16 +416,42 @@ RPCHelpMan initpegoutwallet()
     // Generate a new key that is added to wallet or set from argument
     CPubKey online_pubkey;
     if (request.params[2].isNull()) {
-        std::string error;
-        if (!pwallet->GetOnlinePakKey(online_pubkey, error)) {
-            throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, error);
+        if (is_descriptor) {
+            // Descriptor wallets have no legacy PAK keypool; derive a fresh online
+            // key from the wallet's own descriptor and look up its pubkey. Use a
+            // native segwit (bech32/wpkh) destination, which descriptor wallets
+            // always provide, and resolve the pubkey from its key id.
+            auto dest = pwallet->GetNewDestination(OutputType::BECH32, "liquid_pak");
+            if (!dest) {
+                throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, util::ErrorString(dest).original);
+            }
+            const WitnessV0KeyHash* wpkh = std::get_if<WitnessV0KeyHash>(&*dest);
+            if (!wpkh) {
+                throw JSONRPCError(RPC_WALLET_ERROR, "Error: could not derive a Liquid PAK key.");
+            }
+            const CScript spk = GetScriptForDestination(*wpkh);
+            std::unique_ptr<SigningProvider> prov = pwallet->GetSolvingProvider(spk);
+            CPubKey derived;
+            if (!prov || !prov->GetPubKey(ToKeyID(*wpkh), derived)) {
+                throw JSONRPCError(RPC_WALLET_ERROR, "Error: could not retrieve the derived Liquid PAK pubkey.");
+            }
+            online_pubkey = derived;
+        } else {
+            std::string error;
+            if (!pwallet->GetOnlinePakKey(online_pubkey, error)) {
+                throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, error);
+            }
         }
     } else {
         online_pubkey = CPubKey(ParseHex(request.params[2].get_str()));
         if (!online_pubkey.IsFullyValid()) {
             throw JSONRPCError(RPC_WALLET_ERROR, "Error: Given liquid_pak is not valid.");
         }
-        if (!spk_man->HaveKey(online_pubkey.GetID())) {
+        CKey dummy;
+        const bool have_key = is_descriptor
+            ? GetWalletPrivKeyForPubKey(*pwallet, online_pubkey, dummy)
+            : spk_man->HaveKey(online_pubkey.GetID());
+        if (!have_key) {
             throw JSONRPCError(RPC_WALLET_ERROR, "Error: liquid_pak could not be found in wallet");
         }
     }
@@ -637,8 +750,9 @@ RPCHelpMan sendtomainchain_pak()
     std::string error;
     auto descriptors = Parse(pwallet->offline_desc, provider, error);
 
+    const bool is_descriptor = pwallet->IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS);
     LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
-    if (!spk_man) {
+    if (!spk_man && !is_descriptor) {
         throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
     }
 
@@ -712,8 +826,9 @@ RPCHelpMan sendtomainchain_pak()
 
     // Get online PAK
     CKey masterOnlineKey;
-    if (!spk_man->GetKey(onlinepubkey.GetID(), masterOnlineKey))
+    if (!GetWalletPrivKeyForPubKey(*pwallet, onlinepubkey, masterOnlineKey)) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Given online key is in master set but not in wallet");
+    }
 
     // Tweak offline pubkey by tweakSum aka sumkey to get bitcoin key
     std::vector<unsigned char> tweakSum;
@@ -1912,8 +2027,9 @@ RPCHelpMan generatepegoutproof()
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Pegout freeze is under effect to aid a pak transition to a new list. Please consult the network operator.");
     }
 
+    const bool is_descriptor = pwallet->IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS);
     LegacyScriptPubKeyMan* spk_man = pwallet->GetLegacyScriptPubKeyMan();
-    if (!spk_man) {
+    if (!spk_man && !is_descriptor) {
         throw JSONRPCError(RPC_WALLET_ERROR, "This type of wallet does not support this command");
     }
 
@@ -1928,8 +2044,9 @@ RPCHelpMan generatepegoutproof()
         throw JSONRPCError(RPC_WALLET_ERROR, "Given online key is not in Pegout Authorization Key List");
 
     CKey masterOnlineKey;
-    if (!spk_man->GetKey(onlinepubkey.GetID(), masterOnlineKey))
+    if (!GetWalletPrivKeyForPubKey(*pwallet, onlinepubkey, masterOnlineKey)) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Given online key is in master set but not in wallet");
+    }
 
     //Parse own offline pubkey
     secp256k1_pubkey btcpubkey;

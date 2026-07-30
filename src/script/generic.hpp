@@ -78,7 +78,7 @@ bool GenericVerifyScript(const CScript& scriptSig, const CScriptWitness& witness
 }
 
 template<typename T>
-bool GenericSignScript(const FillableSigningProvider& keystore, const T& data, const CScript& fromPubKey, SignatureData& scriptSig, unsigned int additional_flags)
+bool GenericSignScript(const SigningProvider& keystore, const T& data, const CScript& fromPubKey, SignatureData& scriptSig, unsigned int additional_flags)
 {
     bool sighash_byte = (additional_flags & SCRIPT_NO_SIGHASH_BYTE) ? false : true;
     // Note: Our hash doesn't commit to the sighash byte

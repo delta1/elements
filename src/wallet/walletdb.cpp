@@ -1090,6 +1090,40 @@ static DBErrors LoadDescriptorWalletRecords(CWallet* pwallet, DatabaseBatch& bat
         }
         return DBErrors::LOAD_OK;
     });
+
+    // PAK peg-out wallet settings (initpegoutwallet). These are wallet-level
+    // records shared by legacy and descriptor wallets; load them here so
+    // descriptor wallets retain their PAK configuration across restarts.
+    LoadRecords(pwallet, batch, "onlinekey",
+        [] (CWallet* pwallet, DataStream& key, DataStream& value, std::string& err) {
+        CPubKey online_key;
+        value >> online_key;
+        pwallet->online_key = online_key;
+        return DBErrors::LOAD_OK;
+    });
+    LoadRecords(pwallet, batch, "offlinexpub",
+        [] (CWallet* pwallet, DataStream& key, DataStream& value, std::string& err) {
+        std::vector<unsigned char> vxpub;
+        CExtPubKey xpub;
+        value >> vxpub;
+        xpub.Decode(&vxpub[0]);
+        pwallet->offline_xpub = xpub;
+        return DBErrors::LOAD_OK;
+    });
+    LoadRecords(pwallet, batch, "offlinecounter",
+        [] (CWallet* pwallet, DataStream& key, DataStream& value, std::string& err) {
+        int counter;
+        value >> counter;
+        pwallet->offline_counter = counter;
+        return DBErrors::LOAD_OK;
+    });
+    LoadRecords(pwallet, batch, "offlinedesc",
+        [] (CWallet* pwallet, DataStream& key, DataStream& value, std::string& err) {
+        std::string descriptor;
+        value >> descriptor;
+        pwallet->offline_desc = descriptor;
+        return DBErrors::LOAD_OK;
+    });
     // END ELEMENTS
 
     if (desc_res.m_result <= DBErrors::NONCRITICAL_ERROR) {

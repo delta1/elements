@@ -685,6 +685,12 @@ public:
     // Fetch the SigningProvider for the given pubkey and always include private keys. This should only be called by signing code.
     std::unique_ptr<FlatSigningProvider> GetSigningProvider(const CPubKey& pubkey) const;
 
+    // ELEMENTS: Fetch a SigningProvider for the given script, optionally including
+    // private keys. Public wrapper over the internal helper for signing code that
+    // needs to satisfy a non-transaction script (e.g. signblock). Should only be
+    // called by signing code.
+    std::unique_ptr<FlatSigningProvider> GetScriptSigningProvider(const CScript& script, bool include_private) const;
+
     bool SignTransaction(CMutableTransaction& tx, const std::map<COutPoint, Coin>& coins, int sighash, std::map<int, bilingual_str>& input_errors) const override;
     SigningResult SignMessage(const std::string& message, const PKHash& pkhash, std::string& str_sig) const override;
     std::optional<common::PSBTError> FillPSBT(PartiallySignedTransaction& psbt, const PrecomputedTransactionData& txdata, int sighash_type = SIGHASH_DEFAULT, bool sign = true, bool bip32derivs = false, int* n_signed = nullptr, bool finalize = true) const override;
