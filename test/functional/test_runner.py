@@ -113,6 +113,7 @@ BASE_SCRIPTS = [
     'rpc_calcfastmerkleroot.py',
     'feature_txwitness.py',
     'rpc_tweakfedpeg.py --legacy-wallet',
+    'rpc_tweakfedpeg.py --descriptors',
     'feature_issuance.py --legacy-wallet',
     'feature_issuance.py --descriptors',
     'feature_confidential_transactions.py --legacy-wallet',
