@@ -2266,6 +2266,7 @@ RPCHelpMan importblindingkey()
 RPCHelpMan importmasterblindingkey()
 {
     return RPCHelpMan{"importmasterblindingkey",
+                "\nDEPRECATED. For descriptor wallets, import a ct(slip77(<master blinding key>), ...) descriptor with `importdescriptors` instead."
                 "\nImports a master private blinding key in hex for the wallet."
                 "\nNote: wallets can only have one master blinding key at a time. Funds could be permanently lost if user doesn't know what they are doing. Recommended use is only for wallet recovery using this in conjunction with `sethdseed`.\n",
                 {
@@ -2282,6 +2283,8 @@ RPCHelpMan importmasterblindingkey()
     CWallet* const pwallet = wallet.get();
 
     LOCK(pwallet->cs_wallet);
+
+    pwallet->WalletLogPrintf("WARNING: importmasterblindingkey is deprecated. For descriptor wallets, import a ct(slip77(...)) descriptor with importdescriptors instead.\n");
 
     if (!IsHex(request.params[0].get_str())) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid hexadecimal for key");
@@ -2424,6 +2427,7 @@ RPCHelpMan dumpblindingkey()
 RPCHelpMan dumpmasterblindingkey()
 {
     return RPCHelpMan{"dumpmasterblindingkey",
+                "\nDEPRECATED. For descriptor wallets, export a ct(slip77(<master blinding key>), ...) descriptor with `listdescriptors true` (or `listdescriptors false` with include_blinding_key) instead."
                 "\nDumps the master private blinding key in hex.",
                 {},
                 RPCResult{
@@ -2439,6 +2443,8 @@ RPCHelpMan dumpmasterblindingkey()
     CWallet* const pwallet = wallet.get();
 
     LOCK(pwallet->cs_wallet);
+
+    pwallet->WalletLogPrintf("WARNING: dumpmasterblindingkey is deprecated. For descriptor wallets, export a ct(slip77(...)) descriptor with listdescriptors instead.\n");
 
     if (!pwallet->blinding_derivation_key.IsNull()) {
         return HexStr(pwallet->blinding_derivation_key);
