@@ -2612,9 +2612,12 @@ std::optional<PSBTError> DescriptorScriptPubKeyMan::FillPSBT(PartiallySignedTran
                 return PSBTError::MISSING_INPUTS;
             }
             script = input.non_witness_utxo->vout[*input.prev_out].scriptPubKey;
-        } else if (input.witness_utxo.IsNull() && (!input.m_peg_in_value || input.m_peg_in_claim_script.empty())) {
-            // There's no UTXO so we can just skip this now
-            continue;
+        } else if (input.m_peg_in_value && !input.m_peg_in_claim_script.empty()) {
+            // ELEMENTS: peg-in inputs have no on-chain prevout (it lives on the
+            // parent chain). The output being spent is the claim script (a wpkh
+            // over one of this wallet's keys), which is what we must find a
+            // signing provider for. GetUTXO() reconstructs the same CTxOut.
+            script = input.m_peg_in_claim_script;
         } else {
             // There's no UTXO so we can just skip this now
             continue;

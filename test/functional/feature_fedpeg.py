@@ -241,10 +241,12 @@ class FedPegTest(BitcoinTestFramework):
         # Create a wallet in order to test that multi-wallet support works correctly for claimpegin
         #   (Regression test for https://github.com/ElementsProject/elements/issues/812 .)
         sidechain.createwallet("throwaway")
-        # Set up our sidechain RPCs to use the first wallet (with empty name). We do this by
+        # Set up our sidechain RPCs to use the original default wallet. We do this by
         #   overriding the RPC object in a hacky way, to avoid breaking a different hack on TestNode
         #   that enables generate() to work despite the deprecation of the generate RPC.
-        sidechain.rpc = sidechain.get_wallet_rpc("")
+        #   The default wallet name differs between legacy ("") and descriptor
+        #   ("default_wallet") wallets.
+        sidechain.rpc = sidechain.get_wallet_rpc(self.default_wallet_name)
 
         print("Attempting peg-ins")
         # First attempt fails the consensus check but gives useful result
@@ -630,8 +632,16 @@ class FedPegTest(BitcoinTestFramework):
         # Have bitcoin output go directly into a claim output
         pegin_info = sidechain.getpeginaddress()
         mainchain_addr = pegin_info["mainchain_address"]
-        # Watch the address so we can get tx without txindex
-        parent.importaddress(mainchain_addr)
+        # Watch the address so we can get tx without txindex. Descriptor wallets
+        # with private keys enabled reject importing a watch-only addr()
+        # descriptor; that's fine here because the coinbase is read below via
+        # getblock(verbosity=2) and gettxoutproof with an explicit block hash,
+        # neither of which needs the address to be in the wallet.
+        try:
+            parent.importaddress(mainchain_addr)
+        except JSONRPCException:
+            if not self.options.descriptors:
+                raise
         claim_block = self.generatetoaddress(parent, 50, mainchain_addr, sync_fun=self.no_op)[0]
         for node_group in self.node_groups:
             self.sync_all(node_group)
