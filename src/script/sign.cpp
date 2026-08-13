@@ -785,6 +785,21 @@ bool SignTransaction(CMutableTransaction& mtx, const SigningProvider* keystore, 
 {
     bool fHashSingle = ((nHashType & ~SIGHASH_ANYONECANPAY) == SIGHASH_SINGLE);
 
+    // ELEMENTS: normalize the output witness vector to match the number of
+    // outputs before computing any sighash. Elements taproot sighashes commit
+    // to the per-output witnesses (GetOutputWitnessesSHA256 over vtxoutwit), and
+    // transaction (de)serialization always resizes vtxoutwit to vout.size() when
+    // any witness is present. When signing a transaction parsed from raw hex
+    // (e.g. via signrawtransactionwithwallet or walletprocesspsbt), vtxoutwit is
+    // frequently empty; without this resize the signer would commit to an empty
+    // vtxoutwit while consensus verification sees a vout.size()-length vector of
+    // (empty) witnesses, producing a different sighash and an invalid Schnorr
+    // signature for taproot key-path spends. The wallet's internal
+    // CreateTransaction path is unaffected because it builds a fully-sized
+    // witness (via BlindTransaction) before signing. (vtxinwit is likewise
+    // resized to vin.size() further below, before per-input signing.)
+    mtx.witness.vtxoutwit.resize(mtx.vout.size());
+
     // Use CTransaction for the constant parts of the
     // transaction to avoid rehashing.
     const CTransaction txConst(mtx);

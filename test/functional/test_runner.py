@@ -219,8 +219,10 @@ BASE_SCRIPTS = [
     'wallet_dump.py --legacy-wallet',
     'rpc_signer.py',
     'wallet_signer.py --descriptors',
-    'feature_taphash_pegins_issuances.py',
-    'feature_tapscript_opcodes.py',
+    'feature_taphash_pegins_issuances.py --legacy-wallet',
+    'feature_taphash_pegins_issuances.py --descriptors',
+    'feature_tapscript_opcodes.py --legacy-wallet',
+    'feature_tapscript_opcodes.py --descriptors',
     # vv Tests less than 60s vv
     'wallet_importmulti.py --legacy-wallet',
     'mempool_limit.py',
