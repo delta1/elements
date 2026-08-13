@@ -278,6 +278,7 @@ BASE_SCRIPTS = [
     'p2p_block_sync.py --v1transport',
     'p2p_block_sync.py --v2transport',
     'feature_pegin_subsidy.py --legacy-wallet',
+    'feature_pegin_subsidy.py --descriptors',
     'wallet_createwallet.py --legacy-wallet',
     'wallet_createwallet.py --usecli',
     'wallet_createwallet.py --descriptors',
