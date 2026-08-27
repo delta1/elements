@@ -8,7 +8,39 @@ See: https://elementsproject.org/elements-code-tutorial/reissuing-assets
 TODO: add functionality from contrib/assets_tutorial/assets_tutorial.py into here
 """
 from test_framework.blocktools import COINBASE_MATURITY
+from test_framework.descriptors import descsum_create
 from test_framework.test_framework import BitcoinTestFramework
+from test_framework.util import assert_equal
+
+
+# Derive a concrete (non-wildcard) private descriptor for a wallet address on
+# `node`, so it can be imported into another descriptor wallet. This replaces the
+# legacy `importaddress` flow, which is unavailable on descriptor wallets. We look
+# up the address' HD keypath, find the matching active private descriptor via
+# `listdescriptors(True)`, and substitute the wildcard with the address' child
+# index.
+def get_privkey_desc_for_address(node, addr):
+    info = node.getaddressinfo(addr)
+    keypath = info["hdkeypath"]
+    if keypath.startswith("m/"):
+        keypath = keypath[2:]
+    child_index = keypath.split("/")[-1]
+    prefix = "/".join(keypath.split("/")[:-1])
+    for d in node.listdescriptors(True)["descriptors"]:
+        desc = d["desc"]
+        if "/*" not in desc:
+            continue
+        inner = desc.split("#")[0]
+        if inner.startswith("ct(") and inner.endswith(")"):
+            # ct(slip77(<key>),<inner_desc>) -> <inner_desc>
+            after_comma = inner[inner.index(",") + 1:]
+            inner = after_comma[:-1]
+        if ("/" + prefix + "/*") not in inner:
+            continue
+        concrete = inner.replace("/" + prefix + "/*", "/" + prefix + "/" + child_index)
+        return descsum_create(concrete)
+    raise AssertionError("Could not find private descriptor for address {}".format(addr))
+
 
 class WalletTest(BitcoinTestFramework):
     def set_test_params(self):
@@ -28,7 +60,6 @@ class WalletTest(BitcoinTestFramework):
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
-        self.skip_if_no_bdb()
 
     def run_test(self):
         self.generate(self.nodes[0], COINBASE_MATURITY + 1)
@@ -47,7 +78,16 @@ class WalletTest(BitcoinTestFramework):
         self.nodes[0].generatetoaddress(1, self.nodes[0].getnewaddress(), called_by_framework=True)  # confirm the tx
 
         issuance_addr = self.nodes[0].gettransaction(issuance_txid)['details'][0]['address']
-        self.nodes[1].importaddress(issuance_addr)
+        if self.options.descriptors:
+            # Descriptor wallets don't support watch-only `importaddress`. Hand
+            # node 1 the private descriptor for the issuance output (derived from
+            # node 0's wallet) via `importdescriptors`, so node 1 learns about the
+            # issuance transaction needed by `importissuanceblindingkey`.
+            desc = get_privkey_desc_for_address(self.nodes[0], issuance_addr)
+            res = self.nodes[1].importdescriptors([{"desc": desc, "timestamp": 0}])
+            assert_equal(res[0]["success"], True)
+        else:
+            self.nodes[1].importaddress(issuance_addr)
 
         issuance_key = self.nodes[0].dumpissuanceblindingkey(issuance_txid, issuance_vin)
         self.nodes[1].importissuanceblindingkey(issuance_txid, issuance_vin, issuance_key)
