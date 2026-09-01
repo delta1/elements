@@ -12,6 +12,7 @@
 #include <key_io.h>
 #include <merkleblock.h>
 #include <rpc/util.h>
+#include <random.h>
 #include <script/descriptor.h>
 #include <script/script.h>
 #include <script/solver.h>
@@ -24,6 +25,7 @@
 #include <wallet/rpc/util.h>
 #include <wallet/wallet.h>
 
+#include <cassert>
 #include <cstdint>
 #include <fstream>
 #include <tuple>
@@ -41,6 +43,11 @@ namespace {
     public:
         CSecp256k1Init() {
             secp256k1_ctx = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN);
+            assert(secp256k1_ctx != nullptr);
+            // Pass in a random blinding seed to the secp256k1 context (side-channel hardening).
+            unsigned char seed[32];
+            GetRandBytes(seed);
+            assert(secp256k1_context_randomize(secp256k1_ctx, seed));
         }
         ~CSecp256k1Init() {
             secp256k1_context_destroy(secp256k1_ctx);
