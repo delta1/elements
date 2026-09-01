@@ -15,6 +15,7 @@
 #include <merkleblock.h>
 #include <pow.h>
 #include <primitives/transaction.h>
+#include <random.h>
 #include <primitives/bitcoin/merkleblock.h>
 #include <secp256k1.h>
 #include <script/interpreter.h>
@@ -37,6 +38,10 @@ public:
         assert(secp256k1_ctx_validation == nullptr);
         secp256k1_ctx_validation = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY | SECP256K1_CONTEXT_SIGN);
         assert(secp256k1_ctx_validation != nullptr);
+        // Randomize the context to harden against side-channel leakage; mirrors ECC_Start() in key.cpp.
+        unsigned char seed[32];
+        GetRandBytes(seed);
+        assert(secp256k1_context_randomize(secp256k1_ctx_validation, seed) == 1);
     }
 
     ~Secp256k1Ctx() {
