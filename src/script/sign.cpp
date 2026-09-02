@@ -10,6 +10,7 @@
 #include <pegins.h>
 #include <policy/policy.h>
 #include <primitives/transaction.h>
+#include <random.h>
 #include <script/keyorigin.h>
 #include <script/pegins.h>  // for GetPeginOutputFromWitness()
 #include <script/miniscript.h>
@@ -102,8 +103,9 @@ bool MutableTransactionSignatureCreator::CreateSchnorrSig(const SigningProvider&
     uint256 hash;
     if (!SignatureHashSchnorr(hash, execdata, m_txto, nIn, taproot_hashtype, sigversion, *m_txdata, MissingDataBehavior::FAIL)) return false;
     sig.resize(64);
-    // Use uint256{} as aux_rnd for now.
-    if (!key.SignSchnorr(hash, sig, merkle_root, {})) return false;
+    uint256 aux_rnd;
+    GetStrongRandBytes(Span<unsigned char>(aux_rnd.begin(), aux_rnd.size()));
+    if (!key.SignSchnorr(hash, sig, merkle_root, aux_rnd)) return false;
     if (taproot_hashtype) sig.push_back(taproot_hashtype);
     return true;
 }

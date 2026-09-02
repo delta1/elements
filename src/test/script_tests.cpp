@@ -1735,11 +1735,27 @@ BOOST_AUTO_TEST_CASE(bip341_keypath_test_vectors)
             BOOST_CHECK_EQUAL(HexStr(pubkey), input["intermediary"]["internalPubkey"].get_str());
 
             // Sign and verify signature.
-            FlatSigningProvider provider;
-            provider.keys[key.GetPubKey().GetID()] = key;
-            MutableTransactionSignatureCreator creator(tx, txinpos, utxos[txinpos].nValue, &txdata, hashtype);
             std::vector<unsigned char> signature;
-            BOOST_CHECK(creator.CreateSchnorrSig(provider, signature, pubkey, nullptr, &merkle_root, SigVersion::TAPROOT));
+            // These upstream BIP341 key-path vectors were produced with a fixed
+            // (zero) aux_rnd. CreateSchnorrSig now randomizes aux_rnd, so to keep
+            // this exact-hex vector check reproducible we sign deterministically
+            // via key.SignSchnorr with the zero aux the vectors encode.
+            uint256 vector_sighash;
+            ScriptExecutionData vector_sed;
+            vector_sed.m_annex_init = true;
+            vector_sed.m_annex_present = false;
+            BOOST_CHECK(SignatureHashSchnorr(vector_sighash, vector_sed, tx, txinpos, hashtype, SigVersion::TAPROOT, txdata, MissingDataBehavior::FAIL));
+            signature.resize(64);
+            const uint256 zero_aux;
+            // Pass &merkle_root unconditionally: a non-null pointer whose value
+            // happens to be null still applies the BIP341 tap-tweak (tweak = hash
+            // of the untweaked pubkey), matching how the original test invoked
+            // CreateSchnorrSig. Passing nullptr would skip the tweak entirely.
+            BOOST_CHECK(key.SignSchnorr(vector_sighash, signature, &merkle_root, zero_aux));
+            // Mirror CreateSchnorrSig's SIGHASH_RANGEPROOF masking and the append
+            // of the (masked) hashtype byte for non-default sighash types.
+            const int taproot_hashtype = hashtype & ~SIGHASH_RANGEPROOF;
+            if (taproot_hashtype) signature.push_back(static_cast<unsigned char>(taproot_hashtype));
             BOOST_CHECK_EQUAL(HexStr(signature), input["expected"]["witness"][0].get_str());
 
             // We can't observe the tweak used inside the signing logic, so verify by recomputing it.
