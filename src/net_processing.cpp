@@ -2178,6 +2178,11 @@ void PeerManagerImpl::ProcessHeadersMessage(CNode& pfrom, const Peer& peer,
     bool all_duplicate = false;
     if (!m_chainman.ProcessNewBlockHeaders(headers, state, m_chainparams, &pindexLast, &all_duplicate)) {
         if (state.IsInvalid()) {
+            LogPrint(BCLog::NET, "peer=%d: invalid header received (via_compact_block=%d, count=%u, first_hash=%s, first_prev=%s, first_time=%u, first_bits=%08x, first_nonce=%u, reject_reason=%s, debug_message=%s)\n",
+                    pfrom.GetId(), via_compact_block, nCount,
+                    headers.front().GetHash().ToString(), headers.front().hashPrevBlock.ToString(),
+                    headers.front().nTime, headers.front().nBits, headers.front().nNonce,
+                    state.GetRejectReason(), state.GetDebugMessage());
             MaybePunishNodeForBlock(pfrom.GetId(), state, via_compact_block, "invalid header received");
             return;
         }
