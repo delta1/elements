@@ -175,13 +175,7 @@ void InitSurjectionproofCache()
 
 bool CachingRangeProofChecker::VerifyRangeProof(const std::vector<unsigned char>& vchRangeProof, const std::vector<unsigned char>& vchValueCommitment, const std::vector<unsigned char>& vchAssetCommitment, const CScript& scriptPubKey, const secp256k1_context* secp256k1_ctx_verify_amounts) const
 {
-    uint256 entry;
-    rangeProofCache.ComputeEntryRangeProof(entry, vchRangeProof, vchValueCommitment, vchAssetCommitment, scriptPubKey);
-
-    if (rangeProofCache.Get(entry, !store)) {
-        return true;
-    }
-
+    // ELEMENTS: range proof cache disabled — always perform full verification.
     if (vchRangeProof.size() == 0) {
         return false;
     }
@@ -206,10 +200,6 @@ bool CachingRangeProofChecker::VerifyRangeProof(const std::vector<unsigned char>
     // Issuances proofs are always "unspendable" as they commit to an empty script.
     if (min_value == 0 && !scriptPubKey.IsUnspendable()) {
         return false;
-    }
-
-    if (store) {
-        rangeProofCache.Set(entry);
     }
 
     return true;
